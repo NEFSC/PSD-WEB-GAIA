@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>GAIA Login</title>
+	<style>
+		h1{
+			margin: auto;
+			text-align: center;
+		}
+		h3{
+			margin: auto;
+			text-align: center;
+		}
+		p{
+			font-weight: normal;
+			text-align: left;
+		}
+		form{
+			margin: auto;
+			padding: 20px;
+			border-radius: 8px;
+			width: 300px;
+		}
+		button{
+			width: 100%;
+			padding: 10px;
+			color: white;
+			background-color: #003087;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-weight: bold;
+		}
+		button:hover{
+			background-color: #0085CA;
+			color: white;
+		}
+	</style>
+</head>
+<body>
+	<h1>Welcome to the Geospatial Artificial Intelligence for Animals Platform!</h1><br><br>
+	
+	<h3>Consent to Monitor<h3>
+	<p>You are accessing a U.S. Government (USG) Information System (IS) that is provided for USG beneficiary self-service-authorized use only.</p>
+	<p>By using this IS (which includes any device attached to this IS), you consent to the following conditions:</p>
+	<p>The USG routinely intercepts and monitors communications on this IS for purposes including, but not limited to, penetration testing, COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement (LE), and counterintelligence (CI) investigations.</p>
+	<p>At any time, the USG may inspect and seize data stored on this IS.</p>
+	<p>While all personal identifying information (PII) data stored on this IS is protected under the Privacy Act of 1974, all communications using this IS, and the data captured to support this IS, are not private, are subject to routine monitoring, interception, and search, and may be disclosed or used for any USG authorized purpose.</p>
+	<p>This IS includes security measures (e.g., authentication and access controls) to protect USG interests--not for your personal benefit or privacy.
+	<p>Notwithstanding the above, using this IS does not constitute consent to PM, LE or CI investigative searching or monitoring of the content of privileged communications, or work product, related to personal representation or services by attorneys, psychotherapists, or clergy, and their assistants. Such communications and work product are private and confidential. See User Agreement for details.</p>
+
+	<form method="POST">
+		{% csrf_token %}
+		{{ form.as_p }}
+		
+		{% if form.errors %}
+			<p style="color: red;">Invalid username or password</p>
+		{% endif %}
+		
+		<button type="submit">Login</button>
+	</form>
+</body>
+</html>
