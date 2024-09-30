@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Collection Page</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+	<style>
+		.header-container{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 20px;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		.button-container{
+			display: flex;
+			align-items: center;
+		}
+		.button-container button{
+			background-color: #003087;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			margin-left: 10px;
+			margin-right: 10px;
+		}
+		.button-container button:hover {
+			background-color: #0085CA;
+		}
+		.page-title {
+			margin: 0;
+			font-size: 24 px;
+			test-align: center;
+			flex-grow: 1;
+			position: absolute;
+			left: 40%;
+			width: 100%
+		}
+	</style>
+</head>
+<body>
+	<div class="header-container">
+		<div class="button-container">
+			<form id="home-form" action="{% url 'landing_page' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<button type="submit">Home</button>
+			</form>
+		</div>
+		
+		<h1 class="page-title">Collection Interface</h1>
+		
+		<div class="button-container">
+			<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<button type="submit">Logout</button>
+			</form>
+		</div>
+	</div>
+
+	<div>
+		<p>The Collection Interface is intended to assist with, at this time, the identification of historical imagery from the three primary data repositories: USGS Earth Explorer, GEOINT Enhanced Global Delivery, and Maxar Geospatial Platform. Identified imagery can then be added, or registered, within the database table for Processing. </p>
+	</div>
+
+	<p>Form Instance: {{ form }}</p>
+	<p>Form Errors: {{ form.errors }}</p>
+
+	<form method="POST">
+		{% csrf_token %}
+		{{ form.as_p }}
+		<button type="submit">Submit</button>
+	</form>
+	
+	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	
+	<!-- <script>
+		document.getElementById('select-all').addEventListener('change', function() {
+			let checkboxes = document.querySelectorAll('input[name="selected"]');
+			checkboxes.forEach(function(checkbox) {
+				checkbox.checked = this.checked;
+			}, this);
+		});
+		
+		var map = L.map('map');
+		
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; OpenStreetMap contributors'
+		}).addTo(map);
+		
+		var areaOfInterest = {{ area_of_interest_geojson|safe }};
+		var aoiLayer = L.geoJSON(areaOfInterest, {style: {color: 'blue', fillOpacity: 0}}).addTo(map);
+		
+		var bounds = [[{{ aoi_bounds.1 }}, {{ aoi_bounds.0 }}], [{{ aoi_bounds.3 }}, {{ aoi_bounds.2 }}]]
+		map.fitBounds(bounds);
+		
+		var resultsGeoJson = {{ results_geojson|safe }};
+		L.geoJSON(resultsGeoJson, {
+			onEachFeature: function (feature, layer) {
+				layer.bindPopup('<strong>ID:</strong> ' + feature.properties['Vendor ID'])
+			}, style: {color: 'red', fillOpacity: 0}
+		}).addTo(map);
+	</script> -->
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Collection Page</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+	<style>
+		.header-container{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 20px;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		.button-container{
+			display: flex;
+			align-items: center;
+		}
+		.button-container button{
+			background-color: #003087;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			margin-left: 10px;
+			margin-right: 10px;
+		}
+		.button-container button:hover {
+			background-color: #0085CA;
+		}
+		.page-title {
+			margin: 0;
+			font-size: 24 px;
+			test-align: center;
+			flex-grow: 1;
+			position: absolute;
+			left: 40%;
+			width: 100%
+		}
+		.container{
+			display: flex;
+			flex-direction: column;
+			aleign-items: center;
+		}
+		.flex-container{
+			display: flex;
+			justify-contnet: space-between;
+			align-items: flex-start;
+		}
+		.map-container, form-container {
+			flex: 1;
+			margin: 10px;
+		}
+		.map{
+			height: 500px;
+			width: 100%;
+			border: 1px solid #ccc;
+		}
+		table{
+			margin-top: 20px;
+			border-collapse: collapse;
+		}
+		table, th, td {
+			border: 2px solid black;
+		}
+		th, td {
+			padding: 8px;
+			text-align: left;
+		}
+		th {
+			background-color: #f2f2f2;
+		}
+
+		.btn-group{
+			margin-top: 20px;
+		}
+	</style>
+</head>
+<body>
+	<div class="header-container">
+		<div class="button-container">
+			<form id="home-form" action="{% url 'landing_page' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<button type="submit">Home</button>
+			</form>
+		</div>
+		
+		<h1 class="page-title">Collection Interface</h1>
+		
+		<div class="button-container">
+			<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<button type="submit">Logout</button>
+			</form>
+		</div>
+	</div>
+
+	<div>
+		<p>The Collection Interface is intended to assist with, at this time, the identification of historical imagery from the three primary data repositories: USGS Earth Explorer, GEOINT Enhanced Global Delivery, and Maxar Geospatial Platform. Identified imagery can then be added to, or extracted from, the database table for Processing. </p>
+	</div>
+
+	<div class="container">
+		<div class="flex-container">
+			<div class="form-container">
+				<p>
+					<strong>Note:</strong> do not change your API between querying and extracting records.
+				</p>
+				<form method="post">
+					{% csrf_token %}
+					{{ form.as_p }}
+					<button type="submit">Query</button>
+				</form>
+			</div>
+			
+			<div class="map-container">
+				<div id="map" class="map"></div>
+			</div>
+		</div>
+			
+		
+		{% if results %}
+			<h2>Results</h2>
+			
+			{%if message %}
+				<strong>{{ message }}</strong><br><br>
+			{% endif %}
+			
+			<form method="POST">
+				{% csrf_token %}
+				<input type="checkbox" id="select-all">Select/Deselect all
+					{{ results|safe }}
+				<div class="btn-group">
+					<button type="submit" name="extracted_selected">Extract Selected</button>
+				</div>
+			</form>
+		{% endif %}
+		
+		{% if messages %}
+			{% for message in messages %}
+				<div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+					{{ message }}
+				</div>
+			{% endfor %}
+		{% endif %}
+	</div>
+	
+	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	
+	<script>
+		// Initialize the map with a default view
+		var map = L.map('map').setView([39.8283, -98.5795], 4);
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; OpenStreetMap contributors'
+		}).addTo(map);
+		
+		// If an area of interest is selected, plot it and zoom to its bounds
+		{% if area_of_interest_geojson %}
+		var areaOfInterest = {{ area_of_interest_geojson|safe }}
+		var aoiLayer = L.geoJSON(areaOfInterest, {style: {color: 'blue', fillOpacity: 0}}).addTo(map);
+		
+		var bounds = [[{{ aoi_bounds.1 }}, {{ aoi_bounds.0 }}], [{{ aoi_bounds.3 }}, {{ aoi_bounds.2 }}]]
+		map.fitBounds(bounds);
+		{% endif %}
+		
+		// If results are present, plot them on the map
+		{% if results_geojson %}
+		var resultsGeoJson = {{ results_geojson|safe }};
+		L.geoJSON(resultsGeoJson, {
+			onEachFeature: function (feature, layer) {
+				layer.bindPopup('<strong>ID:</strong>' + feature.properties['Vendor ID']);
+			}, style: {color: 'red', fillOpacity: 0}
+		}).addTo(map);
+		{% endif %}
+		
+		// Event listener for individual checkboxes
+		let individualCheckboxes = document.querySelectorAll('input[name="selected"]');
+		individualCheckboxes.forEach(function (checkbox) {
+			checkbox.addEventListener('change', function () {
+				if (checkbox.checked) {
+					let tdValues = [];
+					let tds = checkbox.closest('tr').querySelectorAll('td');
+					tds.forEach(function (td) {
+						let textContent = td.textContent;
+						if (textContent !== undefined && textContent !== null) {
+							tdValues.push(textContent.trim());
+						}
+					});
+					console.log(tdValues); // Ouputs the values of the <td> elements
+					
+					// Create hidden inputs to pass data back to the server
+					tdValues.forEach((value, index) => {
+						let hiddenInput = document.createElement('input');
+						hiddenInput.type = 'hidden';
+						hiddenInput.name = `row_data_${checkbox.value}_${index}`;
+						hiddenInput.value = value;
+						checkbox.form.appendChild(hiddenInput);
+					});
+				} else {
+					document.querySelectorAll(`input[name^="row_data_${checkbox.value}_"]`).forEach(input => input.remove());
+				}
+			});
+		});
+		
+		//document.getElementById('form').addEventListener('change', function () {
+		//	document.getElementById('api-hidden-input').value = this.value;
+		//});
+		
+		//document.getElementById('data-form').addEventListener('submit', function () {
+		//	document.getElementById('api-hidden-input').value = //document.getElementById('select-api').value;
+		//});
+	</script>
+
+</body>
+</html>

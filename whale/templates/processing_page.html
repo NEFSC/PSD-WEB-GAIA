@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Production Page</title>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+	<style>
+		.header-container{
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 20px;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		.button-container{
+			display: flex;
+			align-items: center;
+		}
+		.button-container button{
+			background-color: #003087;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			margin-left: 10px;
+			margin-right: 10px;
+		}
+		.button-container button:hover {
+			background-color: #0085CA;
+		}
+		.page-title {
+			margin: 0;
+			font-size: 24px;
+			text-align: center;
+			flex-grow: 1;
+			position: absolute;
+			width: 100%;
+		}
+		.container{
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+		.flex-container{
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+		}
+		#map{
+			height: 500px;
+			width: 100%;
+		}
+		.form-container{
+			width: 50%;
+			float: left;
+		}
+		.map-container{
+			width: 50%;
+			float: right;
+		}
+		.results-table{
+			width: 100%;
+			margin-top: 20px;
+			border-collapse: collapse;
+		}
+		.results-table th, .results-table td{
+			border: 2px solid black;
+			padding: 8px;
+		}
+		.results-table tr.selected{
+			background-color: red;
+		}
+		.results-table th {
+			background-color: #f2f2f2;
+		}
+		.hidden-checkbox {
+			opacity: 0;
+			position: absolute;
+		}
+		.hidden {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<div class="header-container">
+		<div class="button-container">
+			<form id="home-form" action="{% url 'landing_page' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<button type="submit">Home</button>
+			</form>
+		</div>
+		
+		<h1 class="page-title">Processing Interface</h1>
+		
+		<div class="button-container">
+			<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
+				{% csrf_token %}
+				<button type="submit">Logout</button>
+			</form>
+		</div>
+	</div>
+
+	<div>
+		<p>The Processing Interface is inteded to allow end-users to preprocess identified imagery from the Collection interface leveraging the consolidated imagery data table. Imagery must be downloaded, orthorectified and calibrated, pansharpened, oversample, tiled, and uploaded to Microsoft Azure. Identifying spectrally anamalous points can also be done at this stage as part of pre-exploitation and review. </p>
+	</div>
+	
+	<div class="form-container">
+		<form method="POST">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<button type="submit" name="filter">Submit</button>
+		</form>
+	</div>
+		
+	<div class="map-container">
+		<div id="map"></div>
+	</div>
+	<div style="clear: both;"></div>
+		
+	{% if filtered_data %}
+	<form id="data-form" method="POST">
+		<!-- First section: data selection -->
+		{% csrf_token %}
+		<h2>Results</h2>
+		<table class="results-table">
+			<thead>
+				<tr>
+					<th><input type="checkbox" id="select-all"></th>
+					<th>ID</th>
+					<th>Vendor ID</th>
+					<th>Entity ID</th>
+					<th>Vendor</th>
+					<th>Platform</th>
+					<th>Date</th>
+					<th>Publish Date</th>
+					<th>Pixel Size</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for data in filtered_data %}
+				<tr data-geom="{{ data.geometry }}">
+					<td>
+						<input type="checkbox" class="record-checkbox" name="ids" value="{{ data.id }}"
+							data-vendor-id="{{ data.vendor_id }}" data-entity-id="{{ data.entity_id }}">
+					</td>
+					<td>{{ data.id }}</td>
+					<td>{{ data.vendor_id }}</td>
+					<td>{{ data.entity_id }}</td>
+					<td>{{ data.vendor }}</td>
+					<td>{{ data.platform }}</td>
+					<td>{{ data.date }}</td>
+					<td>{{ data.publish_date }}</td>
+					<td>{{ data.pixel_size_x|floatformat:2 }} x {{ data.pixel_size_y|floatformat:2 }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		
+		<div id="credentials-section", method="POST">
+			<h3>Enter Credentials</h3>
+			<p>Enter your credentials for the corresponding table name</p>
+			{% csrf_token %}
+			<label for="username">Username:</label>
+			<input type="text" id="username" name="username" required><br><br>
+			<label for="password">Password:</label>
+			<input type="password" id="password" name="password" required><br><br>
+		</div>
+		
+		<button type="submit" id="process">Process selection</button>
+	</form>
+	{% endif %}
+</body>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+	document.addEventListener('DOMContentLoaded', function () {
+		// Initalize map
+		var map = L.map('map').setView([39.8283, -98.5795], 4);
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; OpenStreetMap contributors'
+		}).addTo(map);
+		
+		// Add GeoJSON polygons to the map and sync with table
+		{% if filtered_data %}
+		var geojsonData = [];
+		var bounds = L.latLngBounds();
+		
+		{% for data in filtered_data %}
+			var geom = JSON.parse('{{ data.geometry|escapejs }}');
+			geojsonData.push(geom);
+			
+			var layer = L.geoJSON(geom, {style: {color: 'blue', fillOpacity: 0}}).addTo(map);
+			
+			// Extend bounds to include current geometry
+			layer.eachLayer(function (layer) {
+				bounds.extend(layer.getBounds());
+			});
+		{% endfor %}
+		
+		map.fitBounds(bounds);
+		{% endif %}
+			
+		// Function to update hidden inputs based on checkbox selections
+		function updateHiddenInputs() {
+			document.querySelectorAll('input[name="vendor_ids"], input[name="entity_ids"]').forEach(input => input.remove());
+			
+			document.querySelectorAll('input.record-checkbox:checked').forEach(checkbox => {
+				let vendorId = checkbox.getAttribute('data-vendor-id');
+				let entityId = checkbox.getAttribute('data-entity-id');
+				
+				let vendorInput = document.createElement('input');
+				vendorInput.type = 'hidden';
+				vendorInput.name = 'vendor_ids';
+				vendorInput.value = vendorId;
+				document.getElementById('data-form').appendChild(vendorInput);
+				
+				let entityInput =document.createElement('input');
+				entityInput.type = 'hidden';
+				entityInput.name = 'entity_ids';
+				entityInput.value = entityId;
+				document.getElementById('data-form').appendChild(entityInput);
+			});
+			
+		}
+		
+		attachEventListeners();
+		
+		// Reattach event listeners after form submission
+		function attachEventListeners() {
+			// Checks if the credentials section exists
+			var credentialsForm = document.getElementById('credentials-section');
+		
+			if (credentialsForm) {
+				credentialsForm.addEventListener('submit', function(e) {
+					// Prevent default submission to handle encryption first
+					e.preventDefault();
+					
+					// Get user inputs
+					let username = document.getElementById('username').value;
+					let password = document.getElementById('password').value;
+					
+					// Encrypt the credentials using base64
+					// This is currently not working
+					let encryptedUsername = btoa(username);
+					let encryptedPassword = btoa(password);
+					
+					// Set encrypted values back to the the form fields
+					document.getElementById('username').value = encryptedUsername;
+					document.getElementById('password').value = encryptedPassword;
+					
+					// Submit the form with encrypted Credentials
+					this.submit()
+				});
+			} else {
+				console.error('Credentials section not found.');
+			}
+		
+			// Select or deselect all checkboxes
+			document.getElementById('select-all').addEventListener('change', function () {
+				let checkboxes = document.querySelectorAll('input.record-checkbox');
+				checkboxes.forEach(checkbox => {
+					checkbox.checked = this.checked;
+				});
+				updateHiddenInputs();
+			});
+		
+		
+			// Update hidden inputs when individual checkboxes are changed
+			document.querySelectorAll('input.record-checkbox').forEach(checkbox => {
+				checkbox.addEventListener('change', function() {
+					updateHiddenInputs();
+				});
+			});
+		}
+		
+			// Update hidden inputs on form submission
+			//document.getElementById('data-form').addEventListener('submit', function(e) {
+			//	updateHiddenInputs();
+			//});
+
+		//document.addEventListener('DOMContentLoaded', function () {
+			// Select or deselect all checkboxes
+		//	document.getElementById('select-all').addEventListener('change', function() {
+		//		let checkboxes = document.querySelectorAll('input.record-checkbox');
+		//		checkboxes.forEach(checkbox => {
+		//			checkbox.checked = this.checked;
+		//		});
+		//		updateHiddenInputs();
+		//	});
+		//});
+		
+		// Update hidden inputs when indvidual checkboxes are changed
+		//document.querySelectorAll('input.record-checkbox').forEach(checkbox => {
+		//	checkbox.addEventListener('change', function() {
+		//		updateHiddenInputs();
+		//	});
+		//});
+		
+	// Call the function to attach event listeners when the page loads
+	//attachEventListeners();
+	});
+</script>
+</html>

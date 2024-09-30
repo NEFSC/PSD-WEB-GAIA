@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Landing Page</title>
+	<style>
+		.logout-container{
+			position: absolute;
+			top: 20px;
+			right: 20px;
+		}
+		.logout-container button{
+			background-color: #003087;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		.logout-container button:hover {
+			background-color: #0085CA;
+			color: white;
+		}
+	</style>
+</head>
+<body>
+	<div class="logout-container">
+		<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
+			{% csrf_token %}
+			<button type="submit">Logout</button>
+		</form>
+	</div>
+
+	<h1>Welcome to the GAIA GeoDjango TCPED Platform!</h1>
+	<ul>
+		<li><a href="{% url 'tasking_page' %}">Tasking</a></li>
+		<li><a href="{% url 'collection_page' %}">Collection</a></li>
+		<li><a href="{% url 'processing_page' %}">Processing</a></li>
+		<li><a href="{% url 'exploitation_page' %}">Exploitation</a></li>
+		<li><a href="{% url 'dissemination_page' %}">Dissemination</a></li>
+	</ul>
+</body>
+</html>

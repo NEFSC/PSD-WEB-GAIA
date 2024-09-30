@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Dissemination Page</title>
+	<style>
+		.logout-container{
+			position: absolute;
+			top: 20px;
+			right: 20px;
+		}
+		.logout-container button{
+			background-color: #003087;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+
+		.logout-container button:hover {
+			background-color: #0085CA;
+			color: white;
+		}
+	</style>
+</head>
+<body>
+	<div class="logout-container">
+		<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
+			{% csrf_token %}
+			<button type="submit">Logout</button>
+		</form>
+	</div>
+
+	<h1>This is the Dissemination Page</h1>
+	<p> More details to come...</p>
+	<a href="{% url 'landing_page' %}">Back to Dissemination Page</a><br><br>
+</body>
+</html>
