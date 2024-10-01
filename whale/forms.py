@@ -63,7 +63,7 @@ class ProcessingForm(forms.Form):
                   'pixel_x_min', 'pixel_x_max', 'pixel_y_min', 'pixel_y_max',
                   'date_min', 'date_max', 'publish_date_min', 'publish_date_max', 'aoi']
 
-class SpeciesForm(forms.ModelForm):
+class PointsOfInterestForm(forms.ModelForm):
     class Meta:
         model = Species
         fields = ['classification', 'confidence','species', 'comments']
