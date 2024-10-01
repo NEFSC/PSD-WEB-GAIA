@@ -57,7 +57,10 @@ from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .query import build_ee_query_payload, query_mgp
 from .download import download_imagery
-from .utils import standardize_names, calibrate_image, convert_to_tiles, get_entity_pairs, import_pois, convert_date_or_none
+# Collection page
+from .utils import convert_date_or_none
+# Processing page
+from .utils import get_entity_pairs, standardize_names, calibrate_image, import_pois  # should be depricated: convert_to_tiles
 
 
 ########################################################################################################################
@@ -124,6 +127,9 @@ def collection_page(request):
         Currently supports USGS EarthExplorer, NGA GEOINT Discovery, and
             Maxar Geospatial Platform satellite imagery repositories.
 
+        DEPENDENCIES:
+            - utils.convert_date_or_none
+        
         TODO: Split each data repository into a function (GAIFAGP-55).
     """
     results = None
@@ -228,7 +234,6 @@ def collection_page(request):
                                          f" It has not been added to the database, but likely because some version of the" +
                                          f" record is already there. You should validate that is the case through the Django shell.")
 
-            
             elif request.POST.get('select_api') == 'mgp':
                 for attributes in row_data.values():
                     attributes = [attribute for attribute in attributes if attribute]
@@ -485,6 +490,18 @@ def collection_page(request):
 
 
 def processing_page(request):
+    """ A page for preprocessing satellite imagery. Data are selected from records within
+            the database by an end-user to preprocess. Preprocessing steps include
+            orthorectification, calibration, super-sampling, converted to
+            Cloud Optimized GeoTIFFs (COGs), and uploaded to Azure.
+
+        TODO: Support preprocessing for more than just USGS's EarthExplorer 'crssp_orderable_w3'
+            data repository (GAIFAGP-56)
+        TODO: Remove GDAL2Tiles implimentation for RIOCOGEO COG creation (GAIFAGP-57)
+        TODO: Execute these steps asynchronously (GAIFAGP-58, GAIFAGP-59)
+        TODO: Properly integrate generate_interesting_points.py to include not only point
+            generation, but their registration within the database (GAIFAGP-60)
+    """
     form = ProcessingForm()
     filtered_data = None
 
@@ -809,7 +826,7 @@ def exploitation_page(request, item_id=None):
         # Iterate through each previous POI until a valid COG is found
         for poi in previous_pois:
             print(f"Checking previous POI ID: {poi.id}")  # Debug print to see which POIs are being checked
-            exists, blob_name = cog_exists(poi.vendor_id)  # Unpack the return values of cog_exists
+            exists, blob_name = cog_exists(poi.vendor_id)
     
             if exists:
                 # Lock and return this POI for the user
@@ -843,9 +860,8 @@ def exploitation_page(request, item_id=None):
         cache.set(f'cog_existence_{vendor_id}', (exists, blob_name), timeout=300)  # Cache COG existence for 5 minutes
         return exists, blob_name
 
-    # Scenario 1:
-    #    If no id, catalog_id, vendor_id, and entity_id are provided, find the first unreviewed
-    #    point of interest with a valid COG file in Azure.
+    # Scenario 1: If no id, catalog_id, vendor_id, and entity_id are provided,
+    #    find the first unreviewed point of interest with a valid COG file in Azure.
     if id is None and not (catalog_id and vendor_id and entity_id):
         poi = get_first_unreviewed_poi(user)
         if poi:
@@ -865,8 +881,7 @@ def exploitation_page(request, item_id=None):
             'cog_url': f"{blob_name}" if exists else None
         })
 
-    # Scenario 2:
-    #      Handle "next" action (get the next unreviewed point of interest with a COG)
+    # Scenario 2: Handle "next" action (get the next unreviewed point of interest with a COG)
     if action == "next":
         next_poi = get_next_poi(user)
         if next_poi:
@@ -918,8 +933,7 @@ def exploitation_page(request, item_id=None):
             'cog_url': None
         })
     
-    # Scenario 3:
-    #     If parameters (id, catalog_id, vendor_id, and entity_id) are provided,
+    # Scenario 3: If parameters (id, catalog_id, vendor_id, and entity_id) are provided,
     #     retrieve the specific point of interest
     if id and catalog_id and vendor_id and entity_id:
         try:
@@ -985,6 +999,10 @@ def exploitation_page(request, item_id=None):
     })
 
 def dissemination_page(request):
+    """ This page is to inform the scientific investigators as to what is currently within
+            the data so that they can make decisions based on it (e.g., task for additional
+            satellite imagery) (GAIFAGP-46).
+    """
     return render(request, 'dissemination_page.html')
 
 def check_records_view(request):
