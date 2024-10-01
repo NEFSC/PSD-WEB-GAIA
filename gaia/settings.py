@@ -26,7 +26,7 @@ SPATIALITE_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'REACH OUT TO JOHN'
+SECRET_KEY = 'django-insecure-^ud!fp2+#gd)inku-u4$f=v9w-8lh#i86hn9vll^1d_8k)g)a0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -183,5 +183,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 AZURE_STORAGE_ACCOUNT_NAME = 'gaianoaastorage'
-AZURE_STORAGE_ACCOUNT_KEY = 'ASK JOHN FOR THIS'
+AZURE_STORAGE_ACCOUNT_KEY = 'GLvbP75MSVs4CVi8p0lXQU3whmnv78RsrZpUh8NtTgtP8RhMEtr2deJeSlxg6LiFda9JbO41lnNn+AStyESCfA=='
 AZURE_CONTAINER_NAME = 'data'
