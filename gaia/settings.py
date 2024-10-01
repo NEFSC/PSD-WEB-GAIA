@@ -11,22 +11,28 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 import os
+import json
 from pathlib import Path
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 GDAL_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Library/bin/gdal.dll'
+SECRETS_FILE = os.path.join(BASE_DIR, 'gaia/secrets.json')
 
 # !!! This makes no sense to me. I have to have the SpatiaLite files within my GeoDjango project,
 #      but I also have to use the path like this within my Anaconda environment.
 SPATIALITE_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Library/bin/mod_spatialite.dll'
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^ud!fp2+#gd)inku-u4$f=v9w-8lh#i86hn9vll^1d_8k)g)a0'
+with open(SECRETS_FILE) as f:
+    secrets = json.load(f)
+
+SECRET_KEY = secrets['DJANGO_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -183,5 +189,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
 AZURE_STORAGE_ACCOUNT_NAME = 'gaianoaastorage'
-AZURE_STORAGE_ACCOUNT_KEY = 'GLvbP75MSVs4CVi8p0lXQU3whmnv78RsrZpUh8NtTgtP8RhMEtr2deJeSlxg6LiFda9JbO41lnNn+AStyESCfA=='
+AZURE_STORAGE_ACCOUNT_KEY = secrets['AZURE_KEY']
 AZURE_CONTAINER_NAME = 'data'
