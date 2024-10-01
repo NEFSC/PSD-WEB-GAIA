@@ -1039,33 +1039,12 @@ def generate_sas_token(blob_name):
         print(f"Error generating SAS token for blob '{blob_name}': {e}")
         return None
 
-# def generate_authorization_token(blob_name):
-#     """ AUXILIARY FUNCTION
-
-#         This function generates an SAS Token
-#     """
-#     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
-#     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
-#     container_name = "transfer"
-
-#     url_path = f"/{account_name}/{container_name}/{blob_name}"
-#     date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-
-#     string_to_sign = f"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{date}\nx-ms-version:2020-06-12\n{url_path}"
-
-#     signature = base64.b64encode(hmac.new(base64.b64decode(account_key), string_to_sign.encode('utf-8'), hashlib.sha256).digest()).decode('utf-8')
-
-#     authorization_header = f"SharedKey {account_name}:{signature}"
-#     return authorization_header, date
-
 def check_cog_existence(vendor_id, directory=None):
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
 
     vendor_id = vendor_id.replace('P1BS', 'S1BS')
-    
-    # print(f"Checking for COG Vendor ID: {vendor_id}")
     
     try:
         credential = AzureNamedKeyCredential(account_name, account_key)
@@ -1137,41 +1116,6 @@ def cog_view(request, vendor_id=None):
         else:
             return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
             
-    except requests.exceptions.RequestException as e:
-        return HttpResponse(f"Network error: {str(e)}", status = 503)
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=403)
-
-def tile_view(request, z, x, y, vendor_id=None):
-    # Blob name should be changed to accomodate changes in tiles
-    base_tile_path = "21APR24154045-S1BS-506967344060_01_P006_u08mr32619"
-    blob_name = f"tiles/{base_tile_path}/{z}/{x}/{y}.png"
-
-    try:
-        authorization_header, date = generate_authorization_token(blob_name)
-        blob_url = f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/{settings.AZURE_CONTAINER_NAME}/{blob_name}"
-        print(f"YOUR BLOB URL IS: {blob_url}")
-
-        headers = {
-            'Authorization': authorization_header,
-            'x-ms-date': date,
-            'x-ms-version': '2020-06-12'
-        }
-
-        #response = requests.get(blob_url, headers=headers)
-
-        session = requests.Session()
-        retries = requests.adapters.Retry(total = 5, backoff_factor = 1, status_forcelist = [500, 502, 503, 504])
-        adapter = requests.adapters.HTTPAdapter(max_retries = retries)
-        session.mount('https://', adapter)
-
-        response = session.get(blob_url, headers = headers, timeout = 10)
-        
-        if response.status_code == 200:
-            tile_response = HttpResponse(response.content, content_type = 'image/png')
-            return tile_response
-        else:
-            return HttpResponseForbidden(f"Error fetching tile: {response.status_code} - {response.text}")
     except requests.exceptions.RequestException as e:
         return HttpResponse(f"Network error: {str(e)}", status = 503)
     except Exception as e:
