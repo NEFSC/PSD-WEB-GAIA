@@ -1123,31 +1123,6 @@ def cog_view(request, vendor_id=None):
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=403)
 
-def get_poi_coordinates(species):
-    """
-    Retrieves the longitude and latitude coordinates for a given species object.
-    If the species has a point geometry and an EPSG code, it will set the correct SRID
-    and then transform the coordinates to WGS84 (EPSG:4326) using GeoDjango's transform method.
-    Otherwise, it returns default coordinates.
-    """
-    # Default coordinates (replace with appropriate default if necessary)
-    longitude, latitude = -70.183762, 42.049081
-
-    if species and species.point and species.epsg_code:  # Ensure the species has a geometry field and EPSG code
-        try:
-            # Set the SRID (spatial reference identifier) of the geometry to the EPSG code from the database
-            species.point.srid = int(species.epsg_code)
-
-            # Transform the geometry to EPSG:4326 (WGS84)
-            geometry_4326 = species.point.transform(4326, clone=True)
-
-            # Extract the transformed coordinates
-            longitude, latitude = geometry_4326.coords
-        except Exception as e:
-            print(f"Error transforming coordinates: {e}")
-
-    return longitude, latitude
-
 def proxy_openlayers_js(request):
     url = "https://cdn.jsdelivr.net/npm/ol@6.15.1/ol.js"
     response = requests.get(url)
