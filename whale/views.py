@@ -27,6 +27,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.cache import cache
 from django.core.serializers import serialize
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.safestring import mark_safe
@@ -34,6 +35,8 @@ from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.db.models.functions import Transform
+from django.contrib.sessions.models import Session
+from django.views import View
 from django_q.tasks import async_task
 from wsgiref.util import FileWrapper
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions
@@ -41,7 +44,7 @@ from azure.core.credentials import AzureNamedKeyCredential
 from datetime import datetime, timedelta
 from .models import AreaOfInterest, EarthExplorer, GEOINTDiscovery, MaxarGeospatialPlatform, ExtractTransformLoad
 from .models import PointsOfInterest
-from .forms import APIQueryForm, ProcessingForm, SpeciesForm
+from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .security import ee_login, mgp_login
 from .query import build_ee_query_payload, query_mgp
@@ -663,7 +666,301 @@ def processing_page(request):
     return render(request, 'processing_page.html', {'form': form})
 
 def exploitation_page(request, item_id=None):
-    return render(request, 'exploitation_page.html')
+    """ The WHALE TCPED Exploidation Page is intended to support the review of
+            Points of Interest (POI) from three scenerios:
+
+                 1. An end-user nagivates to the page and is provided with the first
+                     point of interest they have not reviewed and which still has not
+                     been reviewed by three people.
+                 2. An end-user needs to advance and reverse through points of
+                     interests they intend to review or have reviewed. In short,
+                     they need to be able to use "next" and "previous" buttons.
+                 3. An end-user knows exactly the id, catalog_id, vendor_id, and entity_id
+                     string they need for a point of interest.
+    """
+    # Get values passed by front-end
+    id = request.GET.get('id')
+    catalog_id = request.GET.get('catalog_id')
+    vendor_id = request.GET.get('vendor_id')
+    entity_id = request.GET.get('entity_id')
+    action = request.GET.get('action')
+
+    # Troubleshooting print statements to show action and parameters being passed
+    print(f"Action: {action}")
+    print(f"URL Paramters - ID: {id}, Catalog ID: {catalog_id}, Vendor ID: {vendor_id}, and Entity ID: {entity_id}")
+
+    # Set the following to none then update as necessairy
+    poi = None
+    next_id = None
+    previous_id = None
+
+    # Convert id to integer if it exists
+    try:
+        id = int(id) if id else None
+    except ValueError:
+        id = None
+
+    # Record the user to add to database
+    user = request.user
+
+    # Helper functions!
+    def get_first_unreviewed_poi(user):
+        """ Get the first unreviewed POI for the user with a
+                 valid COG in Azure. When a valid COG is found,
+                 lock the point of interest within the database.
+                 If no unreviewed point of interest is found
+                 overlaying any COGs in Azure, return None.
+
+             This supports Scenerio 1.
+
+             USER - The loged-in user making the request
+        """
+        # Query for all points of interest that the user has not reviewed and are available
+        unreviewed_pois = PointsOfInterest.objects.filter(status="Available").exclude(reviewed_by_users=user).order_by('id')
+
+        # Iterate through each unreviewed points of interest until a valid COG is found in Azure
+        for poi in unreviewed_pois:
+            # Debug statement to see which POIs are being checked
+            print(f"Checking POI ID: {poi.id}")
+            
+            exists, blob_name = cog_exists(poi.vendor_id)
+
+            # If the COG exists, lock it for review
+            if exists:
+                poi.status = "In Review"
+                poi.locked_by = user
+                poi.save()
+                
+                print(f"Found POI with COG - ID: {poi.id}, Vendor ID: {poi.vendor_id}")
+                return poi
+
+        print("No available POIs with valid COG found.")
+        return None
+
+    def get_next_poi(user):
+        """ Get the next unreviewed POI for the user with a
+                valid COG in Azure. When a valid COG is found,
+                lock the point of interest within the database.
+                If no unreviewed point of interest is found
+                overlaying any COGs in Azure, return None.
+
+             This supports Scenerio 2.
+
+             USER - The loged-in user making the request
+        """
+        # Query for all points of interest that the user has not reviewed and are available
+        next_pois = PointsOfInterest.objects.filter(status="Available").exclude(reviewed_by_users=user).order_by('id')
+        
+        # Iterate through each unreviewed points of interest until a valid COG is found in Azure
+        for poi in next_pois:
+            # Debug statement to see which POIs are being checked
+            print(f"Checking POI ID: {poi.id}")
+            
+            exists, blob_name = cog_exists(poi.vendor_id)
+
+            # If the COG exists, lock it for review
+            if exists:
+                poi.status = "In Review"
+                poi.locked_by = user
+                poi.save()
+                
+                print(f"Found POI with COG - ID: {poi.id}, Vendor ID: {poi.vendor_id}")
+                return poi
+
+        print("No available POIs with valid COG found.")
+        return None
+
+    def get_previous_poi(user, current_poi_id):
+        """ Get the next unreviewed POI for the user with a
+                valid COG in Azure. When a valid COG is found,
+                lock the point of interest within the database.
+                If no unreviewed point of interest is found
+                overlaying any COGs in Azure, return None.
+
+             This supports Scenerio 2.
+
+             USER - The loged-in user making the request
+        """
+        # Query for all previous POIs that the user has not reviewed and are available
+        previous_pois = PointsOfInterest.objects.filter(id__lt=current_poi_id, status="Available", reviewed_by=user).order_by('-id')
+    
+        # Iterate through each previous POI until a valid COG is found
+        for poi in previous_pois:
+            print(f"Checking previous POI ID: {poi.id}")  # Debug print to see which POIs are being checked
+            exists, blob_name = cog_exists(poi.vendor_id)  # Unpack the return values of cog_exists
+    
+            if exists:
+                # Lock and return this POI for the user
+                poi.status = "In Review"
+                poi.locked_by = user
+                poi.save()
+
+                cache_key = f"reviewed_pois_{user.id}"
+                reviewed_pois = cache.get(cache_key, [])
+                reviewed_pois.append(poi.id)
+                cache.set(cache_key, reviewed_pois, timeout=3600)
+                
+                print(f"Found previous POI with COG - ID: {poi.id}, Vendor ID: {poi.vendor_id}, Blob: {blob_name}")
+                return poi
+    
+        print("No previous POIs with valid COG found.")
+        return None  # No previous POIs with valid COG found
+    
+    def cog_exists(vendor_id):
+        """ Checks if a COG exists in Azure when provided with a Vendor ID.
+                Really a wrapper function that includes a check cache function.
+
+            VENDOR ID - Vendor ID value
+        """
+        cached_result = cache.get(f'cog_existence_{vendor_id}')
+        if cached_result is not None:
+            return cached_result
+
+        # Call real CHECK COG EXISTANCE function
+        exists, blob_name = check_cog_existence(vendor_id, directory='cogs/')
+        cache.set(f'cog_existence_{vendor_id}', (exists, blob_name), timeout=300)  # Cache COG existence for 5 minutes
+        return exists, blob_name
+
+    # Scenario 1:
+    #    If no id, catalog_id, vendor_id, and entity_id are provided, find the first unreviewed
+    #    point of interest with a valid COG file in Azure.
+    if id is None and not (catalog_id and vendor_id and entity_id):
+        poi = get_first_unreviewed_poi(user)
+        if poi:
+            return redirect(f'{request.path}?id={poi.id}&catalog_id={poi.catalog_id}&vendor_id={poi.vendor_id}&entity_id={poi.entity_id}')
+
+        # Error handle for when no available points of interest can be found with a corresponding
+        #      COG.
+        return render(request, 'exploitation_page.html', {
+            'poi': None,
+            'poi_form': None,
+            'next_id': None,
+            'previous_id': None,
+            'vendor_id': None,
+            'longitude': None,
+            'latitude': None,
+            'error_message': "No available POIs with valid COG found.",
+            'cog_url': f"{blob_name}" if exists else None
+        })
+
+    # Scenario 2:
+    #      Handle "next" action (get the next unreviewed point of interest with a COG)
+    if action == "next":
+        next_poi = get_next_poi(user)
+        if next_poi:
+            return redirect(f'{request.path}?id={next_poi.id}&catalog_id={next_poi.catalog_id}&vendor_id={next_poi.vendor_id}&entity_id={next_poi.entity_id}')
+
+        # Error handling for when there are no more unreviewed point of interest with a valid COG
+        return render(request, 'exploitation_page.html', {
+            'poi': None,
+            'poi_form': None,
+            'next_id': None,
+            'previous_id': None,
+            'vendor_id': None,
+            'longitude': None,
+            'latitude': None,
+            'error_message': "No more unreviewed POIs with valid COG found.",
+            'cog_url': f"{blob_name}" if exists else None
+        })
+
+    # Handle "previous" action (retrieve previous point of interest)
+    if action == "previous":
+        print("Handling 'previous' action...")
+        if id:
+            print("\tAn ID was provided")
+            try:
+                poi = PointsOfInterest.objects.get(id=id)
+            except PointsOfInterest.DoesNotExist:
+                poi = None
+
+        if poi:
+            print("\tA point of interest object was provided")
+            previous_poi = get_previous_poi(user, poi.id)
+            if previous_poi:
+                return redirect(f'{request.path}?id={previous_poi.id}&catalog_id={previous_poi.catalog_id}&vendor_id={previous_poi.vendor_id}&entity_id={previous_poi.entity_id}')
+            else:
+                print("No previous points of interest found for the 'previous' action.")
+        else:
+            print("No current point of interest found; cannot navigate to previous point of interest.")
+
+        # Error handling for when there are no previous points of interest to display
+        return render(request, 'exploitation_page.html', {
+            'poi': None,
+            'poi_form': None,
+            'next_id': None,
+            'previous_id': None,
+            'vendor_id': None,
+            'longitude': None,
+            'latitude': None,
+            'error_message': "No previous POIs to display.",
+            'cog_url': None
+        })
+    
+    # Scenario 3:
+    #     If parameters (id, catalog_id, vendor_id, and entity_id) are provided,
+    #     retrieve the specific point of interest
+    if id and catalog_id and vendor_id and entity_id:
+        try:
+            poi = PointsOfInterest.objects.get(id=id, catalog_id=catalog_id, vendor_id=vendor_id, entity_id=entity_id)
+            
+        except PointsOfInterest.DoesNotExist:
+            poi = None
+
+    # Classification form (i.e., PointsOfInterestForm) handling
+    if request.method == "POST":
+        form = PointsOfInterestForm(request.POST, instance=poi) if poi else PointsOfInterestForm(request.POST)
+        if form.is_valid():
+            poi = form.save()
+            
+            return redirect(f'{request.path}?id={poi.id}&catalog_id={poi.catalog_id}&vendor_id={poi.vendor_id}&entity_id={poi.entity_id}')
+    else:
+        form = PointsOfInterestForm(instance=poi) if poi else PointsOfInterestForm()
+
+    # Since the points were generated from projected imagery, we need to transform them to
+    #      geographic coordinates (i.e., EPSG:4326) to show them.
+    if poi and poi.point and poi.epsg_code:
+        print(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
+        source_crs = CRS(f"EPSG:{poi.epsg_code}")
+        target_crs = CRS("EPSG:4326")
+        transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
+        easting, northing = poi.point.coords
+        longitude, latitude = transformer.transform(easting, northing)
+        
+    else:
+        # Have a fallback location of Fisherman's Wharf, Provincetown, MA.
+        longitude, latitude = -70.183762, 42.049081
+
+    # Check if the COG file for the vendor ID exists
+    if vendor_id:
+        modified_vendor_id = vendor_id.replace("P1BS", "S1BS")
+        exists, blob_name = cog_exists(modified_vendor_id)
+        if not exists:
+
+            # Error handling for when a point of interest might exist, but no COG
+            return render(request, 'exploitation_page.html', {
+                'poi': poi,
+                'poi_form': form,
+                'next_id': next_id,
+                'previous_id': previous_id,
+                'vendor_id': vendor_id,
+                'longitude': longitude,
+                'latitude': latitude,
+                'error_message': f"COG of vendor id {vendor_id} has not been uploaded to Azure yet. Please check back later.",
+                'cog_url': None
+            })
+
+    # If everything passes, render the page. Still have some COG error handling.
+    return render(request, 'exploitation_page.html', {
+        'poi': poi,
+        'poi_form': form,
+        'next_id': next_id,
+        'previous_id': previous_id,
+        'vendor_id': vendor_id,
+        'longitude': longitude,
+        'latitude': latitude,
+        'error_message': None,
+        'cog_url': f"{blob_name}" if exists else None
+    })
 
 def dissemination_page(request):
     return render(request, 'dissemination_page.html')
@@ -702,10 +999,34 @@ def generate_sas_token(blob_name):
         print(f"Error generating SAS token for blob '{blob_name}': {e}")
         return None
 
+# def generate_authorization_token(blob_name):
+#     """ AUXILIARY FUNCTION
+
+#         This function generates an SAS Token
+#     """
+#     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
+#     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
+#     container_name = "transfer"
+
+#     url_path = f"/{account_name}/{container_name}/{blob_name}"
+#     date = datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+#     string_to_sign = f"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{date}\nx-ms-version:2020-06-12\n{url_path}"
+
+#     signature = base64.b64encode(hmac.new(base64.b64decode(account_key), string_to_sign.encode('utf-8'), hashlib.sha256).digest()).decode('utf-8')
+
+#     authorization_header = f"SharedKey {account_name}:{signature}"
+#     return authorization_header, date
+
 def check_cog_existence(vendor_id, directory=None):
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
+
+    vendor_id = vendor_id.replace('P1BS', 'S1BS')
+    
+    # print(f"Checking for COG Vendor ID: {vendor_id}")
+    
     try:
         credential = AzureNamedKeyCredential(account_name, account_key)
     
@@ -721,6 +1042,7 @@ def check_cog_existence(vendor_id, directory=None):
         blobs = container_client.list_blobs(name_starts_with=prefix)
         for blob in blobs:
             if vendor_id in blob.name:
+                print(f"Your validated blob name is: {blob.name}")
                 return True, blob.name
     
         return False, None
@@ -815,7 +1137,7 @@ def tile_view(request, z, x, y, vendor_id=None):
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=403)
 
-def get_species_coordinates(species):
+def get_poi_coordinates(species):
     """
     Retrieves the longitude and latitude coordinates for a given species object.
     If the species has a point geometry and an EPSG code, it will set the correct SRID
