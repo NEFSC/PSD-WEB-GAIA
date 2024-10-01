@@ -1,10 +1,19 @@
+# Basic stack
 import os
 import sys
 import subprocess
 import datetime
-from osgeo import gdal
 from glob import glob
+
+# Geospatial stack
+from osgeo import gdal
 import geopandas as gpd
+
+# Azure stack
+from azure.core.credentials import AzureNamedKeyCredential
+from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+
+# GAIA stack
 from .models import ExtractTransformLoad as ETL
 from .models import PointsOfInterest as POI
 
@@ -164,3 +173,60 @@ def convert_date_or_none(date_str):
             return datetime.datetime.strptime(date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
         raise ValueError(f"Date string {date_str} does not match supported formats!")
     return None
+
+def generate_sas_token(blob_name):
+    try:
+        account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
+        account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
+        container_name = settings.AZURE_CONTAINER_NAME
+
+        blob_path = 'cogs/' + blob_name
+        print(f"Your blob path is: {blob_path}")
+        
+        sas_token = generate_blob_sas(
+            account_name = account_name,
+            container_name = container_name,
+            blob_name = blob_path,
+            account_key = account_key,
+            permission = BlobSasPermissions(read=True),
+            expiry = datetime.utcnow() + timedelta(hours=1)
+        )
+    
+        blob_url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_path}?{sas_token}"
+    
+        return blob_url
+
+    except Exception as e:
+        print(f"Error generating SAS token for blob '{blob_name}': {e}")
+        return None
+
+def check_cog_existence(vendor_id, directory=None):
+    account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
+    account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
+    container_name = settings.AZURE_CONTAINER_NAME
+
+    vendor_id = vendor_id.replace('P1BS', 'S1BS')
+    
+    try:
+        credential = AzureNamedKeyCredential(account_name, account_key)
+    
+        blob_service_client = BlobServiceClient(
+            account_url = f"https://{account_name}.blob.core.windows.net/",
+            credential=credential
+        )
+    
+        container_client = blob_service_client.get_container_client(container_name)
+    
+        prefix = directory if directory else ""
+        
+        blobs = container_client.list_blobs(name_starts_with=prefix)
+        for blob in blobs:
+            if vendor_id in blob.name:
+                print(f"Your validated blob name is: {blob.name}")
+                return True, blob.name
+    
+        return False, None
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False, None
