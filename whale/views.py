@@ -59,6 +59,16 @@ from .query import build_ee_query_payload, query_mgp
 from .download import download_imagery
 from .utils import standardize_names, calibrate_image, convert_to_tiles, get_entity_pairs, import_pois
 
+
+########################################################################################################################
+#
+#  In Django, a view is what takes a Web request and returns a Web response. The response can be many things, but most
+#  of the time it will be a Web page, a redirect, or a document. In this case, the response will almost always be data
+#  in JSON format.
+#
+########################################################################################################################
+
+
 # Create your views here.
 def landing_page(request):
     return render(request, 'landing_page.html')
