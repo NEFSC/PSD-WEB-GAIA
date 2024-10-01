@@ -1072,6 +1072,8 @@ def check_cog_existence(vendor_id, directory=None):
         
 
 def cog_view(request, vendor_id=None):
+    """ Supporting view for the exploitation page which serves out the COGs. """
+    
     print(f"\n\nIncoming vendor_id: {vendor_id}")
     
     blob_name = vendor_id
