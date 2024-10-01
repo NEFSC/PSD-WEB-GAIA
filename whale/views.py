@@ -1124,11 +1124,13 @@ def cog_view(request, vendor_id=None):
         return HttpResponse(f"Error: {str(e)}", status=403)
 
 def proxy_openlayers_js(request):
+    """ Proxy view for serving OpenLayers supporting COG viewing. """
     url = "https://cdn.jsdelivr.net/npm/ol@6.15.1/ol.js"
     response = requests.get(url)
     return HttpResponse(response.content, content_type="application/javascript")
 
 def proxy_webgls_js(request):
+    """ Proxy view for serving WebGLS supporting COG viewing. """
     url = "https://cdn.jsdelivr.net/npm/ol-webgl/dist/ol-webgl.min.js"
     response = requests.get(url)
     return HttpResponse(response.content, content_type="application/javascript")
