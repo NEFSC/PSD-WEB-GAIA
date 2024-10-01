@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import datetime
 from osgeo import gdal
 from glob import glob
 import geopandas as gpd
@@ -147,3 +148,19 @@ def import_pois(geojson_path):
         #print(f"\t{'Created' if created else 'Updated'} POI with id: {poi.sample_idx}\n")
 
     print('Data imported successfully!')
+
+def convert_date_or_none(date_str):
+    success = False
+    
+    if date_str and date_str != "None":
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                result = datetime.datetime.strptime(date_str, fmt)
+                success = True
+                return result
+            except ValueError:
+                continue
+        if not success:
+            return datetime.datetime.strptime(date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
+        raise ValueError(f"Date string {date_str} does not match supported formats!")
+    return None

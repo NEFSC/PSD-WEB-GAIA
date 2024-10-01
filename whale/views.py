@@ -57,7 +57,7 @@ from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .query import build_ee_query_payload, query_mgp
 from .download import download_imagery
-from .utils import standardize_names, calibrate_image, convert_to_tiles, get_entity_pairs, import_pois
+from .utils import standardize_names, calibrate_image, convert_to_tiles, get_entity_pairs, import_pois, convert_date_or_none
 
 
 ########################################################################################################################
@@ -116,23 +116,16 @@ def tasking_page(request):
         'geojson_aoi_data': aoi_data
     })
 
-def convert_date_or_none(date_str):
-    success = False
-    
-    if date_str and date_str != "None":
-        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
-            try:
-                result = datetime.datetime.strptime(date_str, fmt)
-                success = True
-                return result
-            except ValueError:
-                continue
-        if not success:
-            return datetime.datetime.strptime(date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
-        raise ValueError(f"Date string {date_str} does not match supported formats!")
-    return None
-
 def collection_page(request):
+    """ A page for consolidated review of satellite imagery collected over
+            loaded areas of interest and registration of these images into
+            the SpatiaLite database for processing.
+
+        Currently supports USGS EarthExplorer, NGA GEOINT Discovery, and
+            Maxar Geospatial Platform satellite imagery repositories.
+
+        TODO: Split each data repository into a function (GAIFAGP-55).
+    """
     results = None
     message = None
     geometry = None
