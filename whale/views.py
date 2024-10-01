@@ -69,11 +69,11 @@ from .utils import standardize_names, calibrate_image, convert_to_tiles, get_ent
 ########################################################################################################################
 
 
-# Create your views here.
-def landing_page(request):
-    return render(request, 'landing_page.html')
-
 def login_view(request):
+    """ A simple log-in page meeting NOAA OCIO's security requirement for
+            a username and password protecting restricted access
+            satellite imagery.
+    """
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -84,6 +84,9 @@ def login_view(request):
         form = AuthenticationForm()
         
     return render(request, 'login.html', {'form': form})
+
+def landing_page(request):
+    return render(request, 'landing_page.html')
 
 def tasking_page(request):
     aoi_objects = AreaOfInterest.objects.all()
