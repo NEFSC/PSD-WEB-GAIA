@@ -1,9 +1,18 @@
+# Basic stack
 import os
 import sys
 import subprocess
-from osgeo import gdal
+from datetime import datetime, timedelta
 from glob import glob
+
+# Geospatial stack
+from osgeo import gdal
 import geopandas as gpd
+
+# Django stack
+from django.conf import settings
+
+# GAIA stack
 from .models import ExtractTransformLoad as ETL
 from .models import PointsOfInterest as POI
 
