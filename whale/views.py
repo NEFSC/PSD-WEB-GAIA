@@ -86,9 +86,17 @@ def login_view(request):
     return render(request, 'login.html', {'form': form})
 
 def landing_page(request):
+    """ A basic landing page for the WHale Active Learning Environment (WHALE)
+            Tasking, Collection, Processing, Exploitation, and Dissimination
+            (TCPED) pages. Each TCPED task has its own page linked to this
+            one.
+    """
     return render(request, 'landing_page.html')
 
 def tasking_page(request):
+    """ A simple page to show where Areas of Interest (AOIs) currently loaded
+            in the SpatiaLite database are within the world.
+    """
     aoi_objects = AreaOfInterest.objects.all()
     aoi_data = serialize('geojson', aoi_objects)
     aoi_data = json.loads(aoi_data)
