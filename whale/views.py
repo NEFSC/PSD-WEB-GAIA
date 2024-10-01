@@ -10,11 +10,6 @@ from time import time
 from glob import glob
 from wsgiref.util import FileWrapper
 
-# Security stack
-import hmac
-import hashlib
-import base64
-
 # Geospatial Stack
 from pyproj import CRS, Transformer
 from osgeo import gdal
@@ -24,10 +19,6 @@ from shapely.geometry import box, Point, Polygon
 from fiona.drvsupport import supported_drivers
 import pandas as pd
 import geopandas as gpd
-
-# Azure stack
-from azure.core.credentials import AzureNamedKeyCredential
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 
 # Django stack
 from django.core.cache import cache
@@ -57,10 +48,7 @@ from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .query import build_ee_query_payload, query_mgp
 from .download import download_imagery
-# Collection page
-from .utils import convert_date_or_none
-# Processing page
-from .utils import get_entity_pairs, standardize_names, calibrate_image, import_pois  # should be depricated: convert_to_tiles
+from .utils import convert_date_or_none, check_cog_existence, generate_sas_token, get_entity_pairs, standardize_names, calibrate_image, import_pois  # should be depricated: convert_to_tiles
 
 
 ########################################################################################################################
@@ -1006,70 +994,9 @@ def dissemination_page(request):
     return render(request, 'dissemination_page.html')
 
 def check_records_view(request):
-    """ AUXILIARY FUNCTION
-
-        This function is for QA/QC
-    """
-    records_exist = Species.objects.exists()
+    """ Supports validating that a point of interest actually exists within the database. """
+    records_exist = PointsOfInterestForm.objects.exists()
     return render(request, 'check_records.html', {'records_exist': records_exist})
-
-def generate_sas_token(blob_name):
-    try:
-        account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
-        account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
-        container_name = settings.AZURE_CONTAINER_NAME
-
-        blob_path = 'cogs/' + blob_name
-        print(f"Your blob path is: {blob_path}")
-        
-        sas_token = generate_blob_sas(
-            account_name = account_name,
-            container_name = container_name,
-            blob_name = blob_path,
-            account_key = account_key,
-            permission = BlobSasPermissions(read=True),
-            expiry = datetime.utcnow() + timedelta(hours=1)
-        )
-    
-        blob_url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_path}?{sas_token}"
-    
-        return blob_url
-
-    except Exception as e:
-        print(f"Error generating SAS token for blob '{blob_name}': {e}")
-        return None
-
-def check_cog_existence(vendor_id, directory=None):
-    account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
-    account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
-    container_name = settings.AZURE_CONTAINER_NAME
-
-    vendor_id = vendor_id.replace('P1BS', 'S1BS')
-    
-    try:
-        credential = AzureNamedKeyCredential(account_name, account_key)
-    
-        blob_service_client = BlobServiceClient(
-            account_url = f"https://{account_name}.blob.core.windows.net/",
-            credential=credential
-        )
-    
-        container_client = blob_service_client.get_container_client(container_name)
-    
-        prefix = directory if directory else ""
-        
-        blobs = container_client.list_blobs(name_starts_with=prefix)
-        for blob in blobs:
-            if vendor_id in blob.name:
-                print(f"Your validated blob name is: {blob.name}")
-                return True, blob.name
-    
-        return False, None
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return False, None
-        
 
 def cog_view(request, vendor_id=None):
     """ Supporting view for the exploitation page which serves out the COGs. """
