@@ -120,7 +120,7 @@ def collection_page(request):
             Maxar Geospatial Platform satellite imagery repositories.
 
         DEPENDENCIES:
-            - utils.convert_date_or_none
+            - convert_date_or_none
         
         TODO: Split each data repository into a function (GAIFAGP-55).
     """
@@ -841,6 +841,9 @@ def exploitation_page(request, item_id=None):
         """ Checks if a COG exists in Azure when provided with a Vendor ID.
                 Really a wrapper function that includes a check cache function.
 
+            Dependencies:
+                - check_cog_existence
+
             VENDOR ID - Vendor ID value
         """
         cached_result = cache.get(f'cog_existence_{vendor_id}')
@@ -1003,7 +1006,11 @@ def check_records_view(request):
     return render(request, 'check_records.html', {'records_exist': records_exist})
 
 def cog_view(request, vendor_id=None):
-    """ Supporting view for the exploitation page which serves out the COGs. """
+    """ Supporting view for the exploitation page which serves out the COGs. 
+    
+        Dependencies:
+            - generate_sas_token
+    """
     
     print(f"\n\nIncoming vendor_id: {vendor_id}")
     
@@ -1067,6 +1074,7 @@ def proxy_webgls_js(request):
     return HttpResponse(response.content, content_type="application/javascript")
 
 def convert_date_or_none(date_str):
+    """ Used to convert date formats from USGS EarthExplorer and NGA GEGD. """
     success = False
     
     if date_str and date_str != "None":
@@ -1083,6 +1091,7 @@ def convert_date_or_none(date_str):
     return None
 
 def generate_sas_token(blob_name):
+    """ Generates a Shared Access Signature (SAS) Token on-the-fly. """
     try:
         account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
         account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
@@ -1109,6 +1118,8 @@ def generate_sas_token(blob_name):
         return None
 
 def check_cog_existence(vendor_id, directory=None):
+    """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
+    
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
