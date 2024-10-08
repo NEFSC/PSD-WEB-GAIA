@@ -598,7 +598,7 @@ def processing_page(request):
                 #         tile_dir = '.'.join(ultratiff.split('.')[:-1]) + '_tiles/'
                 #         # More than five processes results in errors!!! If oversampled image, no more than three processes!!!
                 #         # Set to '4-' levels for right now. 20 takes too long!
-                #         subprocess.run([sys.executable, 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
+                #         subprocess.run([sys.executable, 'C:/Users/jeffrey.wyman/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
                 #                         '-r', 'cubic', '-z', '4-', '--processes=3', '-w', 'none',
                 #                         ultratiff, tile_dir])
                 #         print("Tiled {}!".format(tile_dir))

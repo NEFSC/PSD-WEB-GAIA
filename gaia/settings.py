@@ -18,12 +18,12 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-GDAL_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Library/bin/gdal.dll'
+GDAL_LIBRARY_PATH = 'C:/Users/jeffrey.wyman/AppData/Local/anaconda3/envs/gaia/Library/bin/gdal.dll'
 SECRETS_FILE = os.path.join(BASE_DIR, 'gaia/secrets.json')
 
 # !!! This makes no sense to me. I have to have the SpatiaLite files within my GeoDjango project,
 #      but I also have to use the path like this within my Anaconda environment.
-SPATIALITE_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Library/bin/mod_spatialite.dll'
+SPATIALITE_LIBRARY_PATH = 'C:/Users/jeffrey.wyman/AppData/Local/anaconda3/envs/gaia/Library/bin/mod_spatialite.dll'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
