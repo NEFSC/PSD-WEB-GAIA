@@ -13,20 +13,24 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import json
 from pathlib import Path
-
+from sys import platform
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-GDAL_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Library/bin/gdal.dll'
+
+if platform == "linux":
+    GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    SPATIALITE_LIBRARY_PATH = '/anaconda/envs/gaia/lib/mod_spatialite.so'
+elif platform == "win32":
+    USER_HOME = os.path.expanduser("~")
+    ANACONDA_GAIA_HOME = os.path.join(USER_HOME, 'AppData', 'Local', 'anaconda3', 'envs', 'gaia', 'Library', 'bin')
+    GDAL_LIBRARY_PATH = os.path.join(ANACONDA_GAIA_HOME, 'gdal.dll')
+    SPATIALITE_LIBRARY_PATH = os.path.join(ANACONDA_GAIA_HOME, 'mod_spatialite.dll')
+else:
+    print("YOUR PLATFORM IS NOT SUPPORTED AT THIS TIME!")
+
 SECRETS_FILE = os.path.join(BASE_DIR, 'gaia/secrets.json')
-
-# !!! This makes no sense to me. I have to have the SpatiaLite files within my GeoDjango project,
-#      but I also have to use the path like this within my Anaconda environment.
-SPATIALITE_LIBRARY_PATH = 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Library/bin/mod_spatialite.dll'
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 with open(SECRETS_FILE) as f:
