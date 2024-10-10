@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,8 +25,10 @@
 			color: white;
 		}
 	</style>
+	<link rel="stylesheet" href="{% static 'uswds/uswds.css' %}">
 </head>
 <body>
+	<script src="{% static 'uswds/uswds.min.js' %}"></script>
 	<div class="logout-container">
 		<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
 			{% csrf_token %}
