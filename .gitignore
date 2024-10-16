@@ -1,5 +1,6 @@
 .ipynb_checkpoints/
 data/
+imagery_utils/
 *.dll
 *.exe
 *.sqlite3
