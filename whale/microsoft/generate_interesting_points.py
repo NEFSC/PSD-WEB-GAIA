@@ -15,7 +15,8 @@ import shapely.geometry
 import torch
 from tqdm import tqdm
 
-import whales.methods
+import sys; sys.path.append("./")
+import methods
 
 
 def set_up_parser():
@@ -181,10 +182,10 @@ def main(args):
     print("Calculating deviations")
     tic = time.time()
     if args.method == "big_window":
-        deviations = whales.methods.apply_chunked_standardization(data, args.big_window_size, nodata=nodata)
+        deviations = methods.apply_chunked_standardization(data, args.big_window_size, nodata=nodata)
     elif args.method == "rolling_window":
         device = torch.device(f"cuda:{args.gpu}")
-        deviations = whales.methods.apply_rolling_standardization(
+        deviations = methods.apply_rolling_standardization(
             data, device, 10000, 51
         )
     elif args.method == "gmm":

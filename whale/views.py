@@ -1149,3 +1149,8 @@ def check_cog_existence(vendor_id, directory=None):
     except Exception as e:
         print(f"An error occurred: {e}")
         return False, None
+
+def generate_interesting_points_subprocess(geotiff, out_geojson, method="big_window", difference='20'):
+    """Executes Microsoft's generate_intersting_points.py"""
+    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'microsoft', 'generate_interesting_points.py')
+    subprocess.run([sys.executable, script_path, '--input_url', geotiff, '--output_fn', out_geojson, '--method', method, '--difference_threshold', difference, '--overwrite'])

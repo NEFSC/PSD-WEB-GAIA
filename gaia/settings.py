@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import json
 from pathlib import Path
+import sys
 from sys import platform
 
 
@@ -21,12 +22,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 if platform == "linux":
     GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    GEOS_LIBRARY_PATH = '/anaconda/envs/gaia/lib/geos_c.so'
     SPATIALITE_LIBRARY_PATH = '/anaconda/envs/gaia/lib/mod_spatialite.so'
 elif platform == "win32":
     USER_HOME = os.path.expanduser("~")
-    ANACONDA_GAIA_HOME = os.path.join(USER_HOME, 'AppData', 'Local', 'anaconda3', 'envs', 'gaia', 'Library', 'bin')
-    GDAL_LIBRARY_PATH = os.path.join(ANACONDA_GAIA_HOME, 'gdal.dll')
-    SPATIALITE_LIBRARY_PATH = os.path.join(ANACONDA_GAIA_HOME, 'mod_spatialite.dll')
+    CONDA_PREFIX = os.environ.get("CONDA_PREFIX", "")    
+    GDAL_LIBRARY_PATH = os.path.join(CONDA_PREFIX, 'Library', 'bin', 'gdal.dll')
+    GEOS_LIBRARY_PATH = os.path.join(CONDA_PREFIX, 'Library', 'bin', 'geos_c.dll')
+    SPATIALITE_LIBRARY_PATH = os.path.join(CONDA_PREFIX, 'Library', 'bin','mod_spatialite.dll')
 else:
     print("YOUR PLATFORM IS NOT SUPPORTED AT THIS TIME!")
 
