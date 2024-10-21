@@ -595,42 +595,18 @@ def processing_page(request):
                         import_pois(out_geojson)
 
                         # Oversample pansharpened images
-                        # ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
-                        # options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
-                        # output_dataset = gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
-                        # output_dataset = None
-                        # print("Oversampling {}!".format(ultratiff))
-                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
+                        ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
+                        options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
+                        output_dataset = gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
+                        output_dataset = None
+                        print("Oversampling {}!".format(ultratiff))
+                        print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
     
                         # Generate Cloud Optimized GeoTIFF
                         cogtiff = shrptiff.replace('.tif', '_cog.tif')
                         subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', shrptiff, cogtiff])
 
                         # Upload to Azure
-                        # try:
-                        #     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
-                        #     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
-                        #     container_name = settings.AZURE_CONTAINER_NAME
-
-                        #     account_url = f"https://{account_name}.blob.core.windows.net"
-                        #     blob_service_client = BlobServiceClient(account_url=account_url, credential=account_key)
-
-                        #     cog_blob = "cogs/" + shrptiff.split('/')[-1]
-                        #     blob_client = blob_service_client.get_blob_client(container=container_name, blob=cog_blob)
-                        #     content_settings = ContentSettings(content_type='image/tiff')
-
-                        #     with open(cogtiff, 'rb') as data:
-                        #         blob_client.upload_blob(data, content_settings=content_settings)
-                        #     print(f"Successfully uploaded {data} to {cog_blob}")
-
-                        #     if os.path.exists(cogtiff):
-                        #         os.remove(cogtiff)
-                        #         print(f"Successfully deleted {cogtiff} from local machine.")
-                        #     else:
-                        #         print(f"The file {cogtiff} does not exist.")
-
-                        # except Exception as e:
-                        #     print(f"An error occured: {e}")
                         upload_to_auzre(shrptiff, 'cogs', 'image/tiff')
                             
                     except Exception as e:
