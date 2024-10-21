@@ -22,9 +22,10 @@ import geopandas as gpd
 
 # Azure stack
 from azure.core.credentials import AzureNamedKeyCredential
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, generate_blob_sas, BlobSasPermissions
 
 # Django stack
+import django
 from django.core.cache import cache
 from django.core.serializers import serialize
 from django.core.serializers.json import DjangoJSONEncoder
@@ -52,7 +53,7 @@ from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .query import build_ee_query_payload, query_mgp
 from .download import download_imagery
-from .utils import get_entity_pairs, standardize_names, calibrate_image, import_pois  # should be depricated: convert_to_tiles
+from .utils import get_entity_pairs, standardize_names, calibrate_image, import_pois, upload_to_auzre  # should be depricated: convert_to_tiles
 
 
 ########################################################################################################################
@@ -63,6 +64,8 @@ from .utils import get_entity_pairs, standardize_names, calibrate_image, import_
 #
 ########################################################################################################################
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
+django.setup()
 
 def login_view(request):
     """ A simple log-in page meeting NOAA OCIO's security requirement for
@@ -134,7 +137,7 @@ def collection_page(request):
         form = APIQueryForm(request.POST)
 
         # Print API selected to terminal for troubleshooting
-        print("\n\REQUEST API: ", request.POST.get('select_api'), '\n\n')
+        print("\nREQUEST API: ", request.POST.get('select_api'), '\n\n')
 
         # Post back to SpatiaLite database if there were selections
         if 'selected' in request.POST:
@@ -148,7 +151,7 @@ def collection_page(request):
                     row_data[row_id].append(request.POST[key])
 
             # Print it to terminal
-            print("\n\ROW DATA: ", row_data, '\n\n')
+            print("\nROW DATA: ", row_data, '\n\n')
 
             if request.POST.get('select_api') == 'ee':
                 for attributes in row_data.values():
@@ -506,7 +509,7 @@ def processing_page(request):
     form = ProcessingForm()
     filtered_data = None
 
-    print("\n\REQUEST API: ", request.POST, '\n\n')        
+    print("\nREQUEST API: ", request.POST, '\n\n')        
     
     if request.method == 'POST':
         if 'username' in request.POST and 'password' in request.POST:
@@ -580,9 +583,8 @@ def processing_page(request):
                         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {shrptiff} \n\n")
 
                         # Generate interesting point catalog
-                        interesting_points = 'C:/gis/apps/libs/generate_interesting_points.py'
                         out_geojson = shrptiff.replace('tif', 'geojson')
-                        subprocess.run([sys.executable, interesting_points, '--input_url', shrptiff, '--output_fn', out_geojson, '--method', 'big_window', '--difference_threshold', '20', '--overwrite'])
+                        subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrptiff, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'])
                         
                         # Generate Shapefile for secondary validation
                         gdf = gpd.read_file(out_geojson)
@@ -593,14 +595,44 @@ def processing_page(request):
                         import_pois(out_geojson)
 
                         # Oversample pansharpened images
-                        ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
-                        options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
-                        gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
-                        print("Oversampling {}!".format(ultratiff))
-                        print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
+                        # ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
+                        # options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
+                        # output_dataset = gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
+                        # output_dataset = None
+                        # print("Oversampling {}!".format(ultratiff))
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
     
-                        # RIOCOGEO section here
-                        subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', INPUT, OUTPUT])
+                        # Generate Cloud Optimized GeoTIFF
+                        cogtiff = shrptiff.replace('.tif', '_cog.tif')
+                        subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', shrptiff, cogtiff])
+
+                        # Upload to Azure
+                        # try:
+                        #     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
+                        #     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
+                        #     container_name = settings.AZURE_CONTAINER_NAME
+
+                        #     account_url = f"https://{account_name}.blob.core.windows.net"
+                        #     blob_service_client = BlobServiceClient(account_url=account_url, credential=account_key)
+
+                        #     cog_blob = "cogs/" + shrptiff.split('/')[-1]
+                        #     blob_client = blob_service_client.get_blob_client(container=container_name, blob=cog_blob)
+                        #     content_settings = ContentSettings(content_type='image/tiff')
+
+                        #     with open(cogtiff, 'rb') as data:
+                        #         blob_client.upload_blob(data, content_settings=content_settings)
+                        #     print(f"Successfully uploaded {data} to {cog_blob}")
+
+                        #     if os.path.exists(cogtiff):
+                        #         os.remove(cogtiff)
+                        #         print(f"Successfully deleted {cogtiff} from local machine.")
+                        #     else:
+                        #         print(f"The file {cogtiff} does not exist.")
+
+                        # except Exception as e:
+                        #     print(f"An error occured: {e}")
+                        upload_to_auzre(shrptiff, 'cogs', 'image/tiff')
+                            
                     except Exception as e:
                         print(f"FAILED WITH EXCEPTION {e}. Moving along?!...")
                 
