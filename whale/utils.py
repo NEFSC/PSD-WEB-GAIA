@@ -9,6 +9,9 @@ from glob import glob
 from osgeo import gdal
 import geopandas as gpd
 
+# Azure stack
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, ContentSettings
+
 # Django stack
 from django.conf import settings
 
@@ -153,6 +156,39 @@ def import_pois(geojson_path):
                 'point': row['geometry'].wkt
             }
         )
-        #print(f"\t{'Created' if created else 'Updated'} POI with id: {poi.sample_idx}\n")
+        print(f"\t{'Created' if created else 'Updated'} POI with id: {poi.sample_idx}\n")
 
     print('Data imported successfully!')
+
+def upload_to_auzre(local_file, azure_dir, content_type):
+    """ Uploads a file to Azure from a local machine.
+
+        LOCAL FILE - Local file to be uploaded to Azure
+        AZURE DIR - A directory, nor nest of directories,
+            to place the file under.
+        CONTENT TYPE - Content of the uploaded file
+    """
+    try:
+        account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
+        account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
+        container_name = settings.AZURE_CONTAINER_NAME
+
+        account_url = f"https://{account_name}.blob.core.windows.net"
+        blob_service_client = BlobServiceClient(account_url=account_url, credential=account_key)
+
+        blob = azure_dir + '/' + local_file.split('/')[-1]
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob)
+        content_settings = ContentSettings(content_type=content_type)
+
+        with open(local_file, 'rb') as data:
+            blob_client.upload_blob(data, content_settings=content_settings)
+        print(f"Successfully uploaded {data} to {blob}")
+
+        if os.path.exists(local_file):
+            os.remove(local_file)
+            print(f"Successfully deleted {local_file} from local machine.")
+        else:
+            print(f"The file {local_file} does not exist.")
+
+    except Exception as e:
+        print(f"An error occured: {e}")
