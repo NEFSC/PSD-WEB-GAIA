@@ -8,3 +8,6 @@ data/
 *.log
 *.json
 python
+gaia/__pycache__/settings.cpython-311.pyc
+static/admin/*
+static/gis/*
