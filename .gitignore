@@ -1,6 +1,7 @@
 libspatialite-5.1.0/*
 .ipynb_checkpoints/
 data/
+imagery_utils/
 *.dll
 *.exe
 *.sqlite3
