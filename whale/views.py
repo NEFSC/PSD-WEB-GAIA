@@ -22,9 +22,10 @@ import geopandas as gpd
 
 # Azure stack
 from azure.core.credentials import AzureNamedKeyCredential
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, generate_blob_sas, BlobSasPermissions
 
 # Django stack
+import django
 from django.core.cache import cache
 from django.core.serializers import serialize
 from django.core.serializers.json import DjangoJSONEncoder
@@ -52,7 +53,7 @@ from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .query import build_ee_query_payload, query_mgp
 from .download import download_imagery
-from .utils import get_entity_pairs, standardize_names, calibrate_image, import_pois  # should be depricated: convert_to_tiles
+from .utils import get_entity_pairs, standardize_names, calibrate_image, import_pois, upload_to_auzre  # should be depricated: convert_to_tiles
 
 
 ########################################################################################################################
@@ -63,6 +64,8 @@ from .utils import get_entity_pairs, standardize_names, calibrate_image, import_
 #
 ########################################################################################################################
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
+django.setup()
 
 def login_view(request):
     """ A simple log-in page meeting NOAA OCIO's security requirement for
@@ -134,7 +137,7 @@ def collection_page(request):
         form = APIQueryForm(request.POST)
 
         # Print API selected to terminal for troubleshooting
-        print("\n\REQUEST API: ", request.POST.get('select_api'), '\n\n')
+        print("\nREQUEST API: ", request.POST.get('select_api'), '\n\n')
 
         # Post back to SpatiaLite database if there were selections
         if 'selected' in request.POST:
@@ -148,7 +151,7 @@ def collection_page(request):
                     row_data[row_id].append(request.POST[key])
 
             # Print it to terminal
-            print("\n\ROW DATA: ", row_data, '\n\n')
+            print("\nROW DATA: ", row_data, '\n\n')
 
             if request.POST.get('select_api') == 'ee':
                 for attributes in row_data.values():
@@ -493,11 +496,20 @@ def processing_page(request):
         TODO: Execute these steps asynchronously (GAIFAGP-58, GAIFAGP-59)
         TODO: Properly integrate generate_interesting_points.py to include not only point
             generation, but their registration within the database (GAIFAGP-60)
+        TODO:
+            Add newly downloaded file to the ETL table.
+            Add newly calibrated file to the ETL table.
+            Superceed "geotiffs = glob("../data/**/*.tif", recursive=True)" section after adding above.
+                 This would replace the need for identifying calibrated pansharpened and multispectral
+                 imagery.
+            Add newly pansharpened file to the ETL table.
+            Add newly identified points files (GeoJSON, SHP) to the ETL table.
+            Support moving files off virtual machine to Azure with file management.
     """
     form = ProcessingForm()
     filtered_data = None
 
-    print("\n\REQUEST API: ", request.POST, '\n\n')        
+    print("\nREQUEST API: ", request.POST, '\n\n')        
     
     if request.method == 'POST':
         if 'username' in request.POST and 'password' in request.POST:
@@ -526,38 +538,33 @@ def processing_page(request):
                 for entity_id in entity_ids:
                     # Only allow WV3 for right now
                     try:
-                        print("Test passed?!")
-                        start = time()
-                        # The new file should be added to the ETL table
+                        start = time() # Important, but critical
+                        
                         unzipped_dirs = download_imagery(session, 'crssp_orderable_w3', entity_id)
                         messages.success(request, f'Done downloading {entity_id}')
 
                         print("\n\nStandardizing name and file type!")
                         standard_name_geotiff = standardize_names(unzipped_dirs)
 
-                        # The calibrated image should be added to the ETL table
                         print("\n\nCalibrating image!")
                         calibrated_image = calibrate_image(standard_name_geotiff)
 
                         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS {entity_id} \n\n")
-
-                        # CALIBRATION SHOULD BE FOLLOWED BY PANSHARPENING WHICH NEEDS TO BE OUTSIDE OF THIS LOOP
-                        #      THE PANSHARPENING WORK SHOULD LEVERAGE MY PIPELINE CODE AND THEN PROCEED TO TILING.
-
-                        # print("\n\nTilling image!")
-                        # tile_dir = convert_to_tiles(calibrated_image)
-                        # messages.success(request, f'Done pre-processing {entity_id}')
                     except:
-                        messages.warning(request, f'Failed downloading or pre-processing {entity_id}!')
+                        messages.warning(request, f'Failed downloading or calibration and referencing {entity_id}!')
 
 
-                # If we use a database, this section wont be needed
+                # If we use a database, this section wont be needed.
+                #      There would need to be support for the virtual
+                #      machine determining which images haven't gone
+                #      through the following step.
                 geotiffs = glob("../data/**/*.tif", recursive=True)
                 print(f"Your geotiff list is: {geotiffs}")
                 calibrated_geotiffs = [geotiff for geotiff in geotiffs if 'calibrated' in geotiff]
                 calibrated_panchromatic_images = [calibrated_geotiff for calibrated_geotiff in calibrated_geotiffs if 'P1BS' in calibrated_geotiff]
                 print(f"Your {len(calibrated_panchromatic_images)} calibrated panchromatic image(s) are: {calibrated_panchromatic_images}")
 
+                # Continue preprocessing pipeline
                 for pantiff in calibrated_panchromatic_images:
                     try:
                         panfile = pantiff.split('\\')[-1]
@@ -568,41 +575,40 @@ def processing_page(request):
                         
                         msitiff = [geotiff for geotiff in geotiffs if msifile in geotiff][0]
                         print(f"Your {len(msitiff)} calibrated multispectral image(s) are: {msitiff}")
-                        
+
+                        # Pansharpen calibrated images
                         shrptiff = '../data/' + pantiff.split('\\')[-1].replace('P1BS', 'S1BS')
                         gdal_pansharpen(['' ,'-b', '5', '-b', '3', '-b', '2', '-r', 'cubic', '-threads', 'ALL_CPUS', pantiff, msitiff, shrptiff])
                         print("Pansharpened {}!".format(shrptiff))
                         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {shrptiff} \n\n")
 
-                        # Insert GENERTATE SOME INTERESTING POINTS HERE
-
-                        interesting_points = 'C:/gis/apps/libs/generate_interesting_points.py'
+                        # Generate interesting point catalog
                         out_geojson = shrptiff.replace('tif', 'geojson')
-                        subprocess.run([sys.executable, interesting_points, '--input_url', shrptiff, '--output_fn', out_geojson, '--method', 'big_window', '--difference_threshold', '20', '--overwrite'])
-                        # Create a Shapefile from GeoJSON for heads-up review
+                        subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrptiff, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'])
+                        
+                        # Generate Shapefile for secondary validation
                         gdf = gpd.read_file(out_geojson)
                         output_shp = out_geojson.replace('geojson', 'shp')
                         gdf.to_file(output_shp)
 
-                        # Create or update interesting points in database
+                        # Add interesting points to database
                         import_pois(out_geojson)
 
-                        # COMMENTED OUT TO MAKE SOME CALIBRATED IMAGES TO CREATE POINTS OF INTEREST
+                        # Oversample pansharpened images
+                        ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
+                        options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
+                        output_dataset = gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
+                        output_dataset = None
+                        print("Oversampling {}!".format(ultratiff))
+                        print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
     
-                #         ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
-                #         options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -ovr 20 -co TILED=YES -co BIGTIFF=IF_SAFER -co COMPRESS=LZW -co NUM_THREADS=ALL_CPUS"
-                #         gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
-                #         print("Oversampling {}!".format(ultratiff))
-                #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
-    
-                #         tile_dir = '.'.join(ultratiff.split('.')[:-1]) + '_tiles/'
-                #         # More than five processes results in errors!!! If oversampled image, no more than three processes!!!
-                #         # Set to '4-' levels for right now. 20 takes too long!
-                #         subprocess.run([sys.executable, 'C:/Users/jeffrey.wyman/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
-                #                         '-r', 'cubic', '-z', '4-', '--processes=3', '-w', 'none',
-                #                         ultratiff, tile_dir])
-                #         print("Tiled {}!".format(tile_dir))
-                #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {tile_dir} \n\n")
+                        # Generate Cloud Optimized GeoTIFF
+                        cogtiff = shrptiff.replace('.tif', '_cog.tif')
+                        subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', shrptiff, cogtiff])
+
+                        # Upload to Azure
+                        upload_to_auzre(shrptiff, 'cogs', 'image/tiff')
+                            
                     except Exception as e:
                         print(f"FAILED WITH EXCEPTION {e}. Moving along?!...")
                 
@@ -1149,3 +1155,8 @@ def check_cog_existence(vendor_id, directory=None):
     except Exception as e:
         print(f"An error occurred: {e}")
         return False, None
+
+def generate_interesting_points_subprocess(geotiff, out_geojson, method="big_window", difference='20'):
+    """Executes Microsoft's generate_intersting_points.py"""
+    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'microsoft', 'generate_interesting_points.py')
+    subprocess.run([sys.executable, script_path, '--input_url', geotiff, '--output_fn', out_geojson, '--method', method, '--difference_threshold', difference, '--overwrite'])
