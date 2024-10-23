@@ -1,122 +1,34 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Collection Page</title>
-	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-	<style>
-		.header-container{
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 20px;
-			width: 100%;
-			box-sizing: border-box;
-		}
-		.button-container{
-			display: flex;
-			align-items: center;
-		}
-		.button-container button{
-			background-color: #003087;
-			color: white;
-			padding: 10px 20px;
-			border: none;
-			border-radius: 5px;
-			cursor: pointer;
-			margin-left: 10px;
-			margin-right: 10px;
-		}
-		.button-container button:hover {
-			background-color: #0085CA;
-		}
-		.page-title {
-			margin: 0;
-			font-size: 24 px;
-			test-align: center;
-			flex-grow: 1;
-			position: absolute;
-			left: 40%;
-			width: 100%
-		}
-		.container{
-			display: flex;
-			flex-direction: column;
-			aleign-items: center;
-		}
-		.flex-container{
-			display: flex;
-			justify-contnet: space-between;
-			align-items: flex-start;
-		}
-		.map-container, form-container {
-			flex: 1;
-			margin: 10px;
-		}
-		.map{
-			height: 500px;
-			width: 100%;
-			border: 1px solid #ccc;
-		}
-		table{
-			margin-top: 20px;
-			border-collapse: collapse;
-		}
-		table, th, td {
-			border: 2px solid black;
-		}
-		th, td {
-			padding: 8px;
-			text-align: left;
-		}
-		th {
-			background-color: #f2f2f2;
-		}
-
-		.btn-group{
-			margin-top: 20px;
-		}
-	</style>
-</head>
-<body>
-	<div class="header-container">
-		<div class="button-container">
-			<form id="home-form" action="{% url 'landing_page' %}" method="POST" style="display: inline;">
-				{% csrf_token %}
-				<button type="submit">Home</button>
-			</form>
-		</div>
-		
-		<h1 class="page-title">Collection Interface</h1>
-		
-		<div class="button-container">
-			<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
-				{% csrf_token %}
-				<button type="submit">Logout</button>
-			</form>
-		</div>
-	</div>
-
-	<div>
-		<p>The Collection Interface is intended to assist with, at this time, the identification of historical imagery from the three primary data repositories: USGS Earth Explorer, GEOINT Enhanced Global Delivery, and Maxar Geospatial Platform. Identified imagery can then be added to, or extracted from, the database table for Processing. </p>
-	</div>
+{% load static %}
+{% include 'sections/header.html' %}
+<section class="grid-container usa-section padding-top-0">
+	<h1>Collections</h1>
+		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+			 integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+			 crossorigin=""></script>
+		<div class="grid-row flex-justify-center">
+			<div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
 
 	<div class="container">
 		<div class="flex-container">
 			<div class="form-container">
-				<p>
-					<strong>Note:</strong> do not change your API between querying and extracting records.
-				</p>
+				<div class="usa-alert usa-alert--info usa-alert--slim">
+					<div class="usa-alert__body">
+					  <p class="usa-alert__text">
+						Do not change your API between querying and extracting records.
+					  </p>
+					</div>
+				  </div>
+
 				<form method="post">
 					{% csrf_token %}
 					{{ form.as_p }}
 					<button type="submit">Query</button>
 				</form>
 			</div>
-			
-			<div class="map-container">
-				<div id="map" class="map"></div>
+		</div>
+		<div class="map-container padding-top-5">
+			<div id="map" class="map" style="height: 500px;">
+
 			</div>
 		</div>
 			
@@ -147,7 +59,7 @@
 		{% endif %}
 	</div>
 	
-	<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 	
 	<script>
 		// Initialize the map with a default view
@@ -212,6 +124,7 @@
 		//	document.getElementById('api-hidden-input').value = //document.getElementById('select-api').value;
 		//});
 	</script>
-
+</div></div></section>
 </body>
+{% include 'sections/footer.html' %}
 </html>
