@@ -12,3 +12,4 @@ python
 gaia/__pycache__/settings.cpython-311.pyc
 static/admin/*
 static/gis/*
+static/uswds/img/material-icons/*
