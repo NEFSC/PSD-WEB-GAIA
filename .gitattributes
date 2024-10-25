@@ -1,0 +1,5 @@
+*.svg -diff
+*.png -diff
+*.ttf -diff
+*.woff -diff
+*.woff2 -diff
