@@ -1,67 +1,54 @@
 {% load static %}
 {% include 'sections/header.html' %}
 <section class="grid-container usa-section padding-top-0">
-	<h1>Collections</h1>
-		<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-			 integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-			 crossorigin=""></script>
-		<div class="grid-row flex-justify-center">
-			<div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
-
-	<div class="container">
-		<div class="flex-container">
-			<div class="form-container">
-				<div class="usa-alert usa-alert--info usa-alert--slim">
-					<div class="usa-alert__body">
-					  <p class="usa-alert__text">
-						Do not change your API between querying and extracting records.
-					  </p>
-					</div>
-				  </div>
-
-				<form method="post">
-					{% csrf_token %}
-					{{ form.as_p }}
-					<button type="submit">Query</button>
-				</form>
-			</div>
-		</div>
-		<div class="map-container padding-top-5">
-			<div id="map" class="map" style="height: 500px;">
-
-			</div>
-		</div>
-			
-		
-		{% if results %}
-			<h2>Results</h2>
-			
-			{%if message %}
-				<strong>{{ message }}</strong><br><br>
-			{% endif %}
-			
-			<form method="POST">
-				{% csrf_token %}
-				<input type="checkbox" id="select-all">Select/Deselect all
-					{{ results|safe }}
-				<div class="btn-group">
-					<button type="submit" name="extracted_selected">Extract Selected</button>
-				</div>
-			</form>
-		{% endif %}
-		
-		{% if messages %}
-			{% for message in messages %}
-				<div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-					{{ message }}
-				</div>
-			{% endfor %}
-		{% endif %}
-	</div>
-	
-
-	
-	<script>
+    <h1>Collections</h1>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <div class="grid-row flex-justify-center">
+        <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
+            <div class="container">
+                <div class="flex-container">
+                    <div class="form-container">
+                        <div class="usa-alert usa-alert--info usa-alert--slim">
+                            <div class="usa-alert__body">
+                                <p class="usa-alert__text">Do not change your API between querying and extracting records.</p>
+                            </div>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button class="usa-button" type="submit">Query</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="map-container padding-top-5">
+                    <div id="map" class="map" style="height: 500px;"></div>
+                </div>
+                {% if results %}
+                    <h2>Results</h2>
+                    {% if message %}
+                        <strong>{{ message }}</strong>
+                        <br>
+                        <br>
+                    {% endif %}
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="checkbox" id="select-all">
+                        Select/Deselect all
+                        {{ results|safe }}
+                        <div class="btn-group">
+                            <button type="submit" name="extracted_selected">Extract Selected</button>
+                        </div>
+                    </form>
+                {% endif %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <script>
 		// Initialize the map with a default view
 		var map = L.map('map').setView([39.8283, -98.5795], 4);
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -123,8 +110,10 @@
 		//document.getElementById('data-form').addEventListener('submit', function () {
 		//	document.getElementById('api-hidden-input').value = //document.getElementById('select-api').value;
 		//});
-	</script>
-</div></div></section>
+            </script>
+        </div>
+    </div>
+</section>
 </body>
 {% include 'sections/footer.html' %}
 </html>
