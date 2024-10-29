@@ -121,7 +121,7 @@ def convert_to_tiles(tiff):
     #     return "Image does not use the expected convention."
 
     # Six processes should be about 75% CPU utilization
-    subprocess.run([sys.executable, 'C:/Users/john.wall/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
+    subprocess.run([sys.executable, 'C:/Users/jeffrey.wyman/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
                     '-r', 'cubic', '-z', '4-', '--processes=6', '-w', 'none', vrt_name,
                     tile_dir_name])
     return tile_dir_name

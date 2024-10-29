@@ -1,3 +1,4 @@
+libspatialite-5.1.0/*
 .ipynb_checkpoints/
 data/
 imagery_utils/
@@ -7,3 +8,8 @@ imagery_utils/
 *.db
 *.log
 *.json
+python
+gaia/__pycache__/settings.cpython-311.pyc
+static/admin/*
+static/gis/*
+static/uswds/img/material-icons/*
