@@ -1,182 +1,88 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Production Page</title>
-	<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-	<style>
-		.header-container{
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 20px;
-			width: 100%;
-			box-sizing: border-box;
-		}
-		.button-container{
-			display: flex;
-			align-items: center;
-		}
-		.button-container button{
-			background-color: #003087;
-			color: white;
-			padding: 10px 20px;
-			border: none;
-			border-radius: 5px;
-			cursor: pointer;
-			margin-left: 10px;
-			margin-right: 10px;
-		}
-		.button-container button:hover {
-			background-color: #0085CA;
-		}
-		.page-title {
-			margin: 0;
-			font-size: 24px;
-			text-align: center;
-			flex-grow: 1;
-			position: absolute;
-			width: 100%;
-		}
-		.container{
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-		}
-		.flex-container{
-			display: flex;
-			justify-content: space-between;
-			align-items: flex-start;
-		}
-		#map{
-			height: 500px;
-			width: 100%;
-		}
-		.form-container{
-			width: 50%;
-			float: left;
-		}
-		.map-container{
-			width: 50%;
-			float: right;
-		}
-		.results-table{
-			width: 100%;
-			margin-top: 20px;
-			border-collapse: collapse;
-		}
-		.results-table th, .results-table td{
-			border: 2px solid black;
-			padding: 8px;
-		}
-		.results-table tr.selected{
-			background-color: red;
-		}
-		.results-table th {
-			background-color: #f2f2f2;
-		}
-		.hidden-checkbox {
-			opacity: 0;
-			position: absolute;
-		}
-		.hidden {
-			display: none;
-		}
-	</style>
-</head>
-<body>
-	<div class="header-container">
-		<div class="button-container">
-			<form id="home-form" action="{% url 'landing_page' %}" method="POST" style="display: inline;">
-				{% csrf_token %}
-				<button type="submit">Home</button>
-			</form>
-		</div>
-		
-		<h1 class="page-title">Processing Interface</h1>
-		
-		<div class="button-container">
-			<form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
-				{% csrf_token %}
-				<button type="submit">Logout</button>
-			</form>
-		</div>
-	</div>
-
-	<div>
-		<p>The Processing Interface is inteded to allow end-users to preprocess identified imagery from the Collection interface leveraging the consolidated imagery data table. Imagery must be downloaded, orthorectified and calibrated, pansharpened, oversample, tiled, and uploaded to Microsoft Azure. Identifying spectrally anamalous points can also be done at this stage as part of pre-exploitation and review. </p>
-	</div>
-	
-	<div class="form-container">
-		<form method="POST">
-			{% csrf_token %}
-			{{ form.as_p }}
-			<button type="submit" name="filter">Submit</button>
-		</form>
-	</div>
-		
-	<div class="map-container">
-		<div id="map"></div>
-	</div>
-	<div style="clear: both;"></div>
-		
-	{% if filtered_data %}
-	<form id="data-form" method="POST">
-		<!-- First section: data selection -->
-		{% csrf_token %}
-		<h2>Results</h2>
-		<table class="results-table">
-			<thead>
-				<tr>
-					<th><input type="checkbox" id="select-all"></th>
-					<th>ID</th>
-					<th>Vendor ID</th>
-					<th>Entity ID</th>
-					<th>Vendor</th>
-					<th>Platform</th>
-					<th>Date</th>
-					<th>Publish Date</th>
-					<th>Pixel Size</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for data in filtered_data %}
-				<tr data-geom="{{ data.geometry }}">
-					<td>
-						<input type="checkbox" class="record-checkbox" name="ids" value="{{ data.id }}"
-							data-vendor-id="{{ data.vendor_id }}" data-entity-id="{{ data.entity_id }}">
-					</td>
-					<td>{{ data.id }}</td>
-					<td>{{ data.vendor_id }}</td>
-					<td>{{ data.entity_id }}</td>
-					<td>{{ data.vendor }}</td>
-					<td>{{ data.platform }}</td>
-					<td>{{ data.date }}</td>
-					<td>{{ data.publish_date }}</td>
-					<td>{{ data.pixel_size_x|floatformat:2 }} x {{ data.pixel_size_y|floatformat:2 }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-		
-		<div id="credentials-section", method="POST">
-			<h3>Enter Credentials</h3>
-			<p>Enter your credentials for the corresponding table name</p>
-			{% csrf_token %}
-			<label for="username">Username:</label>
-			<input type="text" id="username" name="username" required><br><br>
-			<label for="password">Password:</label>
-			<input type="password" id="password" name="password" required><br><br>
-		</div>
-		
-		<button type="submit" id="process">Process selection</button>
-	</form>
-	{% endif %}
-</body>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script>
+{% load static %}
+{% include 'sections/header.html' %}
+<section class="grid-container usa-section padding-top-0">
+    <h1>Processing</h1>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="">
+    </script>
+    <div class="grid-row flex-justify-center">
+        <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
+            <div class="container">
+                <div class="flex-container">
+                    <div class="form-container">
+                        <form method="POST">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="usa-button" name="filter">Submit</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="map-container padding-top-5">
+                    <div id="map" class="map" style="height: 700px;"></div>
+                </div>
+                {% if filtered_data %}
+                    <div class="grid-row">
+                        <form id="data-form" method="POST">
+                            <!-- First section: data selection -->
+                            {% csrf_token %}
+                            <h2>Results</h2>
+                            <table class="results-table usa-table usa-table--sticky-header">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <input type="checkbox" id="select-all">
+                                        </th>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Vendor ID</th>
+                                        <th scope="col">Entity ID</th>
+                                        <th scope="col">Vendor</th>
+                                        <th scope="col">Platform</th>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Publish Date</th>
+                                        <th scope="col">Pixel Size</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for data in filtered_data %}
+                                        <tr data-geom="{{ data.geometry }}">
+                                            <td>
+                                                <input type="checkbox"
+                                                       class="record-checkbox"
+                                                       name="ids"
+                                                       value="{{ data.id }}"
+                                                       data-vendor-id="{{ data.vendor_id }}"
+                                                       data-entity-id="{{ data.entity_id }}">
+                                            </td>
+                                            <td>{{ data.id }}</td>
+                                            <td>{{ data.vendor_id }}</td>
+                                            <td>{{ data.entity_id }}</td>
+                                            <td>{{ data.vendor }}</td>
+                                            <td>{{ data.platform }}</td>
+                                            <td>{{ data.date }}</td>
+                                            <td>{{ data.publish_date }}</td>
+                                            <td>{{ data.pixel_size_x|floatformat:2 }} x {{ data.pixel_size_y|floatformat:2 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <div id="credentials-section", method="POST">
+                                <h3>Enter Credentials</h3>
+                                <p>Enter your credentials for the corresponding table name</p>
+                                {% csrf_token %}
+                                <label for="username">Username:</label>
+                                <input type="text" id="username" name="username" required>
+                                <br>
+                                <br>
+                                <label for="password">Password:</label>
+                                <input type="password" id="password" name="password" required>
+                                <br>
+                                <br>
+                            </div>
+                            <button type="submit" id="process">Process selection</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            <script>
 	document.addEventListener('DOMContentLoaded', function () {
 		// Initalize map
 		var map = L.map('map').setView([39.8283, -98.5795], 4);
@@ -303,5 +209,9 @@
 	// Call the function to attach event listeners when the page loads
 	//attachEventListeners();
 	});
-</script>
+            </script>
+        </div>
+    </section>
+</body>
+{% include 'sections/footer.html' %}
 </html>
