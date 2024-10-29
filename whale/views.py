@@ -723,8 +723,8 @@ def exploitation_page(request, item_id=None):
     action = request.GET.get('action')
 
     # Troubleshooting print statements to show action and parameters being passed
-    print(f"Action: {action}")
-    print(f"URL Paramters - ID: {id}, Catalog ID: {catalog_id}, Vendor ID: {vendor_id}, and Entity ID: {entity_id}")
+    #print(f"Action: {action}")
+    #print(f"URL Paramters - ID: {id}, Catalog ID: {catalog_id}, Vendor ID: {vendor_id}, and Entity ID: {entity_id}")
 
     # Set the following to none then update as necessairy
     poi = None
