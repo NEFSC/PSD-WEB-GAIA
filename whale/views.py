@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import shutil
 import requests
 import datetime
 from datetime import datetime, timedelta
@@ -522,95 +523,322 @@ def processing_page(request):
             print("Your PASSWORD is: ", password,)
             print("Entity IDs: ", entity_ids, '\n\n')
 
+            # Check Entity IDs have their PAN, MSI pairs
             if entity_ids:
                 session = requests.Session()
                 session = ee_login(session, username, password)
 
-                entities = [get_entity_pairs(entity_id) for entity_id in entity_ids]
-                entities = [entity for record_list in entities for entity in record_list]
-                print(f"Your entities are: {entities}")
-                if len(entities) > len(entity_ids):
-                    print(f"Your list of entity ids has increased from {len(entity_ids)}! It is now {len(entities)} records in size. This will increase the processing time")
-                    entity_ids = entities
-                else:
-                    print("No additional entity ids were identified for your list. Proceeding as expected...")
-                
-                for entity_id in entity_ids:
-                    # Only allow WV3 for right now
+                list_of_pairs = [get_entity_pairs(entity_id) for entity_id in entity_ids]
+                print(f"Your list of pairs: {list_of_pairs}")
+
+                for pair in list_of_pairs:
                     try:
-                        start = time() # Important, but critical
+                        unzipped_dirs = []
+                        for pan_entity_id, msi_entity_id in pair.items():
+                            start = time()
+                            unzipped_dirs.append(download_imagery(session, 'crssp_orderable_w3', pan_entity_id))
+                            print(f"\n It took: {round(time() - start,2)} seconds to download and unzip {pan_entity_id}, your panchromatic image \n")
+    
+                            start = time()
+                            unzipped_dirs.append(download_imagery(session, 'crssp_orderable_w3', msi_entity_id))
+                            print(f"\n It took: {round(time() - start,2)} seconds to download and unzip {msi_entity_id}, your multispectral image \n")
+    
+                        # BLOCK THIS OUT WHEN DEBUGGING
+                        # Upload these retrieved files to Azure
+                        # for unzipped_dir in unzipped_dirs:
+                        #     start = time()
+                        #     # Get all files from within the unzipped directory, less the license files
+                        #     unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
+                        #     filtered_files = [file for file in unzipped_files if 'license' not in file]
+                            
+                        #     # Determine the image directory name
+                        #     dir_name = filtered_files[0].replace('\\', '/').split('/')[-2].split('.')[0]
+                        #     # Upload files to Azure
+                        #     for file in filtered_files:
+                        #         print(f"Uploading: {file}")
+                        #         upload_to_auzre(file, f'data/imagery/ee/{dir_name}', '')
+                        #     print(f"\n It took: {round(time() - start,2)} seconds to upload {dir_name}, a full directory, to Azure \n\n")
+    
+                        # Standarize file names and calibrate images
+                        for unzipped_dir in unzipped_dirs:
+                            start = time()
+                            # Only use this to get the dir name again
+                            unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
+                            filtered_files = [file for file in unzipped_files if 'license' not in file]
+                            dir_name = filtered_files[0].replace('\\', '/').split('/')[-2].split('.')[0]
+                            
+                            standard_name_geotiff = standardize_names(unzipped_dir)
+                            calibrated_image = calibrate_image(standard_name_geotiff)
+                            print(f"\n It took: {round(time() - start,2)} seconds to calibrate {dir_name} \n")
+    
+                        # Upload these calibrated files to Azure
+                        calibrated_images = []
+                        for unzipped_dir in unzipped_dirs:
+                            start = time()
+                            unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
+                            calibrated_files = [file for file in unzipped_files if 'calibrated' in file]
+                            
+                            for file in calibrated_files:
+                                if 'tif' in file:
+                                    calibrated_images.append(file)
+                                dir_name = file.replace('\\', '/').split('/')[-1].split('.')[0]
+                                upload_to_auzre(file, f'data/imagery/calibrated/{dir_name}', '')
+    
+                            print(f"\n Your calibrated image name is: {calibrated_image} \n")
+                            print(f"\n It took: {round(time() - start,2)} seconds to upload your calibrated image to Azure \n")
+    
+                        # Create a pansharpened image
+                        start = time()
+                        for calibrated_image in calibrated_images:
+                            if 'P1BS' in calibrated_image:
+                                pan_image = calibrated_image
+                            elif 'M1BS' in calibrated_image:
+                                msi_image = calibrated_image
+                            else:
+                                print("\n\nYOUR IMAGE DOES NOT FOLLOW THE STANDARD NAMING CONVENTION FOR MAXAR\n\n")
+    
+                        shrp_image = '../data/' + pan_image.split('\\')[-1].replace('P1BS', 'S1BS')
+                        print(f"YOUR SHARP IMAGE IS: {shrp_image}")
+                        gdal_pansharpen(['' ,'-b', '5', '-b', '3', '-b', '2', '-r', 'cubic', '-threads', 'ALL_CPUS', pan_image, msi_image, shrp_image])
+                        print(f"\n It took: {round(time() - start,2)} seconds to create a pansharpened image \n")
+    
+                        # Upload this panchromatic file to Azure
+                        start = time()
+                        upload_to_auzre(shrp_image, f'data/imagery/panchromatic/{dir_name}', '')
+                        print(f"\n It took: {round(time() - start,2)} seconds to upload your panchromatic image to Azure \n")
+    
+                        # Generate interesting point catalog
+                        start = time()
+                        out_geojson = shrp_image.replace('tif', 'geojson')
+                        subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrp_image, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'])
+                        print(f"\n It took: {round(time() - start,2)} seconds to generate interesting points: {out_geojson} \n")
+    
+                        # Upload the interesting point catalog to Azure
+                        upload_to_auzre(out_geojson, 'json', 'application/geo+json')
+    
+                        # Add interesting points to database
+                        start = time()
+                        import_pois(out_geojson)
+                        print(f"\n It took: {round(time() - start,2)} seconds to register your interesting point catalog in the database \n")
+    
+                        # # DON'T INCLUDE THIS FOR QA/QC
+                        # # Oversample pansharpened images
+                        # start = time()
+                        # ultratiff = '.'.join(shrp_image.split('.')[:-1]) + "_ultra.tif"
+                        # options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS -co compress=lzw"
+                        # output_dataset = gdal.Warp(ultratiff, shrp_image, format="COG", options=options)
+                        # output_dataset = None
+                        # print(f"\n It took: {round(time() - start,2)} seconds to oversampled your image: {ultratiff} \n")
+    
+                        # # Upload the oversampled image to Azure
+                        # start = time()
+                        # upload_to_auzre(ultratiff, 'json', '')
+                        # print(f"\n It took: {round(time() - start,2)} seconds to upload your oversampled image to Azure \n")
+    
+                        # Generate Cloud Optimized GeoTIFF
+                        start = time()
+                        cogtiff = shrp_image.replace('.tif', '_cog.tif')
+                        subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', shrp_image, cogtiff])
+                        print(f"\n It took: {round(time() - start,2)} seconds to create your COG: {cogtiff} \n")
+    
+                        # Upload the COG image to Azure
+                        start = time()
+                        upload_to_auzre(cogtiff, 'data/cog', '')
+                        print(f"\n It took: {round(time() - start,2)} seconds to upload your COG image to Azure \n")
+    
+                        try:
+                            for unzipped_dir in unzipped_dirs:
+                                shutil.rmtree(unzipped_dir)
+                        except:
+                            print("Unable to detele unzipped directories")
+                        try:
+                            os.remove(shrp_image)
+                        except:
+                            print("Unable to remove sharpened image")
+                        try:
+                            os.remove(out_geojson)
+                        except:
+                            print("Unable to remove GeoJSON file")
+                        try:
+                            os.remove(cogtiff)
+                        except:
+                            print("Unable to remove cog")
+                        print("Done carrying out garbage collection.")
                         
-                        unzipped_dirs = download_imagery(session, 'crssp_orderable_w3', entity_id)
-                        messages.success(request, f'Done downloading {entity_id}')
+                    except Exception as e:
+                        print(f"Failed on {pair} with Exception: {e}")
+                        
+                # entities = [entity for record_list in entities for entity in record_list]
+                # print(f"2. Your entities are: {entities}")
+                # if len(entities) > len(entity_ids):
+                #     print(f"Your list of entity ids has increased from {len(entity_ids)}! It is now {len(entities)} records in size. This will increase the processing time")
+                #     entity_ids = entities
+                # else:
+                #     print("No additional entity ids were identified for your list. Proceeding as expected...")
 
-                        print("\n\nStandardizing name and file type!")
-                        standard_name_geotiff = standardize_names(unzipped_dirs)
+            # Download and unzip imagery
+            # unzipped_dirs = []
+            # for entity_id in entity_ids:
+            #     try:
+            #         start = time()
+                    
+            #         unzipped_dirs.append(download_imagery(session, 'crssp_orderable_w3', entity_id))
+            #         messages.success(request, f'Done downloading {entity_id}')
+                    
+            #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO DOWNLOAD {entity_id} \n\n")
+            #     except Exception as e:
+            #         print(f"FAILED DOWNLOADING {entity_id} WITH EXCEPTION {e}")
 
-                        print("\n\nCalibrating image!")
-                        calibrated_image = calibrate_image(standard_name_geotiff)
+            # Upload files to Azure, standarize names
+            # standard_name_geotiffs = []
+            # for unzipped_dir in unzipped_dirs:
+            #     try:
+            #         start = time()
+                    
+            #         unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
+            #         filtered_files = [file for file in unzipped_files if 'license' not in file]
+            #         print(f"YOUR FILTERED FILES: {filtered_files}")
+                    
+            #         dir_name = filtered_files[0].replace('\\', '/').split('/')[-2].split('.')[0]
+            #         for file in filtered_files:
+            #             print(f"Uploading: {file}")
+            #             upload_to_auzre(file, f'data/imagery/ee/{dir_name}', '')
+                        
+            #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO UPLOAD {entity_id} TO AZURE \n\n")
+                    
+            #         standard_name_geotiffs.append(standardize_names(unzipped_dirs))
+            #     except Exception as e:
+            #         print(f"FAILED UPLOADING {unzipped_dir} WITH EXCEPTION {e}")
 
-                        print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS {entity_id} \n\n")
-                    except:
-                        messages.warning(request, f'Failed downloading or calibration and referencing {entity_id}!')
+            # Calibrate images and upload them to Azure
+            #      Only upload the GeoTIFF opposed to it and many other supporting files
+            #      like Log, Prj, and XML.
+            # for standard_name_geotiff in standard_name_geotiffs:
+            #     try:
+            #         start = time()
+            #         calibrated_image = calibrate_image(standard_name_geotiff)
+            #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO CALIBRATE {entity_id} \n\n")
+
+            #         start = time()
+            #         #unzipped_files = glob(unzipped_dirs + '/**/*.*', recursive=True)
+            #         #calibration_files = [file for file in unzipped_files if 'calibrated' in file]
+            #         # print(f"YOUR FILTERED FILES: {filtered_files}")
+            #         # for file in calibration_files:
+            #         #     print(f"Uploading: {file}")
+            #         #     upload_to_auzre(file, f'data/imagery/calibrated/{dir_name}', '')
+            #         print(f"YOUR CALIBRATED FILE IS: {calibrated_image}")
+            #         upload_to_auzre(standard_name_geotiff, f'data/imagery/calibrated/{dir_name}', '') # dir_name = variable abuse
+                        
+            #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO UPLOAD CALIBRATED DATA TO AZURE \n\n")
+            #     except Exception as e:
+            #         print(f"FAILED UPLOADING {standard_name_geotiff} WITH EXCEPTION {e}")
 
 
                 # If we use a database, this section wont be needed.
                 #      There would need to be support for the virtual
                 #      machine determining which images haven't gone
                 #      through the following step.
-                geotiffs = glob("../data/**/*.tif", recursive=True)
-                print(f"Your geotiff list is: {geotiffs}")
-                calibrated_geotiffs = [geotiff for geotiff in geotiffs if 'calibrated' in geotiff]
-                calibrated_panchromatic_images = [calibrated_geotiff for calibrated_geotiff in calibrated_geotiffs if 'P1BS' in calibrated_geotiff]
-                print(f"Your {len(calibrated_panchromatic_images)} calibrated panchromatic image(s) are: {calibrated_panchromatic_images}")
+                # geotiffs = glob("../data/**/*.tif", recursive=True)
+                # print(f"Your geotiff list is: {geotiffs}")
+                # calibrated_geotiffs = [geotiff for geotiff in geotiffs if 'calibrated' in geotiff]
+                # calibrated_panchromatic_images = [calibrated_geotiff for calibrated_geotiff in calibrated_geotiffs if 'P1BS' in calibrated_geotiff]
+                # print(f"Your {len(calibrated_panchromatic_images)} calibrated panchromatic image(s) are: {calibrated_panchromatic_images}")                    
 
                 # Continue preprocessing pipeline
-                for pantiff in calibrated_panchromatic_images:
-                    try:
-                        panfile = pantiff.split('\\')[-1]
-                        print(f"Your pan file name is {panfile}")
+                # for pantiff in calibrated_panchromatic_images:
+                #     try:
+                #         panfile = pantiff.split('\\')[-1]
+                #         print(f"Your pan file name is {panfile}")
+                #         msifile = panfile.replace('P1BS', 'M1BS')
+                #         print(f"Your msi file name is {msifile}")
                         
-                        msifile = panfile.replace('P1BS', 'M1BS')
-                        print(f"Your msi file name is {msifile}")
-                        
-                        msitiff = [geotiff for geotiff in geotiffs if msifile in geotiff][0]
-                        print(f"Your {len(msitiff)} calibrated multispectral image(s) are: {msitiff}")
+                #         msitiff = [geotiff for geotiff in geotiffs if msifile in geotiff][0]
 
-                        # Pansharpen calibrated images
-                        shrptiff = '../data/' + pantiff.split('\\')[-1].replace('P1BS', 'S1BS')
-                        gdal_pansharpen(['' ,'-b', '5', '-b', '3', '-b', '2', '-r', 'cubic', '-threads', 'ALL_CPUS', pantiff, msitiff, shrptiff])
-                        print("Pansharpened {}!".format(shrptiff))
-                        print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {shrptiff} \n\n")
+                #         # Pansharpen calibrated images
+                #         start = time()
+                #         shrptiff = '../data/' + pantiff.split('\\')[-1].replace('P1BS', 'S1BS')
+                #         gdal_pansharpen(['' ,'-b', '5', '-b', '3', '-b', '2', '-r', 'cubic', '-threads', 'ALL_CPUS', pantiff, msitiff, shrptiff])
+                #         print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PANSHARPEN {shrptiff} \n\n")
+                        
+                        # start = time()
+                        # upload_to_auzre(shrptiff, 'cogs', 'image/tiff')
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO UPLOAD YOUR PANSHARPEN IMAGE TO AZURE \n\n")
 
                         # Generate interesting point catalog
-                        out_geojson = shrptiff.replace('tif', 'geojson')
-                        subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrptiff, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'])
+                        # start = time()
+                        # out_geojson = shrptiff.replace('tif', 'geojson')
+                        # subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrptiff, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'])
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO GENERATE INTERESTING POINTS {out_geojson} \n\n")
                         
-                        # Generate Shapefile for secondary validation
-                        gdf = gpd.read_file(out_geojson)
-                        output_shp = out_geojson.replace('geojson', 'shp')
-                        gdf.to_file(output_shp)
+                        # upload_to_auzre(out_geojson, 'json', 'application/geo+json')
+                        
+                        # Generate Shapefile for secondary validation - Probably don't need this
+                        # gdf = gpd.read_file(out_geojson)
+                        # output_shp = out_geojson.replace('geojson', 'shp')
+                        # gdf.to_file(output_shp)
 
                         # Add interesting points to database
-                        import_pois(out_geojson)
+                        # start = time()
+                        # import_pois(out_geojson)
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO REGISTER INTERESTING POINTS IN YOUR DATABASE \n\n")
 
-                        # Oversample pansharpened images
-                        ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
-                        options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
-                        output_dataset = gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
-                        output_dataset = None
-                        print("Oversampling {}!".format(ultratiff))
-                        print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
+                        # # Oversample pansharpened images
+                        # start = time()
+                        # ultratiff = '.'.join(shrptiff.split('.')[:-1]) + "_ultra.tif"
+                        # options = "-overwrite -multi -wm 80% -tr 0.13 0.13 -r cubic -co BIGTIFF=IF_SAFER -co NUM_THREADS=ALL_CPUS"
+                        # output_dataset = gdal.Warp(ultratiff, shrptiff, format="COG", options=options)
+                        # output_dataset = None
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO PROCESS FROM DOWNLOAD TO {ultratiff} \n\n")
     
-                        # Generate Cloud Optimized GeoTIFF
-                        cogtiff = shrptiff.replace('.tif', '_cog.tif')
-                        subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', shrptiff, cogtiff])
+                        # # Generate Cloud Optimized GeoTIFF
+                        # cogtiff = ultratiff.replace('_ultra.tif', '_cog.tif')
+                        # subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', ultratiff, cogtiff])
+
+                        # QA/QC Test
+                        # start = time()
+                        # cogtiff = shrptiff.replace('.tif', '_cog.tif')
+                        # subprocess.run(['rio', 'cogeo', 'create', '--zoom-level', '20', '--overview-resampling', 'cubic', '-w', shrptiff, cogtiff])
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO GENERATE COG {cogtiff} \n\n")
 
                         # Upload to Azure
-                        upload_to_auzre(shrptiff, 'cogs', 'image/tiff')
+                        # start = time()
+                        # upload_to_auzre(cogtiff, 'cogs', 'image/tiff')
+                        # print(f"\n\n IT TOOK: {round(time() - start,2)} SECONDS TO UPLOAD YOUR PANSHARPEN IMAGE TO AZURE \n\n")
+
+                        # Garbage collection
+                        #      Leaves the original, uncalibrated and calibrated images locally
+                        # if os.path.exists(shrptiff):
+                        #     os.remove(shrptiff)
+                        #     print(f"Successfully deleted {shrptiff} from local machine.")
+                        # else:
+                        #     print(f"The file {shrptiff} does not exist.")
+                        
+                        # if os.path.exists(out_geojson):
+                        #     os.remove(out_geojson)
+                        #     print(f"Successfully deleted {out_geojson} from local machine.")
+                        # else:
+                        #     print(f"The file {out_geojson} does not exist.")
+
+                        # # Comment this out when troubleshooting
+                        # if os.path.exists(ultratiff):
+                        #     os.remove(ultratiff)
+                        #     print(f"Successfully deleted {ultratiff} from local machine.")
+                        # else:
+                        #     print(f"The file {ultratiff} does not exist.")
                             
-                    except Exception as e:
-                        print(f"FAILED WITH EXCEPTION {e}. Moving along?!...")
+                #     except Exception as e:
+                #         print(f"FAILED WITH EXCEPTION {e}. Moving along?!...")
+
+                # files = glob('../data/**/*.*', recursive=True)
+                # for file in files:
+                #     os.remove(file)
+                #     print(f"Successfully deleted {ultratiff} from local machine.")
+
+                # for root, dirs, files in os.walk('../data/', topdown = False):
+                #     for dir_name in dirs:
+                #         dir_path = os.path.join(root, dir_name)
+                #         print(f"Removing directory: {dir_path}")
+                #         shutil.rmtree(dir_path)
                 
                 messages.success(request, 'Completed imagery retrieval and pre-processing')
 
