@@ -574,8 +574,12 @@ def processing_page(request):
                             print("Successfully removed license related files")
                             dir_name = filtered_files[0].replace('\\', '/').split('/')[-2].split('.')[0]
                             print(f"Successfully found dir name: {dir_name}")
-                            
-                            standard_name_geotiff = standardize_names(unzipped_dir)
+
+                            try:
+                                standard_name_geotiff = standardize_names(unzipped_dir)
+                            except Exception as e:
+                                standard_name_geotiff = unzipped_dir
+                                print(f"Failed standardizing names with Exception: {e}.\n\tTrying to move along...")
                             print("Successfully standaridized names. Begining to calibrate the image...")
                             calibrated_image = calibrate_image(standard_name_geotiff)
                             print(f"\n It took: {round(time() - start,2)} seconds to calibrate {dir_name} \n")
