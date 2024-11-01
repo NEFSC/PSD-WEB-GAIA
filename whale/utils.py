@@ -56,7 +56,8 @@ def standardize_names(imgdir):
     print(f"GeoTIFFs results: {geotiff}")
     if not geotiff:
         glob_path = imgdir + "/**/*.ntf"
-        geotiff = glob(glob_path, recursive=True)[0]
+        geotiff = glob(glob_path, recursive=True)
+        print(f"NTF results: {geotiff}")
         if len(geotiff) > 0:
             print("NTF files were found! Converting them to GeoTIFF")
             geotiff = convert_ntf_to_tif(geotiff)
