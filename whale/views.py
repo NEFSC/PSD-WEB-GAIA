@@ -535,6 +535,8 @@ def processing_page(request):
                     try:
                         unzipped_dirs = []
                         for pan_entity_id, msi_entity_id in pair.items():
+                            print(f"Your PAN entity id is: {pan_entity_id}, your MSI entity id is: {msi_entity_id}")
+                            
                             start = time()
                             unzipped_dirs.append(download_imagery(session, 'crssp_orderable_w3', pan_entity_id))
                             print(f"\n It took: {round(time() - start,2)} seconds to download and unzip {pan_entity_id}, your panchromatic image \n")
