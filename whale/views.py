@@ -564,6 +564,8 @@ def processing_page(request):
     
                         # Standarize file names and calibrate images
                         for unzipped_dir in unzipped_dirs:
+                            print(f"Your unzipped dir looks like: {unzipped_dir}")
+                            
                             start = time()
                             # Only use this to get the dir name again
                             unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
