@@ -50,13 +50,15 @@ def convert_ntf_to_tif(ntf):
         print(f"Error during conversion: {e}")
 
 def standardize_names(imgdir):
-    glob_path = imgdir + "/**/*.tif"
+    glob_path_lower = imgdir + "/**/*.tif"
+    glob_path_upper = imgdir + "/**/*.TIF"
     print("Trying standarize name glob...")
-    geotiff = glob(glob_path, recursive=True)
+    geotiff = glob(glob_path_lower, recursive=True) + glob(glob_path_upper, recursive=True)
     print(f"GeoTIFFs results: {geotiff}")
     if not geotiff:
-        glob_path = imgdir + "/**/*.ntf"
-        geotiff = glob(glob_path, recursive=True)
+        glob_path_lower = imgdir + "/**/*.ntf"
+        glob_path_upper = imgdir + "/**/*.NTF"
+        geotiff = glob(glob_path_lower, recursive=True) + glob(glob_path_upper, recursive=True)
         print(f"NTF results: {geotiff}")
         if len(geotiff) > 0:
             print("NTF files were found! Converting them to GeoTIFF")
