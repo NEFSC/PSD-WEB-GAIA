@@ -563,13 +563,14 @@ def processing_page(request):
                         #     print(f"\n It took: {round(time() - start,2)} seconds to upload {dir_name}, a full directory, to Azure \n\n")
     
                         # Standarize file names and calibrate images
+                        print(f"Your unzipped directories looks like: {unzipped_dirs}")
                         for unzipped_dir in unzipped_dirs:
                             print(f"Your unzipped dir looks like: {unzipped_dir}")
                             
                             start = time()
                             # Only use this to get the dir name again
                             unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
-                            print("Successfully executed glob")
+                            print(f"Successfully executed glob: {unzipped_files}")
                             filtered_files = [file for file in unzipped_files if 'license' not in file]
                             print("Successfully removed license related files")
                             dir_name = filtered_files[0].replace('\\', '/').split('/')[-2].split('.')[0]
