@@ -534,6 +534,7 @@ def processing_page(request):
                 for pair in list_of_pairs:
                     try:
                         unzipped_dirs = []
+                        print(f"Your pair looks like: {pair}")
                         for pan_entity_id, msi_entity_id in pair.items():
                             print(f"Your PAN entity id is: {pan_entity_id}, your MSI entity id is: {msi_entity_id}")
                             
