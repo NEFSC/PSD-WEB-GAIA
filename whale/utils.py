@@ -87,7 +87,7 @@ def calibrate_image(tiff):
         os.makedirs(dir_path_new)
 
     # Check -c ns versus mr. Lauren might be processing only three bands.
-    subprocess.run([sys.executable, '../../imagery_utils/pgc_ortho.py', '-p', 'utm',
+    subprocess.run([sys.executable, 'imagery_utils/pgc_ortho.py', '-p', 'utm',
                     '-c', 'mr', '-f', 'GTiff', '-t', 'Byte', '--resample=cubic',
                     dir_path, dir_path_new])
     try:
