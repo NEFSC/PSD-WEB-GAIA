@@ -81,8 +81,9 @@ def calibrate_image(tiff):
         Ref: https://github.com/PolarGeospatialCenter/imagery_utils/blob/main/doc/pgc_ortho.txt
     """
     dir_path = os.path.dirname(os.path.realpath(tiff))
-    dir_path_new = os.path.join(dir_path, 'calibrated\\')
-    print(dir_path_new)
+    print(f"Your dir_path is: {dir_path}")
+    dir_path_new = os.path.join(dir_path, 'calibrated/') # Make LInux style
+    print(f"Your new dir_oath is: {dir_path_new}")
     if not os.path.exists(dir_path_new):
         os.makedirs(dir_path_new)
 
@@ -92,7 +93,7 @@ def calibrate_image(tiff):
                     dir_path, dir_path_new])
     try:
         img_out = glob(dir_path_new + "/*.tif")[0]
-        print(img_out)
+        print(f"Your image is: {img_out}")
         return img_out
     except:
         print("Failed on: {}".format(tiff))
