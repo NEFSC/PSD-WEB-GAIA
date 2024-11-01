@@ -580,7 +580,7 @@ def processing_page(request):
                             except Exception as e:
                                 standard_name_geotiff = unzipped_dir
                                 print(f"Failed standardizing names with Exception: {e}.\n\tTrying to move along...")
-                            print("Successfully standaridized names. Begining to calibrate the image...")
+                            print("Begining to calibrate the image...")
                             calibrated_image = calibrate_image(standard_name_geotiff)
                             print(f"\n It took: {round(time() - start,2)} seconds to calibrate {dir_name} \n")
     
