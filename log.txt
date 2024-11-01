@@ -6771,3 +6771,13 @@ WARNINGS:
 ?: (staticfiles.W004) The directory 'C:\gis\PSD-WEB-GAIA\whale\static' in the STATICFILES_DIRS setting does not exist.
 
 System check identified 1 issue (0 silenced).
+Performing system checks...
+
+
+You have 1 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): django_q.
+Run 'python manage.py migrate' to apply them.
+October 31, 2024 - 09:52:26
+Django version 5.1.2, using settings 'gaia.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+
