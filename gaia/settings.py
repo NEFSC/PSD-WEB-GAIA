@@ -45,7 +45,8 @@ SECRET_KEY = secrets['DJANGO_KEY']
 DEBUG = True
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
-                 '52.170.141.35']
+                 '52.170.141.35',
+                 '127.0.0.1']
 
 
 # Application definition
