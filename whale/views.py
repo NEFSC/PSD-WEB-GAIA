@@ -611,7 +611,7 @@ def processing_page(request):
                             else:
                                 print("\n\nYOUR IMAGE DOES NOT FOLLOW THE STANDARD NAMING CONVENTION FOR MAXAR\n\n")
     
-                        shrp_image = '../data/' + pan_image.split('\\')[-1].replace('P1BS', 'S1BS')
+                        shrp_image = pan_image.split('\\')[-1].replace('P1BS', 'S1BS')
                         print(f"YOUR SHARP IMAGE IS: {shrp_image}")
                         gdal_pansharpen(['' ,'-b', '5', '-b', '3', '-b', '2', '-r', 'cubic', '-threads', 'ALL_CPUS', pan_image, msi_image, shrp_image])
                         print(f"\n It took: {round(time() - start,2)} seconds to create a pansharpened image \n")
