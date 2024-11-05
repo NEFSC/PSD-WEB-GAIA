@@ -623,8 +623,13 @@ def processing_page(request):
     
                         # Generate interesting point catalog
                         start = time()
-                        out_geojson = shrp_image.replace('tif', 'geojson')
-                        subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrp_image, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'])
+                        try:
+                            out_geojson = shrp_image.replace('tif', 'geojson')
+                            subprocess.run(['python', 'manage.py', 'generate_points', '--input-file', shrp_image, '--output-file', out_geojson, '--method', 'big_window', '--difference', '20'], check=True, capture_output=True, text=True)
+                            print("Subprocess output:", result.stdout)
+                        except subprocess.CalledProcessError as e:
+                            print("Subprocess failed with return code:", e.returncode)
+                            print("Error output:", e.stderr)
                         print(f"\n It took: {round(time() - start,2)} seconds to generate interesting points: {out_geojson} \n")
     
                         # Upload the interesting point catalog to Azure
