@@ -66,6 +66,7 @@ from .utils import get_entity_pairs, standardize_names, calibrate_image, import_
 ########################################################################################################################
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
+os.environ["CPL_DEBUG"] = "ON" # Should enable GDAL debuggin
 django.setup()
 
 def login_view(request):
