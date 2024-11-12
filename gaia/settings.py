@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 if platform == "linux":
     GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
-    GEOS_LIBRARY_PATH = '/anaconda/envs/gaia/lib/geos_c.so'
+    #GEOS_LIBRARY_PATH = '/anaconda/envs/gaia/lib/geos_c.so'
     SPATIALITE_LIBRARY_PATH = '/anaconda/envs/gaia/lib/mod_spatialite.so'
 elif platform == "win32":
     USER_HOME = os.path.expanduser("~")
@@ -44,7 +44,9 @@ SECRET_KEY = secrets['DJANGO_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
+                 '52.170.141.35',
+                 '127.0.0.1']
 
 
 # Application definition

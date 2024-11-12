@@ -31,9 +31,11 @@ def get_entity_pairs(entity_id):
     records = ETL.objects.filter(entity_id__in=[entity_id, pair_id])
     # print("Object checked!")
     records = [str(record.entity_id) for record in records]
-    print("Your records: {}".format(records))
+    print(f"Your records: {records}")
+    record_key = [record for record in records if 'P' in record][0]
+    record_value = [record for record in records if 'M' in record][0]
 
-    return records
+    return {record_key: record_value}
 
 def convert_ntf_to_tif(ntf):
     try:
@@ -48,11 +50,17 @@ def convert_ntf_to_tif(ntf):
         print(f"Error during conversion: {e}")
 
 def standardize_names(imgdir):
-    glob_path = imgdir + "/**/*.tif"
-    geotiff = glob(glob_path, recursive=True)
+    glob_path_lower = imgdir + "/**/*.tif"
+    glob_path_upper = imgdir + "/**/*.TIF"
+    print("Trying standarize name glob...")
+    geotiff = glob(glob_path_lower, recursive=True) + glob(glob_path_upper, recursive=True)
+    print(f"GeoTIFFs results: {geotiff}")
     if not geotiff:
-        glob_path = imgdir + "/**/*.ntf"
-        geotiff = glob(glob_path, recursive=True)[0]
+        glob_path_lower = imgdir + "/**/*.ntf"
+        glob_path_upper = imgdir + "/**/*.NTF"
+        geotiff = glob(glob_path_lower, recursive=True) + glob(glob_path_upper, recursive=True)
+        geotiff = geotiff[0]
+        print(f"NTF results: {geotiff}")
         if len(geotiff) > 0:
             print("NTF files were found! Converting them to GeoTIFF")
             geotiff = convert_ntf_to_tif(geotiff)
@@ -79,18 +87,19 @@ def calibrate_image(tiff):
         Ref: https://github.com/PolarGeospatialCenter/imagery_utils/blob/main/doc/pgc_ortho.txt
     """
     dir_path = os.path.dirname(os.path.realpath(tiff))
-    dir_path_new = os.path.join(dir_path, 'calibrated\\')
-    print(dir_path_new)
+    print(f"Your dir_path is: {dir_path}")
+    dir_path_new = os.path.join(dir_path, 'calibrated/') # Make LInux style
+    print(f"Your new dir_oath is: {dir_path_new}")
     if not os.path.exists(dir_path_new):
         os.makedirs(dir_path_new)
 
     # Check -c ns versus mr. Lauren might be processing only three bands.
-    subprocess.run([sys.executable, 'C:/gis/apps/libs/imagery_utils/pgc_ortho.py', '-p', 'utm',
+    subprocess.run([sys.executable, 'imagery_utils/pgc_ortho.py', '-p', 'utm',
                     '-c', 'mr', '-f', 'GTiff', '-t', 'Byte', '--resample=cubic',
                     dir_path, dir_path_new])
     try:
         img_out = glob(dir_path_new + "/*.tif")[0]
-        print(img_out)
+        print(f"Your image is: {img_out}")
         return img_out
     except:
         print("Failed on: {}".format(tiff))
@@ -176,7 +185,11 @@ def upload_to_auzre(local_file, azure_dir, content_type):
         account_url = f"https://{account_name}.blob.core.windows.net"
         blob_service_client = BlobServiceClient(account_url=account_url, credential=account_key)
 
+        local_file = local_file.replace('\\', '/')
+        print(f"YOUR LOCAL FILE IS {local_file}")
         blob = azure_dir + '/' + local_file.split('/')[-1]
+        print(f"YOUR BLOB IS: {blob}")
+        blob = blob.replace('_cog.tif', '.tif') if 'cog' in blob else blob
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob)
         content_settings = ContentSettings(content_type=content_type)
 
@@ -184,11 +197,11 @@ def upload_to_auzre(local_file, azure_dir, content_type):
             blob_client.upload_blob(data, content_settings=content_settings)
         print(f"Successfully uploaded {data} to {blob}")
 
-        if os.path.exists(local_file):
-            os.remove(local_file)
-            print(f"Successfully deleted {local_file} from local machine.")
-        else:
-            print(f"The file {local_file} does not exist.")
+        # if os.path.exists(local_file):
+        #     os.remove(local_file)
+        #     print(f"Successfully deleted {local_file} from local machine.")
+        # else:
+        #     print(f"The file {local_file} does not exist.")
 
     except Exception as e:
         print(f"An error occured: {e}")
