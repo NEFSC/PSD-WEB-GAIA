@@ -3,7 +3,8 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - openssl
+  - openssl=3.3.*        # Ensures compatibility with libgdal-core
+  - libgdal=3.9.1 
   - django
   - psycopg2
   - affine
@@ -158,7 +159,6 @@ dependencies:
   - libdeflate
   - libexpat
   - libffi
-  - libgdal
   - libgdal-core
   - libgdal-fits
   - libgdal-grib
