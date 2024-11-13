@@ -21,9 +21,10 @@ from sys import platform
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 if platform == "linux":
-    GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    #GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/opt/conda/envs/gaia/lib/libgdal.so")
     #GEOS_LIBRARY_PATH = '/anaconda/envs/gaia/lib/geos_c.so'
-    SPATIALITE_LIBRARY_PATH = '/anaconda/envs/gaia/lib/mod_spatialite.so'
+    SPATIALITE_LIBRARY_PATH = '/opt/conda/envs/gaia/lib/mod_spatialite.so'
 elif platform == "win32":
     USER_HOME = os.path.expanduser("~")
     CONDA_PREFIX = os.environ.get("CONDA_PREFIX", "")    
@@ -60,7 +61,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'whale',
-    'django_q',
+    #'django_q',
     #'corsheaders',
 ]
 
