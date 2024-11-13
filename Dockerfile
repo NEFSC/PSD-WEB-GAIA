@@ -7,16 +7,19 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
+# Install OpenSSL system-wide
+RUN apt-get update && apt-get install -y openssl
+
 # Install Django and Gunicorn in the Anaconda environment
 RUN conda install -y django gunicorn
 
 # Create the environment using the environment.yml file
 COPY environment.yml .
-RUN conda env create -f environment.yml
+RUN conda install -n base -c conda-forge mamba && mamba env create -f environment.yml
 
 # Activate the environment
 ENV PATH /opt/conda/envs/gaia/bin:$PATH
-RUN echo "conda activate gaia" > ~/.bashrc
+RUN echo "conda init && conda activate gaia" > ~/.bashrc
 ENV CONDA_DEFAULT_ENV gaia
 
 # Install Nginx
