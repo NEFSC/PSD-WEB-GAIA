@@ -47,7 +47,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
-                 '127.0.0.1']
+                 '127.0.0.1', 'localhost']
 
 
 # Application definition
