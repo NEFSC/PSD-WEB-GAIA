@@ -1,11 +1,11 @@
-# Use an official Anaconda image as a parent image
+# Use an official miniconda image as a parent image
 FROM continuumio/miniconda3:latest
 
 # env variables
 ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
 
 # Install dependencies
-RUN apt-get update && apt-get install -y openssl libsqlite3-mod-spatialite sqlite3 gdal-bin binutils nginx binutils
+RUN apt-get update && apt-get install -y openssl libsqlite3-mod-spatialite sqlite3 gdal-bin binutils nginx
 
 # create conda env and install dependencies
 COPY environment.yml .
@@ -31,7 +31,7 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Ensure Spatialite extension loads with Django's database connection
 RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
 
-#Install gunicorn
+# Install gunicorn
 RUN conda install -y gunicorn
 
 # Run migrations and collect static files
@@ -39,7 +39,7 @@ RUN conda install -y gunicorn
 RUN conda run -n gaia python manage.py makemigrations
 RUN conda run -n gaia python manage.py migrate
 
-# expose port 80 for Gunicorn
+# expose port 80 for external access
 EXPOSE 80
 
 # Start Gunicorn and Nginx
