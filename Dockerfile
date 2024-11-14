@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 # Copy the Nginx configuration file to the container
 COPY nginx.conf /etc/nginx/nginx.conf
 
+RUN mkdir -p /app/logs
+
 # Collect static files (optional, depending on Django settings)
 RUN python manage.py collectstatic --noinput
 
