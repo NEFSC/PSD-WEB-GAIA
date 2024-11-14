@@ -31,13 +31,16 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Ensure Spatialite extension loads with Django's database connection
 RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
 
-# expose port 8000 for Gunicorn
-EXPOSE 8000
+#Install gunicorn
+RUN conda install -y gunicorn
 
 # Run migrations and collect static files
 #RUN conda run -n gaia python manage.py migrate
 RUN conda run -n gaia python manage.py
 
+# expose port 8000 for Gunicorn
+EXPOSE 80
+
 # Start Gunicorn and Nginx
-CMD ["bash", "-c", "source activate gaia && (gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 &) && nginx -g 'daemon off;'"]
-#CMD ["conda", "run", "-n", "myenv", "bash", "-c", "(gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 &) && nginx -g 'daemon off;'"]
+#CMD ["bash", "-c", "source activate gaia && (gunicorn gaia.wsgi:application --bind 127.0.0.1:8000 &) && nginx -g 'daemon off;'"]
+CMD ["bash", "-c", "source activate gaia && (gunicorn gaia.wsgi:application --bind 0.0.0.0:8000 &) && nginx -g 'daemon off;'"]
