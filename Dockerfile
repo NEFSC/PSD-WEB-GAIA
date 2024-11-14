@@ -1,42 +1,43 @@
 # Use an official Anaconda image as a parent image
-FROM continuumio/anaconda3:latest
+FROM continuumio/miniconda3:latest
 
-# Set the working directory in the container
-WORKDIR /app
+# env variables
+ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
 
-# Copy the current directory contents into the container at /app
-COPY . /app
+# Install dependencies
+RUN apt-get update && apt-get install -y openssl libsqlite3-mod-spatialite sqlite3 gdal-bin binutils nginx binutils
 
-# Install OpenSSL system-wide
-RUN apt-get update && apt-get install -y openssl libsqlite3-mod-spatialite
-
-ENV SPATIALITE_LIBRARY_PATH=mod_spatialite
-
-# Install Django and Gunicorn in the Anaconda environment
-RUN conda install -y django gunicorn
-
-# Create the environment using the environment.yml file
+# create conda env and install dependencies
 COPY environment.yml .
-RUN conda install -n base -c conda-forge mamba && mamba env create -f environment.yml
+RUN conda env create -f environment.yml && \
+    conda clean -a
 
-# Activate the environment
-ENV PATH /opt/conda/envs/gaia/bin:$PATH
-RUN echo "conda init && conda activate gaia" > ~/.bashrc
+# Activate the conda environment
 ENV CONDA_DEFAULT_ENV gaia
+ENV PATH /opt/conda/envs/$CONDA_DEFAULT_ENV/bin:$PATH
 
-# Install Nginx
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+# Set up Spatialite
+RUN mkdir -p /etc/sqlite && \
+    echo ".load /usr/lib/mod_spatialite.so" > /etc/sqlite/sqlite3.conf && \
+    echo "SELECT load_extension('mod_spatialite');" > /etc/sqlite/spatialite.init
+
+# Set application directory
+WORKDIR /app
+COPY . /app
 
 # Copy the Nginx configuration file to the container
 COPY nginx.conf /etc/nginx/nginx.conf
 
-RUN mkdir -p /app/logs
+# Ensure Spatialite extension loads with Django's database connection
+RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
 
-# Collect static files (optional, depending on Django settings)
-RUN python manage.py collectstatic --noinput
+# expose port 8000 for Gunicorn
+EXPOSE 8000
 
-# Expose port 80 for external access
-EXPOSE 80
+# Run migrations and collect static files
+#RUN conda run -n gaia python manage.py migrate
+RUN conda run -n gaia python manage.py
 
-# Run Gunicorn and start Nginx
-CMD ["sh", "-c", "gunicorn gaia.wsgi:application --bind 0.0.0.0:8000 --timeout 120 & nginx -g 'daemon off;'"]
+# Start Gunicorn and Nginx
+CMD ["bash", "-c", "source activate gaia && (gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 &) && nginx -g 'daemon off;'"]
+#CMD ["conda", "run", "-n", "myenv", "bash", "-c", "(gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 &) && nginx -g 'daemon off;'"]
