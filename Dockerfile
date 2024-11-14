@@ -36,7 +36,8 @@ RUN conda install -y gunicorn
 
 # Run migrations and collect static files
 # RUN conda run -n gaia python manage.py migrate
-RUN conda run -n gaia python manage.py
+RUN conda run -n gaia python manage.py makemigrations
+RUN conda run -n gaia python manage.py migrate
 
 # expose port 80 for Gunicorn
 EXPOSE 80
