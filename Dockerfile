@@ -8,7 +8,9 @@ WORKDIR /app
 COPY . /app
 
 # Install OpenSSL system-wide
-RUN apt-get update && apt-get install -y openssl
+RUN apt-get update && apt-get install -y openssl libsqlite3-mod-spatialite
+
+ENV SPATIALITE_LIBRARY_PATH=mod_spatialite
 
 # Install Django and Gunicorn in the Anaconda environment
 RUN conda install -y django gunicorn
