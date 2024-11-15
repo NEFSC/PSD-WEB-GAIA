@@ -208,3 +208,8 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
+
+# Avoid CSRF verfication failures
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',  # Add the origin used in your requests
+]
