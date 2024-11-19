@@ -21,9 +21,11 @@ from sys import platform
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 if platform == "linux":
-    GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    #GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/opt/conda/envs/gaia/lib/libgdal.so")
     #GEOS_LIBRARY_PATH = '/anaconda/envs/gaia/lib/geos_c.so'
-    SPATIALITE_LIBRARY_PATH = '/anaconda/envs/gaia/lib/mod_spatialite.so'
+    SPATIALITE_LIBRARY_PATH = '/opt/conda/envs/gaia/lib/mod_spatialite.so'
+
 elif platform == "win32":
     USER_HOME = os.path.expanduser("~")
     CONDA_PREFIX = os.environ.get("CONDA_PREFIX", "")    
@@ -46,7 +48,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
-                 '127.0.0.1']
+                 '127.0.0.1',
+                 'localhost']
 
 
 # Application definition
@@ -60,7 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'whale',
-    'django_q',
+    #'django_q',
     #'corsheaders',
 ]
 
@@ -116,7 +119,7 @@ WSGI_APPLICATION = 'gaia.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.spatialite',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -204,4 +207,9 @@ AZURE_CONTAINER_NAME = 'data'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
+]
+
+# Avoid CSRF verfication failures
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',  # Add the origin used in your requests
 ]
