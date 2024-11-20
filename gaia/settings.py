@@ -212,4 +212,6 @@ STATICFILES_DIRS = [
 # Avoid CSRF verfication failures
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8080',  # Add the origin used in your requests
+    'https://dev-gaia.fisheries.noaa.gov',
+    'http://dev-gaia.fisheries.noaa.gov'
 ]
