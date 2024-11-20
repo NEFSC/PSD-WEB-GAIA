@@ -4,16 +4,8 @@ services:
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
-    depends_on:
-      - db
     expose:
       - "8000"
-  db:
-    image: postgres
-    environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
   nginx:
     image: nginx:alpine
     ports:
