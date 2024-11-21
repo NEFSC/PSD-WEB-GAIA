@@ -84,7 +84,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'verbose_csrf_middleware.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -215,7 +215,5 @@ CSRF_TRUSTED_ORIGINS = [
     'https://dev-gaia.fisheries.noaa.gov',
     'http://dev-gaia.fisheries.noaa.gov'
 ]
-
-CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
