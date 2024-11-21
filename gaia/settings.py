@@ -16,6 +16,12 @@ from pathlib import Path
 import sys
 from sys import platform
 
+# Avoid CSRF verfication failures
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",  # Add the origin used in your requests
+    "https://dev-gaia.fisheries.noaa.gov",
+    "http://dev-gaia.fisheries.noaa.gov"
+]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -207,11 +213,4 @@ AZURE_CONTAINER_NAME = 'data'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
-]
-
-# Avoid CSRF verfication failures
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:8080',  # Add the origin used in your requests
-    'https://dev-gaia.fisheries.noaa.gov',
-    'http://dev-gaia.fisheries.noaa.gov'
 ]
