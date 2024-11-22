@@ -57,5 +57,5 @@ RUN conda run -n gaia python manage.py collectstatic --noinput
 # expose port 8000 for external access
 EXPOSE 8000
 
-# Start Gunicorn
+# Start Gunicorn -- Overriden in docker-compose.yml
 CMD ["bash", "-c", "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000"]
