@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user and group
-RUN groupadd -r appuser && \
-    useradd -r -g appuser -m appuser
+RUN groupadd -r vmuser && \
+    useradd -r -g vmuser -m vmuser
 
 # create conda env and install dependencies
 COPY environment.yml .
@@ -37,8 +37,8 @@ WORKDIR /app
 COPY . /app
 
 # Change ownership of the application directory to the non-root user
-RUN chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /etc/sqlite
+RUN chown -R vmuser:vmuser /app && \
+    chown -R vmuser:vmuser /etc/sqlite
 
 # Ensure Spatialite extension loads with Django's database connection
 RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
@@ -47,7 +47,7 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 RUN conda install -y gunicorn
 
 # Switch to the non-root user
-USER appuser
+USER vmuser
 
 # Run migrations and collect static files
 RUN conda run -n gaia python manage.py makemigrations
