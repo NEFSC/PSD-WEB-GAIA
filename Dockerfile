@@ -58,4 +58,4 @@ RUN conda run -n gaia python manage.py collectstatic --noinput
 EXPOSE 8000
 
 # Start Gunicorn
-CMD ["bash", "-c", "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000 --reload"]
+CMD ["bash", "-c", "source activate gaia && python manage.py runserver 0.0.0.0:8000 --cert-file /etc/letsencrypt/live/dev-gaia.fisheries.noaa.gov/fullchain.pem --key-file /etc/letsencrypt/live/dev-gaia.fisheries.noaa.gov/privkey.pem"]
