@@ -2,7 +2,6 @@ services:
   web:
     build: .
     volumes:
-      - .:/app
       - static_volume:/app/static
       - media_volume:/app/media
     expose:
