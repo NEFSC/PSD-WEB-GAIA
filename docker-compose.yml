@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    user: "101:101"
     volumes:
       - .:/app
       - static_volume:/app/static
