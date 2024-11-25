@@ -38,7 +38,8 @@ COPY . /app
 
 # Change ownership of the application directory to the non-root user
 RUN chown -R appuser:appuser /app && \
-    chown -R appuser:appuser /etc/sqlite
+    chown -R appuser:appuser /etc/sqlite && \
+    chmod 777 /app
 
 # Ensure Spatialite extension loads with Django's database connection
 RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
