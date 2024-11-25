@@ -2,7 +2,6 @@ services:
   web:
     build: .
     volumes:
-      - ./whale:/app/whale
       - static_volume:/app/static
       - media_volume:/app/media
     expose:
