@@ -22,10 +22,15 @@ services:
       - web
     command: /bin/sh -c "chmod -R 755 /static && nginx -g 'daemon off;'"
   certbot:
+    # only use this service to renew the certificate
     image: certbot/certbot:latest
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw
       - ./certbot/conf/:/etc/letsencrypt/:rw
+    profiles:
+      # Example usage: docker-compose --profile certbot up
+      - certbot # This profile is used to run the certbot service for certificate renewal
+
 volumes:
   static_volume:
   media_volume:
