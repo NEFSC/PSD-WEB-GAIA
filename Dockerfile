@@ -35,7 +35,7 @@ RUN mkdir -p /etc/sqlite && \
 # Set application directory
 WORKDIR /app
 COPY . /app
-RUN chmod +x /entrypoint.sh
+RUN chmod +x entrypoint.sh
 
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
@@ -54,5 +54,5 @@ EXPOSE 8000
 # Switch to the non-root user
 USER vmuser
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
