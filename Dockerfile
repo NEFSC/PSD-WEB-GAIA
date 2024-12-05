@@ -35,6 +35,7 @@ RUN mkdir -p /etc/sqlite && \
 # Set application directory
 WORKDIR /app
 COPY . /app
+RUN chmod +x /entrypoint.sh
 
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
@@ -46,9 +47,6 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 
 # Install gunicorn
 RUN conda install -y gunicorn
-
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 # expose port 8000 for external access
 EXPOSE 8000
