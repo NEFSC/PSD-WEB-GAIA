@@ -47,16 +47,14 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 # Install gunicorn
 RUN conda install -y gunicorn
 
-# Switch to the non-root user
-USER vmuser
-
-# Run migrations and collect static files
-RUN conda run -n gaia python manage.py makemigrations
-RUN conda run -n gaia python manage.py migrate
-RUN conda run -n gaia python manage.py collectstatic --noinput
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # expose port 8000 for external access
 EXPOSE 8000
 
-# Start Gunicorn -- Overriden in docker-compose.yml
-CMD ["bash", "-c", "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000"]
+# Switch to the non-root user
+USER vmuser
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
