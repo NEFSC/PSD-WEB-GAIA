@@ -1,0 +1,49 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+env:
+  APPNAME: gaia
+  REGISTRY: ghcr.io
+  
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        packages: write
+
+    steps:
+    - name: Generate build ID
+      id: prep
+      run: |
+        branch=${GITHUB_REF##*/}
+        sha=${GITHUB_SHA::8}
+        ts=$(date +%s)
+        reponame="${GITHUB_REPOSITORY,,}"
+        echo "BUILD_ID=${branch}-${sha}-${ts}" >> $GITHUB_OUTPUT
+        echo "LOWER_NAME=${reponame}" >> $GITHUB_OUTPUT
+        echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+        build-args: |
+          GITHUB_OAUTH_TOKEN=${{ secrets.CICDTOKEN }}
