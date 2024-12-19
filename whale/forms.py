@@ -3,6 +3,8 @@ from django import forms
 from django.contrib.gis import forms as gis_forms
 from .models import AreaOfInterest, ExtractTransformLoad
 from .models import PointsOfInterest as Species
+from django.utils.safestring import mark_safe
+from django.forms.utils import flatatt
 
 class APIQueryForm(forms.Form):
     API_CHOICES = [
@@ -63,13 +65,63 @@ class ProcessingForm(forms.Form):
                   'pixel_x_min', 'pixel_x_max', 'pixel_y_min', 'pixel_y_max',
                   'date_min', 'date_max', 'publish_date_min', 'publish_date_max', 'aoi']
 
+class USWDSButtonGroupWidget(forms.Widget):
+    def __init__(self, choices, attrs=None):
+        super().__init__(attrs)
+        self.choices = choices
+
+    def render(self, name, value, attrs=None, renderer=None):
+        if attrs is None:
+            attrs = {}
+        attrs['id'] = attrs.get('id', f'id_{name}')
+        buttons = []
+        for val, label in self.choices:
+            button_attrs = {
+                'type': 'button',
+                'class': 'usa-button margin-1',
+                'data-value': val,
+            }
+            if str(value) == str(val):
+                button_attrs['class'] += ' usa-button--active'
+            button_html = f'<button {flatatt(button_attrs)}>{label}</button>'
+            buttons.append(button_html)
+        hidden_input = f'<input type="hidden" name="{name}" value="{value or ""}" {flatatt(attrs)}>'
+        return mark_safe('<div id="classification-buttongroup" class="">' + ''.join(buttons) + '</div>' + hidden_input)
+
+class USWDSRadioButtonGroupWidget(forms.Widget):
+    def __init__(self, choices, attrs=None):
+        super().__init__(attrs)
+        self.choices = choices
+
+    def render(self, name, value, attrs=None, renderer=None):
+        if attrs is None:
+            attrs = {}
+        attrs['id'] = attrs.get('id', f'id_{name}')
+        radios = []
+        for val, label in self.choices:
+            input_attrs = {
+                'type': 'radio',
+                'name': name,
+                'value': val,
+                'id': f'{attrs["id"]}_{val}',
+                'class': 'usa-radio__input'
+            }
+            if str(value) == str(val):
+                input_attrs['checked'] = 'checked'
+            radio_input = f'<input {flatatt(input_attrs)}>'
+            label_html = f'<label for="{input_attrs["id"]}" class="usa-radio__label">{label}</label>'
+            radios.append(
+                f'<div class="usa-radio">{radio_input}{label_html}</div>'
+            )
+        return mark_safe('<fieldset class="usa-fieldset">' + ''.join(radios) + '</fieldset>')
+
 class PointsOfInterestForm(forms.ModelForm):
     class Meta:
         model = Species
-        fields = ['classification', 'confidence','species', 'comments']
+        fields = ['comments', 'classification', 'species', 'confidence']
         widgets = {
-            'classification': forms.Select(),
-            'confidence': forms.Select(),
-            'species': forms.Select(),
-            'comments': forms.Textarea(attrs={'maxlength': 500}),
+            'comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'classification': USWDSButtonGroupWidget(choices=Species.CLASSIFICATION_CHOICES),
+            'species': USWDSRadioButtonGroupWidget(choices=Species.SPECIES_CHOICES),
+            'confidence': USWDSRadioButtonGroupWidget(choices=Species.CONFIDENCE_CHOICES),
         }
