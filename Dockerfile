@@ -49,6 +49,9 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 # Install gunicorn
 RUN conda install -y gunicorn
 
+RUN mkdir -p /mnt/secrets
+RUN mkdir -p /mnt/data
+
 # Add symbolic links to secrets and database file
 RUN ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
 RUN ln -s /mnt/data/sqlite3 /app/db.sqlite3
