@@ -50,8 +50,8 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 RUN conda install -y gunicorn
 
 # Add symbolic links to secrets and database file
-RUN ln -s /mnt/secrets-json /app/gaia/secrets.json
-RUN ln -s /mnt/sqlite3 /app/db.sqlite3
+RUN ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
+RUN ln -s /mnt/data/sqlite3 /app/db.sqlite3
 # expose port 8000 for external access
 EXPOSE 8000
 
