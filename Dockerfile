@@ -53,8 +53,8 @@ RUN mkdir -p /mnt/secrets
 RUN mkdir -p /mnt/data
 
 # Add symbolic links to secrets and database file
-RUN ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
-RUN ln -s /mnt/data/sqlite3 /app/db.sqlite3
+#RUN ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
+#RUN ln -s /mnt/data/sqlite3 /app/db.sqlite3
 # expose port 8000 for external access
 EXPOSE 8000
 
