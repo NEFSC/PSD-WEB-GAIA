@@ -1,0 +1,12 @@
+.*
+.*/*
+IDE-config/
+Dockerfile
+License.txt
+README.md
+README.MD
+LICENSE
+LICENSE.TXT
+linters/
+.devcontainer/
+azure-objects/
