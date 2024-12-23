@@ -38,6 +38,9 @@ COPY . /app
 
 RUN chmod +x entrypoint.sh
 
+# Create empty log file
+RUN touch /app/logs/django_sqlite.log
+
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
     chown -R vmuser:vmuser /etc/sqlite && \
