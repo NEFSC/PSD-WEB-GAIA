@@ -36,6 +36,8 @@ RUN mkdir -p /etc/sqlite && \
 WORKDIR /app
 COPY . /app
 
+RUN chmod +x entrypoint.sh
+
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
     chown -R vmuser:vmuser /etc/sqlite
@@ -46,16 +48,11 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 # Install gunicorn
 RUN conda install -y gunicorn
 
-# Switch to the non-root user
-USER vmuser
-
-# Run migrations and collect static files
-RUN conda run -n gaia python manage.py makemigrations
-RUN conda run -n gaia python manage.py migrate
-RUN conda run -n gaia python manage.py collectstatic --noinput
-
 # expose port 8000 for external access
 EXPOSE 8000
 
-# Start Gunicorn
-CMD ["bash", "-c", "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000 --reload"]
+# Switch to the non-root user
+USER vmuser
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
