@@ -51,6 +51,8 @@ RUN conda install -y gunicorn
 
 RUN mkdir -p /mnt/secrets
 RUN mkdir -p /mnt/data
+RUN chown -R vmuser:vmuser /mnt/secrets && \
+    chown -R vmuser:vmuser /mnt/data
 
 # Add symbolic links to secrets and database file
 RUN ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
