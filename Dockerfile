@@ -40,8 +40,7 @@ RUN chmod +x entrypoint.sh
 
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
-    chown -R vmuser:vmuser /etc/sqlite && \
-    chmod 777 /app
+    chown -R vmuser:vmuser /etc/sqlite
 
 # Ensure Spatialite extension loads with Django's database connection
 RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
