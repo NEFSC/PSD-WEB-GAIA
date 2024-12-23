@@ -74,17 +74,27 @@ class USWDSButtonGroupWidget(forms.Widget):
         if attrs is None:
             attrs = {}
         attrs['id'] = attrs.get('id', f'id_{name}')
+
+        # Reorder choices to prioritize "Unsure" and "Whale"
+        def prioritize_choice(choice):
+            return (choice[1] not in {"Unsure", "Whale"}, choice[1])
+
+        reordered_choices = sorted(self.choices, key=prioritize_choice)
+
         buttons = []
-        for val, label in self.choices:
+        for val, label in reordered_choices:
             button_attrs = {
                 'type': 'button',
                 'class': 'usa-button margin-1',
                 'data-value': val,
             }
+            if label in {"Unsure", "Whale"}:
+                button_attrs['class'] += ' usa-button--outline'
             if str(value) == str(val):
                 button_attrs['class'] += ' usa-button--active'
             button_html = f'<button {flatatt(button_attrs)}>{label}</button>'
             buttons.append(button_html)
+
         hidden_input = f'<input type="hidden" name="{name}" value="{value or ""}" {flatatt(attrs)}>'
         return mark_safe('<div id="classification-buttongroup" class="">' + ''.join(buttons) + '</div>' + hidden_input)
 
