@@ -38,6 +38,8 @@ COPY . /app
 
 RUN chmod +x entrypoint.sh
 
+RUN mkdir logs
+
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
     chown -R vmuser:vmuser /etc/sqlite && \
