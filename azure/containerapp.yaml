@@ -1,0 +1,81 @@
+identity:
+  type: None
+location: East US
+name: gaia
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: gaia.internal.happypond-d5fa406e.eastus.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions:
+        affinity: none
+      targetPort: 8000
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: 100
+    registries:
+    - identity: ''
+      passwordSecretRef: reg-pswd-8adc1063-bda4
+      server: ghcr.io
+      username: mengland-noaa
+    secrets:
+    - name: reg-pswd-8adc1063-bda4
+    - name: secrets-json
+    service: null
+  delegatedIdentities: []
+  provisioningState: Succeeded
+  runningStatus: Stopped
+  template:
+    containers:
+    - image: ghcr.io/nefsc/psd-web-gaia:run-azure-serverless-ee7b3a29-1735853261
+      name: gaia
+      # args:
+      #   - -c
+      #   - 'while true; do echo "app dir: "; ls -altr /app; echo "cat secrets.json";
+      #     cat /app/gaia/secrets.json; echo "ls app/gaia: "; ls -altr /app/gaia; echo
+      #     "ls /mnt/secrets"; ls -altr /mnt/secrets; echo "ls -altr /mnt/data"; ls -altr
+      #     /mnt/data; echo "ls /mnt"; ls -altr /mnt; echo "find /app"; find /app; sleep 10; done'
+      # command:
+      #   - /bin/bash
+      probes: []
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+      volumeMounts:
+      - mountPath: /mnt/secrets
+        volumeName: my-secrets
+      - mountPath: /mnt/data/
+        volumeName: my-azure-files-volume
+        
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      maxReplicas: 1
+      minReplicas: 0
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes:
+    - name: my-secrets
+      secrets:
+      - path: secrets-json
+        secretRef: secrets-json
+      storageType: Secret
+    - name: my-azure-files-volume
+      storageType: AzureFile
+      storageName: gaia-storage
+  workloadProfileName: Consumption
+resourceGroup: gaia-application-resource-group
+type: Microsoft.App/containerApps
