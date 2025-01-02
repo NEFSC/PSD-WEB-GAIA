@@ -20,3 +20,6 @@ dist/
 *.egg-info/
 *.log
 tmp/
+secrets.json
+logs/
+docker-compose*.yml

@@ -49,7 +49,7 @@ ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
                  '127.0.0.1',
                  'localhost',
-                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io']
+                 'gaia-dev.happypond-d5fa406e.eastus.azurecontainerapps.io']
 
 
 # Application definition
