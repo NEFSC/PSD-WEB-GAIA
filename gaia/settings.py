@@ -16,7 +16,6 @@ from pathlib import Path
 import sys
 from sys import platform
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -89,6 +88,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this near the top
     #'cordsheaders.middleware.CorsMiddleware',
     #'django.middleware.common.CommonMiddleware',
 ]
@@ -189,9 +189,9 @@ LONGIN_URL = '/login/'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS =  [
-    os.path.join(BASE_DIR, 'whale', 'static')
-]
+
+# Enable WhiteNoise storage for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -205,7 +205,6 @@ AZURE_STORAGE_ACCOUNT_NAME = 'gaianoaastorage'
 AZURE_STORAGE_ACCOUNT_KEY = secrets['AZURE_KEY']
 AZURE_CONTAINER_NAME = 'data'
 
-STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
