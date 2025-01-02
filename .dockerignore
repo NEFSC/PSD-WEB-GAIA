@@ -9,3 +9,14 @@ LICENSE
 LICENSE.TXT
 linters/
 .devcontainer/
+*.py[cod]
+__pycache__/
+.pytest_cache/
+.coverage
+.env
+*.sqllite3
+build/
+dist/
+*.egg-info/
+*.log
+tmp/
