@@ -38,7 +38,7 @@ properties:
   runningStatus: Stopped
   template:
     containers:
-    - image: ghcr.io/nefsc/psd-web-gaia:run-azure-serverless-ee7b3a29-1735853261
+    - image: ghcr.io/nefsc/psd-web-gaia:run-azure-serverless-87cdded5-1735855283
       name: gaia
       # args:
       #   - -c
@@ -76,6 +76,7 @@ properties:
     - name: my-azure-files-volume
       storageType: AzureFile
       storageName: gaia-storage
+      mountOptions: "nobrl,mfsymlinks"
   workloadProfileName: Consumption
 resourceGroup: gaia-application-resource-group
 type: Microsoft.App/containerApps
