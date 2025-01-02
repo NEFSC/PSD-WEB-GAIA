@@ -43,7 +43,7 @@ with open(SECRETS_FILE) as f:
 SECRET_KEY = secrets['DJANGO_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
