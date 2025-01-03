@@ -55,13 +55,13 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Set up Azure CLI
-      uses: azure/setup-cli@v2
-
     - name: Update Azure Container App
-      run: |
-        az containerapp update \
-          --name ${{ env.APPNAME }}
-          --resource-group ${{ env.APPNAME }}-application-resource-group
-          --containers gaia
-          --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az containerapp update \
+            --name ${{ env.APPNAME }}
+            --resource-group ${{ env.APPNAME }}-application-resource-group
+            --containers gaia
+            --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
