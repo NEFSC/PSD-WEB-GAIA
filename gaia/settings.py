@@ -49,7 +49,6 @@ ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
                  '127.0.0.1',
                  'localhost',
-                 'gaia*.happypond-d5fa406e.eastus.azurecontainerapps.io',
                  'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',]
 
 
@@ -89,7 +88,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this near the top
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this near the top, TODO: only install in dev envs without a reverse-proxy
     #'cordsheaders.middleware.CorsMiddleware',
     #'django.middleware.common.CommonMiddleware',
 ]
