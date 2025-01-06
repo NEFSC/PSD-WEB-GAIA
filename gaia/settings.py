@@ -194,7 +194,7 @@ LONGIN_URL = '/login/'
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Enable WhiteNoise storage for static files
+# Enable WhiteNoise storage for static files (TODO: only for dev environments without a reverse-proxy)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
