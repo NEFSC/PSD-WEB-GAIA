@@ -54,6 +54,7 @@ RUN conda install -y gunicorn
 # Install whitenoise to serve static files with gunicorn (not for production)
 RUN conda install whitenoise
 
+# Create directories for secrets and data volumes so Azure will mount them
 RUN mkdir -p /mnt/secrets
 RUN mkdir -p /mnt/data
 
