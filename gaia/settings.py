@@ -132,23 +132,39 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'file': {
+        'db_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/django_sqlite.log'),
             'formatter': 'verbose',
         },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/main.log'),
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django.db.backends': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
+            'handlers': ['db_file'],
+            'level': 'INFO',
             'propagate': False,
         },
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+
     },
     'formatters': {
         'verbose': {
             'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
             'style': '{',
         },
     },
