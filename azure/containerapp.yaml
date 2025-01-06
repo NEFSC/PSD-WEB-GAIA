@@ -40,14 +40,6 @@ properties:
     containers:
     - image: ghcr.io/nefsc/psd-web-gaia:run-azure-serverless-87cdded5-1735855283
       name: gaia
-      # args:
-      #   - -c
-      #   - 'while true; do echo "app dir: "; ls -altr /app; echo "cat secrets.json";
-      #     cat /app/gaia/secrets.json; echo "ls app/gaia: "; ls -altr /app/gaia; echo
-      #     "ls /mnt/secrets"; ls -altr /mnt/secrets; echo "ls -altr /mnt/data"; ls -altr
-      #     /mnt/data; echo "ls /mnt"; ls -altr /mnt; echo "find /app"; find /app; sleep 10; done'
-      # command:
-      #   - /bin/bash
       probes: []
       resources:
         cpu: 0.5
