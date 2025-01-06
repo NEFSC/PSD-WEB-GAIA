@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    #volumes:
+    #  - static_volume:/app/static
+    #  - media_volume:/app/media
+    #  - ./whale:/app/whale
+    expose:
+      - "8000"
+    ports:
+      - "80:8000"
+    command: ${BUILT_IN_SERVER_CMD:-/bin/bash -c "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000"}
