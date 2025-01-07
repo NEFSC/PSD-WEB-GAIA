@@ -38,13 +38,13 @@ properties:
   runningStatus: Stopped
   template:
     containers:
-    - image: ghcr.io/nefsc/psd-web-gaia:run-azure-serverless-87cdded5-1735855283
+    - image: ghcr.io/nefsc/psd-web-gaia:dev-282f5904-1736207358
       name: gaia
       probes: []
       resources:
-        cpu: 0.5
-        ephemeralStorage: 2Gi
-        memory: 1Gi
+        cpu: 1
+        ephemeralStorage: 4Gi
+        memory: 2Gi
       volumeMounts:
       - mountPath: /mnt/secrets
         volumeName: my-secrets
