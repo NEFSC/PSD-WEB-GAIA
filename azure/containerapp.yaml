@@ -38,7 +38,7 @@ properties:
   runningStatus: Stopped
   template:
     containers:
-    - image: ghcr.io/nefsc/psd-web-gaia:dev-282f5904-1736207358
+    - image: ghcr.io/nefsc/psd-web-gaia:dev-371999b0-1736212586
       name: gaia
       probes: []
       resources:
@@ -55,7 +55,7 @@ properties:
     revisionSuffix: ''
     scale:
       maxReplicas: 1
-      minReplicas: 0
+      minReplicas: 1
       rules: null
     serviceBinds: null
     terminationGracePeriodSeconds: null
