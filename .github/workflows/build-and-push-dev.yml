@@ -63,6 +63,6 @@ jobs:
         azcliversion: latest
         inlineScript: |
           az containerapp update \
-            --name ${{ env.APPNAME }}
-            --resource-group ${{ env.APPNAME }}-application-resource-group
+            --name ${{ env.APPNAME }} \
+            --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
