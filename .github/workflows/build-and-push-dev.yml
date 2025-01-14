@@ -65,4 +65,5 @@ jobs:
           az containerapp update \
             --name ${{ env.APPNAME }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
-            --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+            --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
+            --revision-suffix ${{ steps.prep.outputs.GIT_BRANCH }}
