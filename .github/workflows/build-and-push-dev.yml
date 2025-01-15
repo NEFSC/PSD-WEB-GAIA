@@ -31,6 +31,7 @@ jobs:
         reponame="${GITHUB_REPOSITORY,,}"
         echo "BUILD_ID=${branch}-${sha}-${ts}" >> $GITHUB_OUTPUT
         echo "LOWER_NAME=${reponame}" >> $GITHUB_OUTPUT
+        echo "reponame=${reponame}"
         echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}" >> $GITHUB_OUTPUT
         echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}"
 
