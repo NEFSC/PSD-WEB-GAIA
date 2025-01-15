@@ -32,7 +32,7 @@ jobs:
         echo "BUILD_ID=${branch}-${sha}-${ts}" >> $GITHUB_OUTPUT
         echo "LOWER_NAME=${reponame}" >> $GITHUB_OUTPUT
         echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}" >> $GITHUB_OUTPUT
-        echo "GIT_BRANCH=${GIT_BRANCH}"
+        echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}"
 
     # - name: Checkout repository
     #   uses: actions/checkout@v4
