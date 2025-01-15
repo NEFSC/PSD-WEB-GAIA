@@ -23,12 +23,14 @@ jobs:
       id: prep
       run: |
         branch=${GITHUB_REF##*/}
+        branch=${branch,,}  # Convert to lowercase
+        branch=${branch//[^a-z0-9\-]/-}  # Replace invalid characters with hyphens
         sha=${GITHUB_SHA::8}
         ts=$(date +%s)
         reponame="${GITHUB_REPOSITORY,,}"
         echo "BUILD_ID=${branch}-${sha}-${ts}" >> $GITHUB_OUTPUT
         echo "LOWER_NAME=${reponame}" >> $GITHUB_OUTPUT
-        echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}" >> $GITHUB_OUTPUT
 
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -66,4 +68,4 @@ jobs:
             --name ${{ env.APPNAME }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
-            --revision-suffix ${{ steps.prep.outputs.GIT_BRANCH }}
+            --revision-suffix ${{ steps.prep.outputs.LOWER_NAME }}
