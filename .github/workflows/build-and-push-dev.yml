@@ -69,3 +69,13 @@ jobs:
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
             --revision-suffix ${{ steps.prep.outputs.GIT_BRANCH }}
+
+    - name: Label Azure Container App
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az containerapp revision label add \
+            --revision ${{ env.APPNAME }}--${{ steps.prep.outputs.GIT_BRANCH }} \
+            --resource-group ${{ env.APPNAME }}-application-resource-group \
+            --label ${{ steps.prep.outputs.GIT_BRANCH }}
