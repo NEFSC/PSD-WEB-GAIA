@@ -60,15 +60,19 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: Update Azure Container App
+      id: update
       uses: azure/cli@v2
       with:
         azcliversion: latest
         inlineScript: |
-          az containerapp update \
+          REVISION=$(az containerapp update \
             --name ${{ env.APPNAME }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
-            --revision-suffix ${{ steps.prep.outputs.BUILD_ID }}
+            --query 'latestRevisionName' \
+            --output tsv)
+          echo "Latest Revision: $REVISION"
+          echo "revision=$REVISION" >> $GITHUB_ENV
 
     - name: Label Azure Container App
       uses: azure/cli@v2
@@ -76,6 +80,6 @@ jobs:
         azcliversion: latest
         inlineScript: |
           az containerapp revision label add \
-            --revision ${{ env.APPNAME }}--${{ steps.prep.outputs.GIT_BRANCH }} \
+            --revision ${{ steps.update.outputs.revision }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --label ${{ steps.prep.outputs.GIT_BRANCH }}
