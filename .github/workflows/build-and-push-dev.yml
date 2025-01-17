@@ -65,13 +65,13 @@ jobs:
       with:
         azcliversion: latest
         inlineScript: |
-          REVISION=$(az containerapp update \
+          LATEST-REVISION=$(az containerapp update \
             --name ${{ env.APPNAME }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
             --query 'properties.latestRevisionName')
-          echo "Latest Revision: $REVISION"
-          echo "revision=$REVISION" >> $GITHUB_ENV
+          echo "Latest revision: $LATEST-REVISION"
+          echo "REVISION=$LATEST-REVISION" >> $GITHUB_ENV
 
     - name: Label Azure Container App
       uses: azure/cli@v2
@@ -79,6 +79,6 @@ jobs:
         azcliversion: latest
         inlineScript: |
           az containerapp revision label add \
-            --revision ${{ steps.update.outputs.revision }} \
+            --revision ${{ steps.prep.outputs.REVISION }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --label ${{ steps.prep.outputs.GIT_BRANCH }}
