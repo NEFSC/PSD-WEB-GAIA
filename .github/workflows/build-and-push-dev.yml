@@ -80,4 +80,6 @@ jobs:
           az containerapp revision label add \
             --revision ${{ env.REVISION }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
-            --label ${{ steps.prep.outputs.GIT_BRANCH }}
+            --label ${{ steps.prep.outputs.GIT_BRANCH }} \
+            --verbose \
+            --no-prompt
