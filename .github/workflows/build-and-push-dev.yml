@@ -78,6 +78,6 @@ jobs:
         azcliversion: latest
         inlineScript: |
           az containerapp revision label add \
-            --revision $REVISION \
+            --revision ${{ env.REVISION }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --label ${{ steps.prep.outputs.GIT_BRANCH }}
