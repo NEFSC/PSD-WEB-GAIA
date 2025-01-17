@@ -60,7 +60,6 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     - name: Update Azure Container App
-      id: update
       uses: azure/cli@v2
       with:
         azcliversion: latest
@@ -79,6 +78,6 @@ jobs:
         azcliversion: latest
         inlineScript: |
           az containerapp revision label add \
-            --revision ${{ steps.prep.outputs.REVISION }} \
+            --revision $REVISION \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --label ${{ steps.prep.outputs.GIT_BRANCH }}
