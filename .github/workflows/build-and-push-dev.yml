@@ -69,8 +69,7 @@ jobs:
             --name ${{ env.APPNAME }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
-            --query 'latestRevisionName' \
-            --output tsv)
+            --query 'properties.latestRevisionName')
           echo "Latest Revision: $REVISION"
           echo "revision=$REVISION" >> $GITHUB_ENV
 
