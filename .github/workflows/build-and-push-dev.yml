@@ -45,14 +45,14 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # - name: Build and push Docker image
-    #   uses: docker/build-push-action@v6
-    #   with:
-    #     context: .
-    #     push: true
-    #     tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
-    #     build-args: |
-    #       GITHUB_OAUTH_TOKEN=${{ secrets.CICDTOKEN }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+        build-args: |
+          GITHUB_OAUTH_TOKEN=${{ secrets.CICDTOKEN }}
 
     - name: Azure login
       uses: azure/login@v2
