@@ -45,14 +45,14 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
-        build-args: |
-          GITHUB_OAUTH_TOKEN=${{ secrets.CICDTOKEN }}
+    # - name: Build and push Docker image
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     context: .
+    #     push: true
+    #     tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }}
+    #     build-args: |
+    #       GITHUB_OAUTH_TOKEN=${{ secrets.CICDTOKEN }}
 
     - name: Azure login
       uses: azure/login@v2
@@ -65,13 +65,13 @@ jobs:
       with:
         azcliversion: latest
         inlineScript: |
-          LATEST-REVISION=$(az containerapp update \
+          LATEST_REVISION=$(az containerapp update \
             --name ${{ env.APPNAME }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
             --query 'properties.latestRevisionName')
-          echo "Latest revision: $LATEST-REVISION"
-          echo "REVISION=$LATEST-REVISION" >> $GITHUB_ENV
+          echo "Latest revision: $LATEST_REVISION"
+          echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
 
     - name: Label Azure Container App
       uses: azure/cli@v2
@@ -79,6 +79,6 @@ jobs:
         azcliversion: latest
         inlineScript: |
           az containerapp revision label add \
-            --revision ${{ steps.prep.outputs.REVISION }} \
+            --revision ${{ steps.prep.outputs.LATEST_REVISION }} \
             --resource-group ${{ env.APPNAME }}-application-resource-group \
             --label ${{ steps.prep.outputs.GIT_BRANCH }}
