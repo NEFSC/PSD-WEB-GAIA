@@ -211,6 +211,7 @@ class PointsOfInterest(gis_models.Model):
         ('buoy', 'Buoy'),
         ('whale', 'Whale'),
         ('zooplankton', 'Zooplankton'),
+        ('land', 'Land'),
         ('unsure', 'Unsure'),
     ]
 
