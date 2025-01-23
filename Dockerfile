@@ -38,6 +38,8 @@ COPY . /app
 
 RUN chmod +x entrypoint.sh
 
+RUN mkdir -p logs
+
 # Change ownership of the application directory to the non-root user
 RUN chown -R vmuser:vmuser /app && \
     chown -R vmuser:vmuser /etc/sqlite
@@ -48,6 +50,16 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 # Install gunicorn
 RUN conda install -y gunicorn
 
+# Install whitenoise to serve static files with gunicorn (not for production)
+RUN conda install whitenoise
+
+# Create directories for secrets and data volumes so Azure will mount them
+RUN mkdir -p /mnt/secrets
+RUN mkdir -p /mnt/data
+
+# Add symbolic links to secrets and database file if they don't exist
+RUN [ -e /app/gaia/secrets.json ] || ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
+RUN [ -e /app/db.sqlite3 ] || ln -s /mnt/data/db.sqlite3 /app/db.sqlite3
 # expose port 8000 for external access
 EXPOSE 8000
 
@@ -55,4 +67,4 @@ EXPOSE 8000
 USER vmuser
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
+CMD ["/bin/bash", "-c", "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000"]

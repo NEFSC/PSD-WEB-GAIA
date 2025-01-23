@@ -16,7 +16,6 @@ from pathlib import Path
 import sys
 from sys import platform
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -44,12 +43,15 @@ with open(SECRETS_FILE) as f:
 SECRET_KEY = secrets['DJANGO_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
+                 'test-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
                  '127.0.0.1',
-                 'localhost']
+                 'localhost',
+                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                 'gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io',]
 
 
 # Application definition
@@ -88,6 +90,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this near the top, TODO: only install in dev envs without a reverse-proxy
     #'cordsheaders.middleware.CorsMiddleware',
     #'django.middleware.common.CommonMiddleware',
 ]
@@ -120,6 +123,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.spatialite',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'OPTIONS': {
+            'timeout': 60,
+            'check_same_thread': True,
+        },
     }
 }
 
@@ -127,23 +134,39 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'file': {
+        'db_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/django_sqlite.log'),
             'formatter': 'verbose',
         },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/main.log'),
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django.db.backends': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
+            'handlers': ['db_file'],
+            'level': 'INFO',
             'propagate': False,
         },
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+
     },
     'formatters': {
         'verbose': {
             'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
             'style': '{',
         },
     },
@@ -188,9 +211,9 @@ LONGIN_URL = '/login/'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS =  [
-    os.path.join(BASE_DIR, 'whale', 'static')
-]
+
+# Enable WhiteNoise storage for static files (TODO: only for dev environments without a reverse-proxy)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -204,7 +227,6 @@ AZURE_STORAGE_ACCOUNT_NAME = 'gaianoaastorage'
 AZURE_STORAGE_ACCOUNT_KEY = secrets['AZURE_KEY']
 AZURE_CONTAINER_NAME = 'data'
 
-STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]

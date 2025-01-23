@@ -11,7 +11,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - ${USE_PORT_80:-443:443}
+      - 443:443
+      - 80:80
     volumes:
       - static_volume:/static
       - media_volume:/media
@@ -23,6 +24,7 @@ services:
     command: /bin/sh -c "chmod -R 755 /static && nginx -g 'daemon off;'"
   certbot:
     # only use this service to renew the certificate
+    # Try a dry-run first with nginx service running: docker compose run certbot renew --dry-run
     image: certbot/certbot:latest
     volumes:
       - ./certbot/www/:/var/www/certbot/:rw

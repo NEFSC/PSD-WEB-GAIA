@@ -3,11 +3,11 @@ name: Build and Push Docker Image and Update Azure Container App
 on:
   push:
     branches:
-      - dev
+      - test
   workflow_dispatch:
 
 env:
-  APPNAME: gaia
+  APPNAME: gaia-test
   REGISTRY: ghcr.io
   
 jobs:
