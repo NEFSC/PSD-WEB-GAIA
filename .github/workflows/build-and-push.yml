@@ -1,8 +1,10 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Image and Update Azure Container App
 
 on:
   push:
     branches:
+      - dev
+      - test
       - GAIFAGP-143-update-azure-container
   workflow_dispatch:
 
