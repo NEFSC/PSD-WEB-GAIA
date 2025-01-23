@@ -46,10 +46,12 @@ SECRET_KEY = secrets['DJANGO_KEY']
 DEBUG = False
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
+                 'test-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
                  '127.0.0.1',
                  'localhost',
-                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',]
+                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                 'gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io',]
 
 
 # Application definition
