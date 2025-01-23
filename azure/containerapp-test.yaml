@@ -1,0 +1,75 @@
+identity:
+  type: None
+location: East US
+name: gaia-test
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: gaia-test.internal.happypond-d5fa406e.eastus.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions:
+        affinity: none
+      targetPort: 8000
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: 100
+    registries:
+    - identity: ''
+      passwordSecretRef: ghcrio-<user>
+      server: ghcr.io
+      username: <user>
+    secrets:
+    - name: ghcrio-<user>
+    - name: secrets-json
+    service: null
+  delegatedIdentities: []
+  template:
+    containers:
+    - image: ghcr.io/nefsc/psd-web-gaia:dev-371999b0-1736212586
+      imageType: ContainerImage
+      name: gaia-test
+      probes: []
+      resources:
+        cpu: 1
+        ephemeralStorage: 4Gi
+        memory: 2Gi
+      volumeMounts:
+      - mountPath: /mnt/secrets
+        volumeName: my-secrets
+      - mountPath: /mnt/data/
+        volumeName: my-azure-files-volume
+        
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 1
+      minReplicas: 1
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes:
+    - name: my-secrets
+      secrets:
+      - path: secrets-json
+        secretRef: secrets-json
+      storageType: Secret
+    - name: my-azure-files-volume
+      storageType: AzureFile
+      storageName: gaia-storage-mount-test
+      mountOptions: "nobrl,mfsymlinks"
+  workloadProfileName: Consumption
+resourceGroup: gaia-application-resource-group
+type: Microsoft.App/containerApps
