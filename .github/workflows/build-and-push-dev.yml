@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - dev
-      - test
-      - GAIFAGP-143-update-azure-container
   workflow_dispatch:
 
 env:
@@ -68,7 +66,7 @@ jobs:
         inlineScript: |
           LATEST_REVISION=$(az containerapp update \
             --name ${{ env.APPNAME }} \
-            --resource-group ${{ env.APPNAME }}-application-resource-group \
+            --resource-group gaia-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
             --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
@@ -81,7 +79,7 @@ jobs:
         inlineScript: |
           az containerapp revision label add \
             --revision ${{ env.REVISION }} \
-            --resource-group ${{ env.APPNAME }}-application-resource-group \
+            --resource-group gaia-application-resource-group \
             --label ${{ steps.prep.outputs.GIT_BRANCH }} \
             --verbose \
             --no-prompt
