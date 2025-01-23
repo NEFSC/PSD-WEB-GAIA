@@ -1,4 +1,4 @@
-name: Build and Push Docker Image and Update Azure Container App
+name: CI Dev
 
 on:
   push:
