@@ -26,11 +26,11 @@ properties:
     maxInactiveRevisions: 100
     registries:
     - identity: ''
-      passwordSecretRef: ghcrio-mengland-noaa
+      passwordSecretRef: ghcrio-<user>
       server: ghcr.io
-      username: mengland-noaa
+      username: <user>
     secrets:
-    - name: ghcrio-mengland-noaa
+    - name: ghcrio-<user>
     - name: secrets-json
     service: null
   delegatedIdentities: []
