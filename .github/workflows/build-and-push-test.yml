@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - test
-      - GAIFAGP-143-update-azure-container
   workflow_dispatch:
 
 env:
