@@ -28,7 +28,7 @@ properties:
     - identity: ''
       passwordSecretRef: reg-pswd-8adc1063-bda4
       server: ghcr.io
-      username: mengland-noaa
+      username: <user>
     secrets:
     - name: reg-pswd-8adc1063-bda4
     - name: secrets-json
