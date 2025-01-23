@@ -1,7 +1,7 @@
 identity:
   type: None
 location: East US
-name: gaia
+name: gaia-test
 properties:
   configuration:
     activeRevisionsMode: Single
@@ -14,7 +14,7 @@ properties:
       customDomains: null
       exposedPort: 0
       external: true
-      fqdn: gaia.internal.happypond-d5fa406e.eastus.azurecontainerapps.io
+      fqdn: gaia-test.internal.happypond-d5fa406e.eastus.azurecontainerapps.io
       ipSecurityRestrictions: null
       stickySessions:
         affinity: none
@@ -26,20 +26,19 @@ properties:
     maxInactiveRevisions: 100
     registries:
     - identity: ''
-      passwordSecretRef: reg-pswd-8adc1063-bda4
+      passwordSecretRef: ghcrio-<user>
       server: ghcr.io
       username: <user>
     secrets:
-    - name: reg-pswd-8adc1063-bda4
+    - name: ghcrio-<user>
     - name: secrets-json
     service: null
   delegatedIdentities: []
-  provisioningState: Succeeded
-  runningStatus: Stopped
   template:
     containers:
     - image: ghcr.io/nefsc/psd-web-gaia:dev-371999b0-1736212586
-      name: gaia
+      imageType: ContainerImage
+      name: gaia-test
       probes: []
       resources:
         cpu: 1
@@ -54,8 +53,10 @@ properties:
     initContainers: null
     revisionSuffix: ''
     scale:
+      cooldownPeriod: 300
       maxReplicas: 1
       minReplicas: 1
+      pollingInterval: 30
       rules: null
     serviceBinds: null
     terminationGracePeriodSeconds: null
@@ -67,7 +68,7 @@ properties:
       storageType: Secret
     - name: my-azure-files-volume
       storageType: AzureFile
-      storageName: gaia-storage
+      storageName: gaia-storage-mount-test
       mountOptions: "nobrl,mfsymlinks"
   workloadProfileName: Consumption
 resourceGroup: gaia-application-resource-group
