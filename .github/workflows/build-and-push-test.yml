@@ -71,15 +71,3 @@ jobs:
             --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
-
-    - name: Label Azure Container App
-      uses: azure/cli@v2
-      with:
-        azcliversion: latest
-        inlineScript: |
-          az containerapp revision label add \
-            --revision ${{ env.REVISION }} \
-            --resource-group gaia-application-resource-group \
-            --label ${{ steps.prep.outputs.GIT_BRANCH }} \
-            --verbose \
-            --no-prompt
