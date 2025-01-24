@@ -1,22 +1,33 @@
-name: CI Test
+name: CI Reuse
 
 on:
-  push:
-    branches:
-      - test
-  workflow_dispatch:
+  workflow_call:
+    # 'inputs' to define parameters that can be passed when calling this workflow
+    inputs:
+      appname:
+        required: true
+        type: string
 
 env:
-  APPNAME: gaia-test
+  APPNAME: ${{ inputs.appname }}  # this should be all lower case
   REGISTRY: ghcr.io
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
   
 jobs:
-  build-and-push:
+  build-and-push-to-github:
+    name: 🏗️ Build and push to GitHub Container Registry 🏗️
     runs-on: ubuntu-latest
     permissions:
         contents: read
         packages: write
         id-token: write
+
+    outputs:
+      LOWER_NAME: ${{ steps.prep.outputs.LOWER_NAME }}
+      BUILD_ID: ${{ steps.prep.outputs.BUILD_ID }}
 
     steps:
     - name: Generate build ID
@@ -54,6 +65,19 @@ jobs:
         build-args: |
           GITHUB_OAUTH_TOKEN=${{ secrets.CICDTOKEN }}
 
+  update-azure-container-app:
+    name: ☁️ Update Azure Container App with latest revision ☁️
+    needs: build-and-push-to-github
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      LOWER_NAME: ${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}
+      BUILD_ID: ${{ needs.build-and-push-to-github.outputs.BUILD_ID }}
+
+    steps:
     - name: Azure login
       uses: azure/login@v2
       with:
@@ -67,7 +91,7 @@ jobs:
           LATEST_REVISION=$(az containerapp update \
             --name ${{ env.APPNAME }} \
             --resource-group gaia-application-resource-group \
-            --image ${{ env.REGISTRY }}/${{ steps.prep.outputs.LOWER_NAME }}:${{ steps.prep.outputs.BUILD_ID }} \
+            --image ${{ env.REGISTRY }}/${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}:${{ needs.build-and-push-to-github.outputs.BUILD_ID }} \
             --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
