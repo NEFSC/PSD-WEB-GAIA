@@ -3,7 +3,6 @@ name: CI Dev
 on:
   push:
     branches:
-      - GAIFAGP-153-reusable-workflow
       - dev
   workflow_dispatch:
 
