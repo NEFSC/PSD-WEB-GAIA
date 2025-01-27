@@ -125,7 +125,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'OPTIONS': {
             'timeout': 60,
-            'check_same_thread': True,
         },
     }
 }
