@@ -15,4 +15,6 @@ urlpatterns = [
     path('dissemination/', login_required(views.dissemination_page), name='dissemination_page'),
     path('proxy/openlayers.js', proxy_openlayers_js, name='proxy_openlayers_js'),
     path('proxy/ol-webgl.js', proxy_webgls_js, name='proxy_webgls_js'),
+    path('blind-reviews/', views.blind_reviews, name='blind_reviews'),
+
 ]

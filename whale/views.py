@@ -49,7 +49,7 @@ from django.views import View
 
 # GAIA stack
 from .security import ee_login, mgp_login
-from .models import AreaOfInterest, PointsOfInterest, EarthExplorer, GEOINTDiscovery, MaxarGeospatialPlatform, ExtractTransformLoad
+from .models import AreaOfInterest, PointsOfInterest, EarthExplorer, GEOINTDiscovery, MaxarGeospatialPlatform, ExtractTransformLoad, BlindReviews
 from .forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from .tasks import process_etl_data
 from .query import build_ee_query_payload, query_mgp
@@ -1408,3 +1408,7 @@ def generate_interesting_points_subprocess(geotiff, out_geojson, method="big_win
     """Executes Microsoft's generate_intersting_points.py"""
     script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'microsoft', 'generate_interesting_points.py')
     subprocess.run([sys.executable, script_path, '--input_url', geotiff, '--output_fn', out_geojson, '--method', method, '--difference_threshold', difference, '--overwrite'])
+
+def blind_reviews(request):
+    reviews = BlindReviews.objects.all().values('primary', 'user1_id', 'user2_id', 'user3_id', 'user1_classify', 'user2_classify', 'user3_classify', 'final_review', 'final_review_date')
+    return render(request, 'blind_reviews_page.html', {'reviews': reviews})
