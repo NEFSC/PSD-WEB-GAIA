@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth.decorators import login_required
 from . import views
-from .views import proxy_openlayers_js, proxy_webgls_js
+from .views.exploitation_views import proxy_openlayers_js, proxy_webgls_js
 
 urlpatterns = [
     path('', login_required(views.landing_page), name='landing_page'),
@@ -16,5 +16,4 @@ urlpatterns = [
     path('proxy/openlayers.js', proxy_openlayers_js, name='proxy_openlayers_js'),
     path('proxy/ol-webgl.js', proxy_webgls_js, name='proxy_webgls_js'),
     path('blind-reviews/', views.blind_reviews, name='blind_reviews'),
-
 ]
