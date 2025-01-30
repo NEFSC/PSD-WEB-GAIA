@@ -1,0 +1,36 @@
+{% load static %}
+{% include 'sections/header.html' %}
+<section class="grid-container usa-section  padding-top-0">
+    <div class="grid-row flex-justify-center">
+        <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
+            <h1>Blind Reviews</h1>
+            <table class="usa-table usa-table--bordered usa-table--striped">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">User 1</th>
+                        <th scope="col">User 2</th>
+                        <th scope="col">User 3</th>
+                        <th scope="col">Final Review</th>
+                        <th scope="col">Final Review Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews %}
+                    <tr>
+                        <td>{{ review.primary }}</td>
+                        <td>{{ review.user1_classify }}</td>
+                        <td>{{ review.user2_classify }}</td>
+                        <td>{{ review.user3_classify }}</td>
+                        <td>{{ review.final_review }}</td>
+                        <td>{{ review.final_review_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+{% include 'sections/footer.html' %}
+</html>
