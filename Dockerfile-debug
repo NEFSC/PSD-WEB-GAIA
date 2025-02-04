@@ -2,7 +2,7 @@
 # Use an official miniconda image as a parent image
 FROM continuumio/miniconda3:latest
 
-# Define build arguments with default values
+# Define build arguments with default values (overriden in .env file)
 ARG UID=1000
 ARG GID=1000
 ARG USER=mengland
