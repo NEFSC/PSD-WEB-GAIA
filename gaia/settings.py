@@ -90,7 +90,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this near the top, Only install in dev envs without a reverse-proxy
     #'cordsheaders.middleware.CorsMiddleware',
     #'django.middleware.common.CommonMiddleware',
 ]
