@@ -56,35 +56,28 @@ from ..query import build_ee_query_payload, query_mgp
 from ..download import download_imagery
 from ..utils import get_entity_pairs, standardize_names, calibrate_image, import_pois, upload_to_auzre  # should be depricated: convert_to_tiles
 
+
+########################################################################################################################
+#
+#  In Django, a view is what takes a Web request and returns a Web response. The response can be many things, but most
+#  of the time it will be a Web page, a redirect, or a document. In this case, the response will almost always be data
+#  in JSON format.
+#
+########################################################################################################################
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
 os.environ["CPL_DEBUG"] = "ON" # Should enable GDAL debuggin
 django.setup()
 
-def login_view(request):
-    """ A simple log-in page meeting NOAA OCIO's security requirement for
-            a username and password protecting restricted access
-            satellite imagery.
-    """
-    if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('landing_page')
-    else:
-        form = AuthenticationForm()
-        
-    return render(request, 'login.html', {'form': form})
 
-def landing_page(request):
-    """ A basic landing page for the WHale Active Learning Environment (WHALE)
-            Tasking, Collection, Processing, Exploitation, and Dissimination
-            (TCPED) pages. Each TCPED task has its own page linked to this
-            one.
-    """
-    return render(request, 'landing_page.html')
 
-def check_records_view(request):
-    """ Supports validating that a point of interest actually exists within the database. """
-    records_exist = PointsOfInterestForm.objects.exists()
-    return render(request, 'check_records.html', {'records_exist': records_exist})
+
+
+
+
+
+
+
+
+
+

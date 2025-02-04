@@ -16,19 +16,52 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for review in reviews %}
+                    {% for review in page_obj %}
                     <tr>
-                        <td>{{ review.primary }}</td>
-                        <td>{{ review.user1_classify }}</td>
-                        <td>{{ review.user2_classify }}</td>
-                        <td>{{ review.user3_classify }}</td>
-                        <td>{{ review.final_review }}</td>
-                        <td>{{ review.final_review_date }}</td>
+                        <td>{{ review.id }}</td>
+                        <td>{% if review.user1_classification %}{{ review.user1_classification }}{% endif %}</td>
+                        <td>{% if review.user2_classification  %}{{ review.user2_classification }}{% endif %}</td>
+                        <td>{% if review.user3_classification  %}{{ review.user3_classification }}{% endif %}</td>
+                        <td>{% if review.final_review  %}{{ review.final_review }}{% endif %}</td>
+                        <td>{% if review.final_review_date  %}{{ review.final_review_date }}{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        <nav aria-label="Pagination" class="usa-pagination">
+            <ul class="usa-pagination__list">
+            {% if page_obj.has_previous %}
+                <li class="usa-pagination__item usa-pagination__arrow">
+                <a class="usa-pagination__link" href="?page=1">
+                    <span class="usa-pagination__link-text">First</span>
+                </a>
+                </li>
+                <li class="usa-pagination__item usa-pagination__arrow">
+                <a class="usa-pagination__link" href="?page={{ page_obj.previous_page_number }}">
+                    <span class="usa-pagination__link-text">Previous</span>
+                </a>
+                </li>
+            {% endif %}
+
+            <li class="usa-pagination__item usa-pagination__page-no">
+                <span class="usa-pagination__link-text">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="usa-pagination__item usa-pagination__arrow">
+                <a class="usa-pagination__link" href="?page={{ page_obj.next_page_number }}">
+                    <span class="usa-pagination__link-text">Next</span>
+                </a>
+                </li>
+                <li class="usa-pagination__item usa-pagination__arrow">
+                <a class="usa-pagination__link" href="?page={{ page_obj.paginator.num_pages }}">
+                    <span class="usa-pagination__link-text">Last</span>
+                </a>
+                </li>
+            {% endif %}
+            </ul>
+        </nav>
     </div>
 </section>
 </body>

@@ -49,7 +49,7 @@ from django.views import View
 
 # GAIA stack
 from ..security import ee_login, mgp_login
-from ..models import AreaOfInterest, PointsOfInterest, EarthExplorer, GEOINTDiscovery, MaxarGeospatialPlatform, ExtractTransformLoad, BlindReviews
+from ..models import AreaOfInterest, PointsOfInterest, EarthExplorer, GEOINTDiscovery, MaxarGeospatialPlatform, ExtractTransformLoad
 from ..forms import APIQueryForm, ProcessingForm, PointsOfInterestForm
 from ..tasks import process_etl_data
 from ..query import build_ee_query_payload, query_mgp
