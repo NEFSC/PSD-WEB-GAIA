@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from whale.views import generate_interesting_points_subprocess
+from whale.views.views import generate_interesting_points_subprocess
 
 class Command(BaseCommand):
     help = "Runs the generate_interesting_points.py script as a subprocess."
