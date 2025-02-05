@@ -222,7 +222,7 @@ class PointsOfInterest(gis_models.Model):
     ]
 
     SPECIES_CHOICES = [
-        ('unknown', 'Unkown'),
+        ('unknown', 'Unknown'),
         ('right', 'Right'),
         ('humpback', 'Humpback'),
         ('fin', 'Fin'),
@@ -254,10 +254,29 @@ class PointsOfInterest(gis_models.Model):
     client_ip = gis_models.CharField(max_length = 13, null=True, blank=True)
     out_time = gis_models.DateField(null=True, blank=True)
     in_time = gis_models.DateField(null=True, blank=True)
-    classification = gis_models.CharField(max_length = 20, choices=CLASSIFICATION_CHOICES, default='Unclassified')
+    classification = gis_models.CharField(max_length = 20, choices=CLASSIFICATION_CHOICES, default='unsure')
     confidence = gis_models.CharField(max_length = 10, choices=CONFIDENCE_CHOICES, default='NA')
     species = gis_models.CharField(max_length = 50, choices=SPECIES_CHOICES, default='NA')
     comments = gis_models.CharField(max_length = 500, null=True, blank=True)
+
+     # For review process
+    user1_id = models.CharField(max_length=30, null=True, blank=True)
+    user1_classification = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
+    user1_comments = models.CharField(max_length=500, null=True, blank=True)
+    user1_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
+    user1_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
+    user2_id = models.CharField(max_length=30, null=True, blank=True)
+    user2_classification = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
+    user2_comments = models.CharField(max_length=500, null=True, blank=True)
+    user2_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
+    user2_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
+    user3_id = models.CharField(max_length=30, null=True, blank=True)
+    user3_classification = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
+    user3_comments = models.CharField(max_length=500, null=True, blank=True)
+    user3_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
+    user3_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
+    final_review = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
+    final_review_date = models.DateField(null=True, blank=True)
 
     # Mandatory
     point = gis_models.GeometryField(null=True, blank=True)
@@ -269,26 +288,3 @@ class PointsOfInterest(gis_models.Model):
     
     def __str__(self):
         return self.classification
-
-class dummy(models.Model):
-    test = models.CharField(max_length = 10)
-
-class BlindReviews(models.Model):
-    primary = models.OneToOneField(PointsOfInterest, on_delete=models.CASCADE, primary_key=True)
-    user1_id = models.CharField(max_length=30)
-    user1_classify = models.CharField(max_length=20, choices=PointsOfInterest.CLASSIFICATION_CHOICES)
-    user1_comments = models.CharField(max_length=500, null=True, blank=True)
-    user1_species = models.CharField(max_length=50, choices=PointsOfInterest.SPECIES_CHOICES, null=True, blank=True)
-    user1_confidence = models.CharField(max_length=10, choices=PointsOfInterest.CONFIDENCE_CHOICES, null=True, blank=True)
-    user2_id = models.CharField(max_length=30, null=True, blank=True)
-    user2_classify = models.CharField(max_length=20, choices=PointsOfInterest.CLASSIFICATION_CHOICES, null=True, blank=True)
-    user2_comments = models.CharField(max_length=500, null=True, blank=True)
-    user2_species = models.CharField(max_length=50, choices=PointsOfInterest.SPECIES_CHOICES, null=True, blank=True)
-    user2_confidence = models.CharField(max_length=10, choices=PointsOfInterest.CONFIDENCE_CHOICES, null=True, blank=True)
-    user3_id = models.CharField(max_length=30, null=True, blank=True)
-    user3_classify = models.CharField(max_length=20, choices=PointsOfInterest.CLASSIFICATION_CHOICES, null=True, blank=True)
-    user3_comments = models.CharField(max_length=500, null=True, blank=True)
-    user3_species = models.CharField(max_length=50, choices=PointsOfInterest.SPECIES_CHOICES, null=True, blank=True)
-    user3_confidence = models.CharField(max_length=10, choices=PointsOfInterest.CONFIDENCE_CHOICES, null=True, blank=True)
-    final_review = models.CharField(max_length=20, choices=PointsOfInterest.CLASSIFICATION_CHOICES, null=True, blank=True)
-    final_review_date = models.DateField(null=True, blank=True)
