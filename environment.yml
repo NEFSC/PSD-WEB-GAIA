@@ -74,6 +74,7 @@ dependencies:
   - cycler
   - debugpy
   - decorator
+  - debugpy
   - defusedxml
   - django
   - django-picklefield

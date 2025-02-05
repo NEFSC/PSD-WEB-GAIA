@@ -1,5 +1,12 @@
+# Dockerfile for vs code debugging
 # Use an official miniconda image as a parent image
 FROM continuumio/miniconda3:latest
+
+# Define build arguments with default values (overriden in .env file)
+ARG UID=1000
+ARG GID=1000
+ARG USER=mengland
+ARG GROUP=mengland
 
 # env variables
 ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
@@ -17,8 +24,8 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user and group
-RUN groupadd -r vmuser && \
-    useradd -r -g vmuser -m vmuser
+RUN groupadd --gid=${GID} -r ${GROUP} && \
+    useradd --uid=${UID} -r -g ${GROUP} -m ${USER}
 
 # create conda env and install dependencies
 COPY environment.yml .
@@ -43,30 +50,30 @@ RUN chmod +x entrypoint.sh
 RUN mkdir -p logs
 
 # Change ownership of the application directory to the non-root user
-RUN chown -R vmuser:vmuser /app && \
-    chown -R vmuser:vmuser /etc/sqlite
+RUN chown -R ${GROUP}:${USER} /app && \
+    chown -R ${GROUP}:${USER} /etc/sqlite
 
 # Ensure Spatialite extension loads with Django's database connection
 RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
 
-# Install gunicorn
-RUN conda install -y gunicorn
+# Install gunicorn - not debug
+#RUN conda install -y gunicorn
 
 # Install whitenoise to serve static files with gunicorn (not for production)
-RUN conda install whitenoise
+#RUN conda install whitenoise
 
 # Create directories for secrets and data volumes so Azure will mount them
-RUN mkdir -p /mnt/secrets
-RUN mkdir -p /mnt/data
+#RUN mkdir -p /mnt/secrets
+#RUN mkdir -p /mnt/data
 
 # Add symbolic links to secrets and database file if they don't exist
-RUN [ -e /app/gaia/secrets.json ] || ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
-RUN [ -e /app/db.sqlite3 ] || ln -s /mnt/data/db.sqlite3 /app/db.sqlite3
+#RUN [ -e /app/gaia/secrets.json ] || ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
+#RUN [ -e /app/db.sqlite3 ] || ln -s /mnt/data/db.sqlite3 /app/db.sqlite3
 # expose port 8000 for external access
 EXPOSE 8000
 
 # Switch to the non-root user
-USER vmuser
+USER ${USER}
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["/bin/bash", "-c", "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000"]
+CMD ["/bin/bash", "-c", "python manage.py runserver 0.0.0.0:8000"]
