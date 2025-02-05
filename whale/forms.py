@@ -2,7 +2,7 @@ from datetime import datetime
 from django import forms
 from django.contrib.gis import forms as gis_forms
 from .models import AreaOfInterest, ExtractTransformLoad
-from .models import PointsOfInterest as Species
+from .models import PointsOfInterest
 from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
 
@@ -83,6 +83,8 @@ class USWDSButtonGroupWidget(forms.Widget):
 
         buttons = []
         for val, label in reordered_choices:
+            if val in [None, '']:
+                continue
             button_attrs = {
                 'type': 'button',
                 'class': 'usa-button margin-1',
@@ -109,6 +111,8 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
         attrs['id'] = attrs.get('id', f'id_{name}')
         radios = []
         for val, label in self.choices:
+            if val in [None, '']:
+                continue
             input_attrs = {
                 'type': 'radio',
                 'name': name,
@@ -127,11 +131,19 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
 
 class PointsOfInterestForm(forms.ModelForm):
     class Meta:
-        model = Species
-        fields = ['comments', 'classification', 'species', 'confidence']
+        model = PointsOfInterest
+        fields = ['user1_id', 'user1_comments', 'user1_classification', 'user1_species', 'user1_confidence', 'user2_id', 'user2_comments', 'user2_classification', 'user2_species', 'user2_confidence', 'user3_id', 'user3_comments', 'user3_classification', 'user3_species', 'user3_confidence']
         widgets = {
-            'comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
-            'classification': USWDSButtonGroupWidget(choices=Species.CLASSIFICATION_CHOICES),
-            'species': USWDSRadioButtonGroupWidget(choices=Species.SPECIES_CHOICES),
-            'confidence': USWDSRadioButtonGroupWidget(choices=Species.CONFIDENCE_CHOICES),
+            'user1_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'user1_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
+            'user1_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
+            'user1_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
+            'user2_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'user2_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
+            'user2_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
+            'user2_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
+            'user3_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'user3_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
+            'user3_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
+            'user3_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
         }
