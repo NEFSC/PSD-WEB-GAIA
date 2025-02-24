@@ -254,7 +254,7 @@ class PointsOfInterest(gis_models.Model):
     client_ip = gis_models.CharField(max_length = 13, null=True, blank=True)
     out_time = gis_models.DateField(null=True, blank=True)
     in_time = gis_models.DateField(null=True, blank=True)
-    classification = gis_models.CharField(max_length = 20, choices=CLASSIFICATION_CHOICES, default='unsure')
+    classification = gis_models.CharField(max_length = 20, choices=CLASSIFICATION_CHOICES, default='Unclassified')
     confidence = gis_models.CharField(max_length = 10, choices=CONFIDENCE_CHOICES, default='NA')
     species = gis_models.CharField(max_length = 50, choices=SPECIES_CHOICES, default='NA')
     comments = gis_models.CharField(max_length = 500, null=True, blank=True)

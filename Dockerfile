@@ -53,7 +53,7 @@ RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.
 RUN conda install -y gunicorn
 
 # Install whitenoise to serve static files with gunicorn (not for production)
-RUN conda install whitenoise
+RUN conda install -c conda-forge whitenoise
 
 # Create directories for secrets and data volumes so Azure will mount them
 RUN mkdir -p /mnt/secrets
