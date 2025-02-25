@@ -7,6 +7,20 @@ from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
 
 class APIQueryForm(forms.Form):
+    """A Django Form for querying various satellite imagery APIs.
+
+    This form provides fields for API selection, authentication, and search parameters
+    for querying satellite imagery from multiple providers including USGS EarthExplorer,
+    Global Enhanced GEOINT Delivery, and Maxar Geospatial Platform.
+
+    Attributes:
+        api (ChoiceField): Selection field for choosing the target API
+        username (CharField): Input field for API username/credentials 
+        password (CharField): Secured input field for API password
+        aoi (ModelChoiceField): Selection field for choosing an Area of Interest
+        start_date (DateField): Start date for the imagery search period
+        end_date (DateField): End date for the imagery search period, defaults to current date
+    """
     API_CHOICES = [
         ('ee', 'USGS EarthExplorer'),
         ('gegd', 'Global Enhanced GEOINT Delivery'),
@@ -35,6 +49,33 @@ class APIQueryForm(forms.Form):
                                required=False)
 
 class ProcessingForm(forms.Form):
+    """
+    A form class for processing data from ExtractTransformLoad model.
+
+    This form provides fields for filtering and querying ETL data based on various parameters
+    including table name, IDs, vendor information, spatial bounds, dates and area of interest.
+
+    Attributes:
+        table_name (ChoiceField): Dropdown of distinct table names from ETL model
+        id (CharField): Optional ID field
+        vendor_id (CharField): Optional vendor ID field
+        entity_id (CharField): Optional entity ID field
+        vendor (ChoiceField): Optional dropdown of distinct vendor names
+        platform (ChoiceField): Optional dropdown of distinct platform names
+        pixel_x_min (FloatField): Optional minimum x coordinate
+        pixel_x_max (FloatField): Optional maximum x coordinate  
+        pixel_y_min (FloatField): Optional minimum y coordinate
+        pixel_y_max (FloatField): Optional maximum y coordinate
+        date_min (DateField): Optional start date with year selection (2007-2033)
+        date_max (DateField): Optional end date defaulting to current date
+        publish_date_min (DateField): Optional publish start date
+        publish_date_max (DateField): Optional publish end date defaulting to current date
+        aoi (ModelChoiceField): Optional area of interest selection
+
+    Meta:
+        model: ExtractTransformLoad
+        fields: All form fields listed above
+    """
     table_name = forms.ChoiceField(choices=[(table, table) for table in ExtractTransformLoad.objects.values_list('table_name', flat=True).distinct()])
     id = forms.CharField(required=False)
     vendor_id = forms.CharField(required=False)
@@ -66,6 +107,29 @@ class ProcessingForm(forms.Form):
                   'date_min', 'date_max', 'publish_date_min', 'publish_date_max', 'aoi']
 
 class USWDSButtonGroupWidget(forms.Widget):
+    """A custom widget class implementing a USWDS (U.S. Web Design System) styled button group.
+
+    This widget creates a group of buttons following USWDS styling guidelines, with special
+    handling for "Unsure" and "Whale" options. It includes a hidden input to store the
+    selected value.
+
+    Args:
+        choices (iterable): An iterable of tuples containing (value, label) pairs for
+            each button in the group.
+        attrs (dict, optional): HTML attributes to be added to the hidden input element.
+            Defaults to None.
+
+    Attributes:
+        choices (iterable): Stored choices for button creation.
+
+    Methods:
+        render(name, value, attrs=None, renderer=None): Renders the button group HTML.
+            Special styling is applied to "Unsure" and "Whale" buttons using USWDS classes.
+            Selected buttons receive an 'usa-button--active' class.
+
+    Returns:
+        SafeString: HTML markup for the button group including a hidden input for form submission.
+    """
     def __init__(self, choices, attrs=None):
         super().__init__(attrs)
         self.choices = choices
@@ -101,6 +165,27 @@ class USWDSButtonGroupWidget(forms.Widget):
         return mark_safe('<div id="classification-buttongroup" class="">' + ''.join(buttons) + '</div>' + hidden_input)
 
 class USWDSRadioButtonGroupWidget(forms.Widget):
+    """
+    A custom Django form widget that renders a group of radio buttons styled
+    according to the U.S. Web Design System (USWDS) standards.
+
+    Attributes:
+        choices (list): A list of tuples containing the value and label for each radio button option.
+        attrs (dict, optional): Additional HTML attributes for the widget.
+
+    Methods:
+        render(name, value, attrs=None, renderer=None):
+            Renders the HTML for the radio button group.
+
+            Args:
+                name (str): The name of the form field.
+                value (str): The currently selected value.
+                attrs (dict, optional): Additional HTML attributes for the widget.
+                renderer (optional): An optional renderer instance.
+
+            Returns:
+                str: The HTML for the radio button group, marked safe for rendering.
+    """
     def __init__(self, choices, attrs=None):
         super().__init__(attrs)
         self.choices = choices
@@ -130,6 +215,35 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
         return mark_safe('<fieldset class="usa-fieldset">' + ''.join(radios) + '</fieldset>')
 
 class PointsOfInterestForm(forms.ModelForm):
+    """
+    PointsOfInterestForm is a Django ModelForm for the PointsOfInterest model.
+
+    This form includes fields for three users to input their comments, classifications, species, and confidence levels.
+    Each user's input fields are customized with specific widgets for better user experience.
+
+    Fields:
+    - user1_id: ID of the first user
+    - user1_comments: Comments from the first user (Textarea with max length 500)
+    - user1_classification: Classification by the first user (Button group widget)
+    - user1_species: Species identified by the first user (Radio button group widget)
+    - user1_confidence: Confidence level of the first user's identification (Radio button group widget)
+    - user2_id: ID of the second user
+    - user2_comments: Comments from the second user (Textarea with max length 500)
+    - user2_classification: Classification by the second user (Button group widget)
+    - user2_species: Species identified by the second user (Radio button group widget)
+    - user2_confidence: Confidence level of the second user's identification (Radio button group widget)
+    - user3_id: ID of the third user
+    - user3_comments: Comments from the third user (Textarea with max length 500)
+    - user3_classification: Classification by the third user (Button group widget)
+    - user3_species: Species identified by the third user (Radio button group widget)
+    - user3_confidence: Confidence level of the third user's identification (Radio button group widget)
+
+    Widgets:
+    - Textarea for comments fields with a maximum length of 500 characters and a specific CSS class and ID.
+    - USWDSButtonGroupWidget for classification fields with choices from PointsOfInterest.CLASSIFICATION_CHOICES.
+    - USWDSRadioButtonGroupWidget for species fields with choices from PointsOfInterest.SPECIES_CHOICES.
+    - USWDSRadioButtonGroupWidget for confidence fields with choices from PointsOfInterest.CONFIDENCE_CHOICES.
+    """
     class Meta:
         model = PointsOfInterest
         fields = ['user1_id', 'user1_comments', 'user1_classification', 'user1_species', 'user1_confidence', 'user2_id', 'user2_comments', 'user2_classification', 'user2_species', 'user2_confidence', 'user3_id', 'user3_comments', 'user3_classification', 'user3_species', 'user3_confidence']
