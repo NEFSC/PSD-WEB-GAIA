@@ -492,6 +492,8 @@ class PointsOfInterest(gis_models.Model):
     user3_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
     final_review = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
     final_review_date = models.DateField(null=True, blank=True)
+    final_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
+    final_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
 
     # Mandatory
     point = gis_models.GeometryField(null=True, blank=True)
