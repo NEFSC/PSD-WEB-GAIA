@@ -30,18 +30,21 @@ def add_fake_reviews(n):
 
         for user_num in users_to_add:
             if user_num == 1:
+                poi.user1_id = f"{fake.first_name()}.{fake.last_name()}"
                 poi.user1_comments = fake.text()
                 poi.user1_classification = "whale" if fake.boolean() else fake.random_element(PointsOfInterest.CLASSIFICATION_CHOICES)[0]
                 if poi.user1_classification == "whale":
                     poi.user1_species = fake.random_element(PointsOfInterest.SPECIES_CHOICES)[0]
                     poi.user1_confidence = fake.random_element(PointsOfInterest.CONFIDENCE_CHOICES)[0]
             elif user_num == 2:
+                poi.user2_id = f"{fake.first_name()}.{fake.last_name()}"
                 poi.user2_comments = fake.text()
                 poi.user2_classification = "whale" if fake.boolean() else fake.random_element(PointsOfInterest.CLASSIFICATION_CHOICES)[0]
                 if poi.user2_classification == "whale":
                     poi.user2_species = fake.random_element(PointsOfInterest.SPECIES_CHOICES)[0]
                     poi.user2_confidence = fake.random_element(PointsOfInterest.CONFIDENCE_CHOICES)[0]
             else:
+                poi.user3_id = f"{fake.first_name()}.{fake.last_name()}"
                 poi.user3_comments = fake.text()
                 poi.user3_classification = "whale" if fake.boolean() else fake.random_element(PointsOfInterest.CLASSIFICATION_CHOICES)[0]
                 if poi.user3_classification == "whale":
