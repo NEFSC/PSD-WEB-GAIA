@@ -18,7 +18,7 @@
                 <tbody>
                     {% for review in page_obj %}
                     <tr>
-                        <td>{{ review.id }}</td>
+                        <td><a href="{% url 'exploitation_page' %}?id={{ review.id }}">{{ review.id }}</a></td>
                         <td>{% if review.user1_classification %}{{ review.user1_classification }}{% endif %}</td>
                         <td>{% if review.user2_classification  %}{{ review.user2_classification }}{% endif %}</td>
                         <td>{% if review.user3_classification  %}{{ review.user3_classification }}{% endif %}</td>

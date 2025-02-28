@@ -216,37 +216,38 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
 
 class PointsOfInterestForm(forms.ModelForm):
     """
-    PointsOfInterestForm is a Django ModelForm for the PointsOfInterest model.
+    PointsOfInterestForm is a Django ModelForm for managing whale observation data from three users.
 
-    This form includes fields for three users to input their comments, classifications, species, and confidence levels.
-    Each user's input fields are customized with specific widgets for better user experience.
+    This form allows multiple users to input their observations about potential whale sightings,
+    with fields for classification, species identification, confidence levels and comments.
+    It also includes final review fields for consensus determination.
 
-    Fields:
-    - user1_id: ID of the first user
-    - user1_comments: Comments from the first user (Textarea with max length 500)
-    - user1_classification: Classification by the first user (Button group widget)
-    - user1_species: Species identified by the first user (Radio button group widget)
-    - user1_confidence: Confidence level of the first user's identification (Radio button group widget)
-    - user2_id: ID of the second user
-    - user2_comments: Comments from the second user (Textarea with max length 500)
-    - user2_classification: Classification by the second user (Button group widget)
-    - user2_species: Species identified by the second user (Radio button group widget)
-    - user2_confidence: Confidence level of the second user's identification (Radio button group widget)
-    - user3_id: ID of the third user
-    - user3_comments: Comments from the third user (Textarea with max length 500)
-    - user3_classification: Classification by the third user (Button group widget)
-    - user3_species: Species identified by the third user (Radio button group widget)
-    - user3_confidence: Confidence level of the third user's identification (Radio button group widget)
+    Fields for each user (user1, user2, user3):
+    - user{n}_id: Unique identifier for the user
+    - user{n}_comments: Free-text observations (max 500 chars)
+    - user{n}_classification: Type of observation (uses USWDS button group)  
+    - user{n}_species: Identified whale species (uses USWDS radio buttons)
+    - user{n}_confidence: Confidence in identification (uses USWDS radio buttons)
 
-    Widgets:
-    - Textarea for comments fields with a maximum length of 500 characters and a specific CSS class and ID.
-    - USWDSButtonGroupWidget for classification fields with choices from PointsOfInterest.CLASSIFICATION_CHOICES.
-    - USWDSRadioButtonGroupWidget for species fields with choices from PointsOfInterest.SPECIES_CHOICES.
-    - USWDSRadioButtonGroupWidget for confidence fields with choices from PointsOfInterest.CONFIDENCE_CHOICES.
+    Final review fields:
+    - final_review: Consensus classification
+    - final_species: Consensus species identification  
+    - final_confidence: Consensus confidence level
+
+    All fields use USWDS (U.S. Web Design System) widgets for consistent styling:
+    - Text areas with 500 char limit and 'usa-textarea' class
+    - Button groups for classifications
+    - Radio button groups for species and confidence selections
+
+    Inherits from:
+        forms.ModelForm
+
+    Related Model:
+        PointsOfInterest
     """
     class Meta:
         model = PointsOfInterest
-        fields = ['user1_id', 'user1_comments', 'user1_classification', 'user1_species', 'user1_confidence', 'user2_id', 'user2_comments', 'user2_classification', 'user2_species', 'user2_confidence', 'user3_id', 'user3_comments', 'user3_classification', 'user3_species', 'user3_confidence']
+        fields = ['user1_id', 'user1_comments', 'user1_classification', 'user1_species', 'user1_confidence', 'user2_id', 'user2_comments', 'user2_classification', 'user2_species', 'user2_confidence', 'user3_id', 'user3_comments', 'user3_classification', 'user3_species', 'user3_confidence', 'final_review', 'final_species', 'final_confidence']
         widgets = {
             'user1_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
             'user1_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
@@ -260,4 +261,7 @@ class PointsOfInterestForm(forms.ModelForm):
             'user3_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
             'user3_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
             'user3_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
+            'final_review': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
+            'final_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
+            'final_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES)
         }
