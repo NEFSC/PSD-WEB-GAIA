@@ -101,16 +101,27 @@ class Migration(migrations.Migration):
             field=models.CharField(choices=[('water', 'Water'), ('cloud', 'Cloud'), ('bird', 'Bird'), ('waves', 'Waves'), ('plane', 'Plane'), ('ship', 'Ship'), ('shadow', 'Shadow'), ('oil', 'Oil'), ('aquaculture', 'Aquaculture'), ('debris', 'Debris'), ('rock', 'Rock'), ('mudflats_or_land', 'Mudflats or Water'), ('buoy', 'Buoy'), ('whale', 'Whale'), ('zooplankton', 'Zooplankton'), ('land', 'Land'), ('unsure', 'Unsure')], default='Unclassified', max_length=20),
         ),
         migrations.RunSQL(
-            """
+             """
             CREATE TRIGGER update_final_review
             AFTER UPDATE ON whale_pointsofinterest
             FOR EACH ROW
-            WHEN NEW.user1_classification IS NOT NULL 
-            AND NEW.user1_classification = NEW.user2_classification 
-            AND NEW.user2_classification = NEW.user3_classification
+            WHEN (
+                NEW.user1_classification IS NOT NULL AND 
+                NEW.user2_classification IS NOT NULL AND 
+                NEW.user3_classification IS NOT NULL
+            )
             BEGIN
                 UPDATE whale_pointsofinterest
-                SET final_review = NEW.user1_classification,
+                SET final_review = CASE
+                    WHEN NEW.user1_classification = 'whale' 
+                         AND NEW.user2_classification = 'whale'
+                         AND NEW.user3_classification = 'whale'
+                    THEN 'whale'
+                    WHEN NEW.user1_classification != 'whale' 
+                         AND NEW.user2_classification != 'whale'
+                         AND NEW.user3_classification != 'whale'
+                    THEN 'not a whale'
+                    END,
                     final_review_date = DATE('now')
                 WHERE id = NEW.id;
             END;
