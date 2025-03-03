@@ -13,5 +13,7 @@ gaia/__pycache__/settings.cpython-311.pyc
 static/admin/*
 static/gis/*
 static/uswds/img/material-icons/*
-*.py[cod]
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
