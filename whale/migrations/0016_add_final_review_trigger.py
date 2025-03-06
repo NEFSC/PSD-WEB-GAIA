@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
              """
+            DROP TRIGGER IF EXISTS update_final_review;
             CREATE TRIGGER update_final_review
             AFTER UPDATE ON whale_pointsofinterest
             FOR EACH ROW
