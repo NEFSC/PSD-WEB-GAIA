@@ -29,21 +29,22 @@
             </label>
             <input
               class="usa-input"
-              id="id_password"
+              id="password-sign-in"
               name="password"
               type="password"
               autocomplete="off"
               required
             />
             <p class="usa-form__note">
-              <a
-                title="Show password"
-                id="id_show_password_label"
+              <button
+                title="Toggle password"
+                type="button"
                 href="javascript:void(0);"
                 class="usa-show-password"
+                data-show-text="Show password"
+                data-hide-text="Hide password"
                 aria-controls="password-sign-in"
-                onclick="togglePasswordVisibility()"
-                >Show password</a
+                >Show password</button
               >
             </p>
 
@@ -71,18 +72,4 @@
     </div>
   </div>
 </section>
-
-<script>
-  function togglePasswordVisibility() {
-    var passwordInput = document.getElementById("id_password");
-    var showPasswordLink = document.getElementById("id_show_password_label");
-    if (passwordInput.type === "password") {
-      passwordInput.type = "text";
-      showPasswordLink.textContent = "Hide password";
-    } else {
-      passwordInput.type = "password";
-      showPasswordLink.textContent = "Show password";
-    }
-  }
-</script>
 {% endblock %}
