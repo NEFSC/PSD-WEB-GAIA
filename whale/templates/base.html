@@ -3,30 +3,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    {% if not form.non_field_errors %}
-    <script
-      src="https://apps-nefsc.fisheries.noaa.gov/CTM/message.js"
-      type="text/javascript"
-    ></script>
-    {% endif %}
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="{% static 'uswds/uswds.css' %}" />
     <script src="{% static 'uswds/uswds-init.js' %}"></script>
-    <title>GAIA Login</title>
-    <script>
-      function togglePasswordVisibility() {
-        var passwordInput = document.getElementById("id_password");
-        var showPasswordLink = document.getElementById("id_show_password_label");
-        if (passwordInput.type === "password") {
-          passwordInput.type = "text";
-          showPasswordLink.textContent = "Hide password";
-        } else {
-          passwordInput.type = "password";
-          showPasswordLink.textContent = "Show password";
-        }
-      }
-    </script>
+    <title>{% block title %}GAIA{% endblock %}</title>
   </head>
   <body>
     <script src="{% static 'uswds/uswds.min.js' %}"></script>
@@ -124,82 +105,13 @@
         <div class="usa-navbar">
           <div class="usa-logo" id="basic-logo">
             <em class="usa-logo__text">
-              <a href="" title="GAIA">GAIA </a>
+              <a href="/" title="GAIA">GAIA </a>
             </em>
           </div>
         </div>
       </div>
     </header>
-    <section class="grid-container usa-section">
-      <div class="grid-row flex-justify-center">
-        <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-8">
-          <div
-            class="bg-white padding-y-3 padding-x-5 border border-base-lighter"
-          >
-            <h1 class="margin-bottom-0">Sign in</h1>
-            <form class="usa-form" method="POST">
-              {% csrf_token %}
-              <fieldset class="usa-fieldset">
-                <label class="usa-label" for="id_username"> Username </label>
-                <input
-                  class="usa-input"
-                  id="id_username"
-                  name="username"
-                  type="test"
-                  autocapitalize="off"
-                  autocorrect="off"
-                  autocomplete="off"
-                  required
-                  maxlength="150"
-                />
-
-                <label class="usa-label" for="password-sign-in">
-                  Password
-                </label>
-                <input
-                  class="usa-input"
-                  id="id_password"
-                  name="password"
-                  type="password"
-                  autocomplete="off"
-                  required
-                />
-                <p class="usa-form__note">
-                  <a
-                    title="Show password"
-                    id="id_show_password_label"
-                    href="javascript:void()"
-                    class="usa-show-password"
-                    aria-controls="password-sign-in"
-                    onclick="togglePasswordVisibility()"
-                    >Show password</a
-                  >
-                </p>
-
-                <input class="usa-button" type="submit" value="Sign in" />
-                {% if form.non_field_errors %}
-                <div class="usa-alert usa-alert--error" role="alert">
-                  <div class="usa-alert__body">
-                    <p class="usa-alert__text" style="margin-left: 0;">
-                        {% for error in form.non_field_errors %}
-                          {{ error }}
-                        {% endfor %}
-                    </p>
-                  </div>
-                </div>
-                {% endif %}
-
-                <p>
-                  <a href="../../password-reset" title="Forgot password">
-                    Forgot password?
-                  </a>
-                </p>
-              </fieldset>
-            </form>
-          </div>
-        </div>
-      </div>
-    </section>
+    {% block content %}{% endblock %}
+    {% include 'sections/footer.html' %}
   </body>
-  {% include 'sections/footer.html' %}
 </html>
