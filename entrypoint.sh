@@ -6,27 +6,9 @@ set -e
 source /opt/conda/etc/profile.d/conda.sh
 conda activate gaia
 
-# Function to delete migration files
-delete_migrations() {
-    # Delete all .py files in migrations directories except __init__.py
-    find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-    # Delete all .pyc files in migrations directories
-    find . -path "*/migrations/*.pyc" -delete
-}
-
-# Function to reset the database
-reset_database() {
-    # Remove the SQLite database file
-    rm -f db.sqlite3
-}
-
-# Delete migration files
-#echo "Deleting migration files"
-#delete_migrations
-
-# Reset the database
-#echo "Resetting the database"
-#reset_database
+# Unapply all migrations for the whale app
+#echo "Unapplying all migrations for the whale app"
+#python manage.py migrate whale zero
 
 # Create new migrations
 echo "Creating new migrations"
