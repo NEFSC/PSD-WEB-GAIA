@@ -2,7 +2,6 @@ from django.urls import path
 from django.contrib.auth.decorators import login_required
 from . import views
 from .views.exploitation_views import proxy_openlayers_js, proxy_webgls_js
-from .views.reset_pw_view import MyResetPasswordView
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
