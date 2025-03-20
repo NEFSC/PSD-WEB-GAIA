@@ -43,32 +43,15 @@ RUN mkdir -p /etc/sqlite && \
 
 # Set application directory
 WORKDIR /app
-COPY . /app
-
-RUN chmod +x entrypoint.sh
 
 RUN mkdir -p logs
 
-# Change ownership of the application directory to the non-root user
-RUN chown -R ${GROUP}:${USER} /app && \
-    chown -R ${GROUP}:${USER} /etc/sqlite
-
-# Ensure Spatialite extension loads with Django's database connection
-RUN sed -i 's/ENGINE": "django.db.backends.sqlite3/ENGINE": "django.contrib.gis.db.backends.spatialite/' /app/gaia/settings.py
-
-# Install gunicorn - not debug
-#RUN conda install -y gunicorn
+# Change ownership to the non-root user
+RUN chown -R ${GROUP}:${USER} /etc/sqlite
 
 # Install whitenoise to serve static files with gunicorn (not for production)
 RUN conda install -c conda-forge whitenoise
 
-# Create directories for secrets and data volumes so Azure will mount them
-#RUN mkdir -p /mnt/secrets
-#RUN mkdir -p /mnt/data
-
-# Add symbolic links to secrets and database file if they don't exist
-#RUN [ -e /app/gaia/secrets.json ] || ln -s /mnt/secrets/secrets-json /app/gaia/secrets.json
-#RUN [ -e /app/db.sqlite3 ] || ln -s /mnt/data/db.sqlite3 /app/db.sqlite3
 # expose port 8000 for external access
 EXPOSE 8000
 
