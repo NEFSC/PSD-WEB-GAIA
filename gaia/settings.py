@@ -254,11 +254,10 @@ EMAIL_HOST_PASSWORD = secrets.get('EMAIL_PASSWORD', '')
 # Email server configuration for testing
 #EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 #EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_mail")
-
-print("EMAIL_BACKEND:", EMAIL_BACKEND)
-print("EMAIL_HOST:", EMAIL_HOST)
-print("EMAIL_PORT:", EMAIL_PORT)
-print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
-print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
+# print("EMAIL_BACKEND:", EMAIL_BACKEND)
+# print("EMAIL_HOST:", EMAIL_HOST)
+# print("EMAIL_PORT:", EMAIL_PORT)
+# print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
+# print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
 
 DEFAULT_FROM_EMAIL = 'no-reply@noaa.gov'
