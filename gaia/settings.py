@@ -58,12 +58,12 @@ ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'django.contrib.auth',
     'whale',
     #'django_q',
     #'corsheaders',
@@ -102,7 +102,8 @@ ROOT_URLCONF = 'gaia.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates',
+                 BASE_DIR / 'whale/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -241,3 +242,22 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Email server configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = secrets.get('EMAIL_SERVER', 'smtp.gmail.com')  # Default to 'smtp.gmail.com' if not in secrets
+EMAIL_PORT = int(secrets.get('EMAIL_PORT', 587))  # Default to 587 for TLS
+EMAIL_USE_TLS = True  # Use TLS for secure email
+EMAIL_HOST_USER = secrets.get('EMAIL_USERNAME', '')
+EMAIL_HOST_PASSWORD = secrets.get('EMAIL_PASSWORD', '')
+
+# Email server configuration for testing
+# EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_mail")
+# print("EMAIL_BACKEND:", EMAIL_BACKEND)
+# print("EMAIL_HOST:", EMAIL_HOST)
+# print("EMAIL_PORT:", EMAIL_PORT)
+# print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
+# print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
+
+DEFAULT_FROM_EMAIL = 'no-reply@noaa.gov'
