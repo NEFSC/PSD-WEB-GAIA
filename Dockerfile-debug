@@ -1,5 +1,18 @@
-# Dockerfile for vs code debugging
-# Use an official miniconda image as a parent image
+# This Dockerfile sets up a development environment for debugging with VS Code
+# It uses Miniconda as the base image and sets up:
+# - A non-root user for security
+# - Spatialite and GDAL for spatial database functionality
+# - A conda environment with project dependencies
+# - SQLite configuration for spatial extensions
+# - Development server on port 8000
+#
+# Key features:
+# - Non-root user for improved security
+# - Spatialite support for spatial database operations
+# - Conda environment for dependency management
+# - Debug-ready configuration
+# - Whitenoise for static file serving in development
+
 FROM continuumio/miniconda3:latest
 
 # Define build arguments with default values (overriden in .env file)

@@ -57,7 +57,13 @@ Notebooks for running insert statements on the database.
 	 - _gegd_
 	 - _mgp_
 	 - _triggers_
-
+	 
+**Tasks**
+	Tasks to be completed to ensure the database supports WHALE.
+		- _requirements_ - The foundational tasks consisting of data modeling, user roles and permissions, data population, and data maintenance.
+		- _permissions_ - A permission matrix to show which users can access the data and in what way.
+		- _roles_ - Role-based access control (RBAC) for each user with specific permissions.
+		- _models_ - Django models representing the data structure for each table.
 
 ### Troubleshooting
 Some basic quality assurance and control via troubleshooting can be done by simply accessing the SpatiaLite database via a SQLite3 terminal. This can be done by navigating to the database's location, via an Anaconda prompt, and entering `sqlite3 db.sqlite3`. 

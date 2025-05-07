@@ -1,4 +1,28 @@
 # Functions for building dataset-search and scene-search queries
+"""
+Collection of functions for building dataset-search and scene-search queries for Earth Explorer (EE) and Maxar Geospatial Portal (MGP).
+Functions:
+    geojson_for_ee(geojson: dict) -> dict:
+        Helper function to build the 'geoJson' value payload for spatial filters.
+        Only supports polygon geometries currently.
+    build_cloud_cover_filter(minimum: int = 0, maximum: int = 100, include_unknown: bool = True) -> dict:
+        Builds cloud cover bandpass filter with parameters for min/max coverage and unknown values.
+    build_spatial_filter(geojson: dict) -> dict:
+        Converts GeoJSON to EarthExplorer spatial filter format. Only supports polygons.
+        Expects EPSG:4326 coordinates.
+    build_acqusition_filter(start: str, end: str) -> dict:
+        Creates temporal filter using ISO 8601 datetime strings.
+    build_dataset_filter(acquisition: dict, spatial: dict) -> dict:
+        Wrapper to build dataset search API query from acquisition and spatial filters.
+    build_scene_filter(acquisition: dict, spatial: dict, cloud: dict) -> dict:
+        Wrapper to build scene search API query from acquisition, spatial and cloud filters.
+    build_ee_query_payload(start_date: str, end_date: str, aoi: dict) -> str:
+        Builds complete Earth Explorer API query payload as JSON string.
+    query_mgp(username: str, password: str, collections: list, start: str, end: str, 
+              where: str, limit: int, export: str = None, bbox: list = None, geometry: dict = None) -> list:
+        Performs spatio-temporal query against Maxar Geospatial Portal STAC API.
+        Returns API response and list of catalog IDs matching query parameters.
+"""
 #
 # These functions make use of work found at: https://github.com/yannforget/landsatxplore
 

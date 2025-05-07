@@ -1,10 +1,32 @@
+"""
+Security module for authentication with Earth Explorer and Maxar Geospatial Portal.
+This module provides functions for authenticating with Earth Explorer and Maxar Geospatial Portal (MGP).
+It handles login, token generation, storage and refresh functionality.
+Functions:
+    ee_login(session, username, password): Authenticates with Earth Explorer
+    auth_local(username, password): Generates MGP bearer token and stores locally 
+    refresh_local(refresh_token): Refreshes MGP access token
+    mgp_login(username, password): Main MGP authentication handler
+File contents are stored in user's home directory to prevent accidental exposure of credentials.
+Dependencies:
+    requests - For making HTTP requests
+    json - For JSON parsing/writing
+    pathlib - For cross-platform file path handling 
+    os - For file operations
+    time - For token expiration checks
+    jwt - For JWT token decoding
+References:
+    Earth Explorer authentication based on:
+    https://github.com/yannforget/landsatxplore/blob/master/landsatxplore/api.py#L90-L104
+"""
+
 import requests
+
 import json
 from pathlib import Path
 import os
 import time
 import jwt
-
 
 def ee_login(session, username, password):
     """ Logs a user into Earth Explorer after they provide
