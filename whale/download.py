@@ -1,18 +1,13 @@
-# Functions for downloading data from 
+# Functions for downloading data
 #
 # These functions make use of work found at: https://m2m.cr.usgs.gov/api/docs/example/download_data-py
 
-# Base stack
 import os
 import re
 import time
 import datetime
 from zipfile import ZipFile
-
-# Web stack
-import requests
 import json
-
 
 def unzip_download(zippedfile):
     """ Unzips downloaded data from EarthExplorer.
@@ -90,11 +85,11 @@ def request_download(session, entity_id, dataset_id, attempts=0):
         download_id = response.json()['data']['preparingDownloads'][0]['downloadId']
         print("Your download is being prepared!")
         download_id = retrieve_download(label)
-        sleep_time = 5 * attemps
+        sleep_time = 5 * attempts
         print("Sleeping for {} seconds.".format(sleep_time))
         time.sleep()
-        attempts = attemps + 1
-        label, download_id = request_download(session, entity_id, dataset_id, attemps)
+        attempts = attempts + 1
+        label, download_id = request_download(session, entity_id, dataset_id, attempts)
     except:
         try:
             download_id = response.json()['data']['availableDownloads'][0]['url']

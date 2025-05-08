@@ -3,7 +3,6 @@
 import argparse
 import os
 import time
-
 import fiona
 import fiona.transform
 import numpy as np
@@ -17,7 +16,6 @@ from tqdm import tqdm
 
 import sys; sys.path.append("./")
 import methods
-
 
 def set_up_parser():
     parser = argparse.ArgumentParser()
@@ -265,7 +263,6 @@ def main(args):
     print(
         f"Wrote {count} features to '{output_fn}' in" + f" {time.time() - tic} seconds"
     )
-
 
 if __name__ == "__main__":
     parser = set_up_parser()

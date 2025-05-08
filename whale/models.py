@@ -1,10 +1,7 @@
-from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.gis.db import models as gis_models
 
-# Create your models here.
 class AreaOfInterest(gis_models.Model):
     """
     A Django model representing an Area of Interest (AOI) with geographic information.
@@ -29,7 +26,6 @@ class AreaOfInterest(gis_models.Model):
     sqkm = gis_models.FloatField()
 
     def __str__(self):
-        #return f"{self.name} (ID: {self.id})"
         return self.name
 
 class People(models.Model):
@@ -334,7 +330,34 @@ class MaxarGeospatialPlatform(gis_models.Model):
 #      aggregate table, staging table, etc. It is effectively a starting
 #      point for other work and should not be expected to matriculate
 #      changes to earlier tables.
+
 class ExtractTransformLoad(gis_models.Model):
+    """
+    A Django model representing the Extract, Transform, Load (ETL) process for geospatial imagery data.
+
+    This model stores metadata about imagery including vendor information, spatial characteristics,
+    and temporal data. It maps to an existing database table 'etl' and is not managed by Django migrations.
+
+    Attributes:
+        table_name (CharField): Name of the table, max length 4 characters
+        aoi_id (IntegerField): Area of Interest identifier
+        id (CharField): Primary key, max length 16 characters
+        vendor_id (CharField): Vendor's unique identifier, max length 39 characters
+        entity_id (CharField): Entity identifier, max length 20 characters
+        vendor (CharField): Name of the vendor, max length 18 characters
+        platform (CharField): Platform identifier, max length 11 characters
+        pixel_size_x (FloatField): Pixel width in ground units
+        pixel_size_y (FloatField): Pixel height in ground units
+        date (DateField): Date of image capture
+        publish_date (DateField): Date of image publication
+        geometry (TextField): Geometry information of the image footprint
+        sea_state_qual (CharField): Qualitative sea state description, optional, max length 15 characters
+        sea_state_quant (IntegerField): Quantitative sea state measurement, optional
+        shareable (CharField): Sharing permissions indicator, optional, max length 3 characters
+
+    Note:
+        The model has a unique constraint on the combination of id, vendor_id, and entity_id fields.
+    """
     table_name = gis_models.CharField(max_length = 4)
     aoi_id = gis_models.IntegerField()
     id = gis_models.CharField(max_length = 16, primary_key = True)
@@ -362,7 +385,6 @@ class ExtractTransformLoad(gis_models.Model):
     def __str__(self):
         return f"{self.id} {self.vendor_id} {self.entity_id}"
 
-# Come back to this tomorrow
 class PointsOfInterest(gis_models.Model):
     """
     A Django model representing Points of Interest in satellite imagery, specifically designed for whale and marine observation.
@@ -505,6 +527,3 @@ class PointsOfInterest(gis_models.Model):
     
     def __str__(self):
         return self.classification
-
-class dummy(models.Model):
-    test = models.CharField(max_length = 10)

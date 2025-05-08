@@ -3,20 +3,17 @@
 import os
 import sys
 
-
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
 
-    # start debugging section
     from django.conf import settings
 
     if settings.DEBUG:
-        if os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN'):
+        if os.environ.get('RUN_MAIN'):
             import debugpy
             debugpy.listen(("0.0.0.0", 5678))
             print('Attached!')
-    # end section
 
     try:
         from django.core.management import execute_from_command_line
@@ -27,7 +24,6 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
-
 
 if __name__ == '__main__':
     main()
