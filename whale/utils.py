@@ -24,7 +24,7 @@ from osgeo import gdal
 import geopandas as gpd
 
 # Azure stack
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, ContentSettings
+from azure.storage.blob import BlobServiceClient, ContentSettings
 
 # Django stack
 from django.conf import settings
@@ -89,7 +89,7 @@ def standardize_names(imgdir):
     else:
         print("File name is standardized already. Moving along...")
         return geotiff
-    return glob(dir_data, recursive=True)
+    return glob(imgdir, recursive=True)
 
 def calibrate_image(tiff):
     """ Calibrates a given Maxar 1B image using the Polar Geospatial Center (PGC) method

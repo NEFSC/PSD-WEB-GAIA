@@ -1,19 +1,9 @@
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
 import django
-from django.utils import timezone
-from django.db import models
-from django.test import TestCase
-
-
-# Set up Django environment
 django.setup()
-
-# Import your models
-from django.contrib.auth.models import User
 from whale.models import PointsOfInterest
 from faker import Faker
-import unittest
 
 def add_fake_reviews(n):
     # Get first n rows from PointsOfInterest table
