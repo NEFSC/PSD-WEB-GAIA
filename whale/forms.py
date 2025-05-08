@@ -35,7 +35,6 @@ Note:
 
 from datetime import datetime
 from django import forms
-from django.contrib.gis import forms as gis_forms
 from .models import AreaOfInterest, ExtractTransformLoad
 from .models import PointsOfInterest
 from django.utils.safestring import mark_safe
