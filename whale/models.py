@@ -1,7 +1,5 @@
-from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.gis.db import models as gis_models
 
 class AreaOfInterest(gis_models.Model):
@@ -28,7 +26,6 @@ class AreaOfInterest(gis_models.Model):
     sqkm = gis_models.FloatField()
 
     def __str__(self):
-        #return f"{self.name} (ID: {self.id})"
         return self.name
 
 class People(models.Model):

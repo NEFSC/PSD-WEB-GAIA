@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import json
 from pathlib import Path
-import sys
 from sys import platform
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

@@ -1,4 +1,3 @@
-from django.contrib import admin
 """
 Django admin configuration module for the whale application.
 
@@ -9,9 +8,9 @@ Models registered:
 
 Note: AreaOfInterest admin configuration is currently commented out.  It needs a way for user to upload .geojson or .kml/.kmz
 """
+
+from django.contrib import admin
 from .models import AreaOfInterest, Targets, Tasking
-
-
 
 # @admin.register(AreaOfInterest)
 # class AreaOfInterestAdmin(admin.ModelAdmin):
