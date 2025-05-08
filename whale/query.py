@@ -1,4 +1,3 @@
-# Functions for building dataset-search and scene-search queries
 """
 Collection of functions for building dataset-search and scene-search queries for Earth Explorer (EE) and Maxar Geospatial Portal (MGP).
 Functions:
@@ -22,19 +21,13 @@ Functions:
               where: str, limit: int, export: str = None, bbox: list = None, geometry: dict = None) -> list:
         Performs spatio-temporal query against Maxar Geospatial Portal STAC API.
         Returns API response and list of catalog IDs matching query parameters.
+These functions make use of work found at: https://github.com/yannforget/landsatxplore
 """
-#
-# These functions make use of work found at: https://github.com/yannforget/landsatxplore
 
-import os
-import time
-from pathlib import Path
-
+import sys
 import json
 import requests
-
 import pandas as pd
-
 from .security import mgp_login
 
 def geojson_for_ee(geojson:dict):

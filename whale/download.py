@@ -1,15 +1,12 @@
-# Functions for downloading data from 
+# Functions for downloading data
 #
 # These functions make use of work found at: https://m2m.cr.usgs.gov/api/docs/example/download_data-py
 
-# Base stack
 import os
 import re
 import time
 import datetime
 from zipfile import ZipFile
-
-# Web stack
 import json
 
 def unzip_download(zippedfile):
