@@ -4,7 +4,7 @@
 ### Description
 The Geospatial Artificial Intelligence for Animals (GAIA) program brings together an extraordinary coalition of organizations to tackle the challenge of designing a large-scale operational platform to detect marine mammals from space-orbiting satellites. These organizations include government agencies (National Oceanic and Atmospheric Administration (NOAA), U.S. Naval Research Laboratory (NRL), the Bureau of Ocean Energy Management (BOEM), the U.S. Geological Survey (USGS), independent research organizations (British Antarctic Survey), academia (University of Edinburgh, University of Minnesota), and the private sector (Microsoft AI for Good Research Lab, Maxar Technologies).
 
-GAIA's WHale Active Learning Environment (WHALE) Tasking, Collection, Processing, Exploitation, and Dissimination (TCPED) Application is a port of the original [WHALE](https://github.com/microsoft/whales), created by Microsoft AI for Good in collaboration with NOAA, to GeoDjango and expanded to handle satellite imagery collection and dissimination needs of the GAIA team.
+GAIA's WHale Active Learning Environment (WHALE) Tasking, Collection, Processing, Annotation, and Dissimination (TCPED) Application is a port of the original [WHALE](https://github.com/microsoft/whales), created by Microsoft AI for Good in collaboration with NOAA, to GeoDjango and expanded to handle satellite imagery collection and dissimination needs of the GAIA team.
 
 ### Contents
 - dba
