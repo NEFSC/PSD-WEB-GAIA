@@ -3,7 +3,7 @@
 <section class="grid-container usa-section  padding-top-0">
     <div class="grid-row flex-justify-center">
         <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
-            <h1>Blind Reviews</h1>
+            <h1>Validation</h1>
             <div class="usa-toggle-container">
                 <input class="usa-toggle" id="toggle-final-reviews" type="checkbox" {% if request.GET.showfinals == 'true' %}checked{% endif %} name="toggle-final-reviews" onchange="if(this.checked) window.location.href='?sort={% if request.GET.sort == "desc" %}asc{% else %}desc{% endif %}&showfinals=true'; else window.location.href='?sort={% if request.GET.sort == "desc" %}asc{% else %}desc{% endif %}&showfinals=false';">
                 <label class="usa-toggle__label" for="toggle-final-reviews">
@@ -33,7 +33,7 @@
                 <tbody>
                     {% for review in page_obj %}
                     <tr>
-                        <td><a href="{% url 'exploitation_page' %}?id={{ review.id }}">{{ review.id }}</a></td>
+                        <td><a href="{% url 'annotation_page' %}?id={{ review.id }}">{{ review.id }}</a></td>
                         <td>{% if review.user1_classification %}{{ review.user1_classification }}{% endif %}</td>
                         <td>{% if review.user2_classification  %}{{ review.user2_classification }}{% endif %}</td>
                         <td>{% if review.user3_classification  %}{{ review.user3_classification }}{% endif %}</td>

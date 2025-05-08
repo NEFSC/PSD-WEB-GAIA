@@ -9,30 +9,30 @@ URL Patterns:
     - 'tasking/': Task management page (requires login)
     - 'collection/': Data collection page (requires login)
     - 'processing/': Data processing page (requires login)
-    - 'exploitation/': Data exploitation page (requires login)
-    - 'exploitation/<int:item_id>': Specific item exploitation page (requires login)
-    - 'exploitation/cogs/<str:vendor_id>/': COG (Cloud Optimized GeoTIFF) view
+    - 'annotation/': Data annotation page (requires login)
+    - 'annotation/<int:item_id>': Specific item annotation page (requires login)
+    - 'annotation/cogs/<str:vendor_id>/': COG (Cloud Optimized GeoTIFF) view
     - 'dissemination/': Data dissemination page (requires login)
     - 'proxy/openlayers.js': Proxy for OpenLayers JavaScript
     - 'proxy/ol-webgl.js': Proxy for WebGL JavaScript
-    - 'blind-reviews/': Blind reviews page
+    - 'validation/': Validation page
 """
 
 from django.urls import path
 from django.contrib.auth.decorators import login_required
 from . import views
-from .views.exploitation_views import proxy_openlayers_js, proxy_webgls_js
+from .views.annotation_views import proxy_openlayers_js, proxy_webgls_js
 
 urlpatterns = [
     path('', login_required(views.landing_page), name='landing_page'),
     path('tasking/', login_required(views.tasking_page), name='tasking_page'),
     path('collection/', login_required(views.collection_page), name='collection_page'),
     path('processing/', login_required(views.processing_page), name='processing_page'),
-    path('exploitation/', login_required(views.exploitation_page), name='exploitation_page'),
-    path('exploitation/<int:item_id>', login_required(views.exploitation_page), name='exploitation_page'),
-    path('exploitation/cogs/<str:vendor_id>/', views.cog_view, name='cog_view'),
+    path('annotation/', login_required(views.annotation_page), name='annotation_page'),
+    path('annotation/<int:item_id>', login_required(views.annotation_page), name='annotation_page'),
+    path('annotation/cogs/<str:vendor_id>/', views.cog_view, name='cog_view'),
     path('dissemination/', login_required(views.dissemination_page), name='dissemination_page'),
     path('proxy/openlayers.js', proxy_openlayers_js, name='proxy_openlayers_js'),
     path('proxy/ol-webgl.js', proxy_webgls_js, name='proxy_webgls_js'),
-    path('blind-reviews/', login_required(views.blind_reviews), name='blind_reviews'),
+    path('validation/', login_required(views.validation), name='validation'),
 ]
