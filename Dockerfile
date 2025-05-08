@@ -1,3 +1,29 @@
+# This Dockerfile sets up a Django application with Spatialite support using Miniconda
+#
+# - Uses miniconda3 as the base image
+# - Installs system dependencies including spatialite, sqlite3, and gdal
+# - Creates a non-root user 'vmuser' for security
+# - Sets up a conda environment from environment.yml
+# - Configures Spatialite integration with Django
+# - Sets up directories for secrets and data volume mounting
+# - Uses gunicorn as the application server
+# - Uses whitenoise for static file serving
+#
+# Environment variables:
+# - SPATIALITE_LIBRARY_PATH=mod_spatialite.so
+# - CONDA_DEFAULT_ENV=gaia
+#
+# Exposed ports:
+# - 8000
+#
+# Volumes:
+# - /mnt/secrets: For application secrets
+# - /mnt/data: For SQLite database
+#
+# The application runs as non-root user 'vmuser' for security
+# Entrypoint runs any initialization scripts
+# Default CMD runs gunicorn server on port 8000
+
 # Use an official miniconda image as a parent image
 FROM continuumio/miniconda3:latest
 

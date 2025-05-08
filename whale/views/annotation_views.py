@@ -20,27 +20,20 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden
 
 from django.shortcuts import render, redirect
-from django_q.tasks import async_task
 from django.db.models import Q
 
 # GAIA stack
 from ..models import PointsOfInterest
 from ..forms import PointsOfInterestForm
 from django.core.paginator import Paginator
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 
-def exploitation_page(request):
+def annotation_page(request):
     id = request.GET.get('id')
-    action = request.GET.get('action')
-# Record the user to add to database
     user = request.user
     if id:
         try:
             poi = PointsOfInterest.objects.get(id=id)
-            catalog_id = poi.catalog_id
             vendor_id = poi.vendor_id
-            entity_id = poi.entity_id
             form = PointsOfInterestForm(instance=poi)
             
             if user.is_superuser:
@@ -121,7 +114,7 @@ def exploitation_page(request):
 
         # Error handle for when no available points of interest can be found with a corresponding
         #      COG.
-        return render(request, 'exploitation_page.html', {
+        return render(request, 'annotation_page.html', {
             'poi': None,
             'poi_form': None,
             'vendor_id': None,
@@ -167,7 +160,7 @@ def exploitation_page(request):
             print("Form is invalid")  #  Debugging: Identify validation errors
             print(form.errors)  # Print validation errors
             # Reload the page to display the errors
-            return render(request, 'exploitation_page.html', {
+            return render(request, 'annotation_page.html', {
                 'poi': poi,
                 'user_number': user_number,
                 'poi_form': form,
@@ -200,7 +193,7 @@ def exploitation_page(request):
         if not exists:
 
             # Error handling for when a point of interest might exist, but no COG
-            return render(request, 'exploitation_page.html', {
+            return render(request, 'annotation_page.html', {
                 'poi': poi,
                 'user_number': user_number,
                 'poi_form': form,
@@ -212,7 +205,7 @@ def exploitation_page(request):
             })
 
     # If everything passes, render the page. Still have some COG error handling.
-    return render(request, 'exploitation_page.html', {
+    return render(request, 'annotation_page.html', {
         'poi': poi,
         'user_number': user_number,
         'poi_form': form,
@@ -224,7 +217,7 @@ def exploitation_page(request):
     })
 
 def cog_view(request, vendor_id=None):
-    """ Supporting view for the exploitation page which serves out the COGs. 
+    """ Supporting view for the annotation page which serves out the COGs. 
     
         Dependencies:
             - generate_sas_token
@@ -324,7 +317,7 @@ def generate_sas_token(blob_name):
             blob_name = blob_path,
             account_key = account_key,
             permission = BlobSasPermissions(read=True),
-            expiry = datetime.utcnow() + timedelta(hours=1)
+            expiry = datetime.now(datetime.timezone.utc) + timedelta(hours=1)
         )
     
         blob_url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_path}?{sas_token}"
@@ -373,7 +366,7 @@ def generate_interesting_points_subprocess(geotiff, out_geojson, method="big_win
     script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'microsoft', 'generate_interesting_points.py')
     subprocess.run([sys.executable, script_path, '--input_url', geotiff, '--output_fn', out_geojson, '--method', method, '--difference_threshold', difference, '--overwrite'])
 
-def blind_reviews(request):
+def validation(request):
     sort_order = request.GET.get('sort', 'asc')
     show_final_reviews = request.GET.get('showfinals', 'false')
 
@@ -396,4 +389,4 @@ def blind_reviews(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'blind_reviews_page.html', {'page_obj': page_obj, 'sort_order': sort_order})
+    return render(request, 'validation_page.html', {'page_obj': page_obj, 'sort_order': sort_order})

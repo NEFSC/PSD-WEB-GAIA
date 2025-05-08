@@ -1,8 +1,22 @@
-# Basic stack
+"""
+Utility functions for working with satellite imagery and Azure storage,
+including file conversion, standardization, calibration, and tile generation.
+
+Also includes functions for Azure blob storage operations and POI imports.
+
+    Functions:
+        get_entity_pairs(entity_id): Gets paired multispectral and panchromatic image IDs.
+        convert_ntf_to_tif(ntf): Converts NTF files to GeoTIFF format.
+        standardize_names(imgdir): Standardizes image filenames in a directory.
+        calibrate_image(tiff): Calibrates Maxar 1B images using PGC method.
+        convert_to_tiles(tiff): Converts images to web-friendly tiles.
+        import_pois(geojson_path): Imports Points of Interest from GeoJSON.
+        upload_to_azure(local_file, azure_dir, content_type): Uploads files to Azure storage.
+"""
+
 import os
 import sys
 import subprocess
-from datetime import datetime, timedelta
 from glob import glob
 
 # Geospatial stack
@@ -10,7 +24,7 @@ from osgeo import gdal
 import geopandas as gpd
 
 # Azure stack
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, ContentSettings
+from azure.storage.blob import BlobServiceClient, ContentSettings
 
 # Django stack
 from django.conf import settings
@@ -75,7 +89,7 @@ def standardize_names(imgdir):
     else:
         print("File name is standardized already. Moving along...")
         return geotiff
-    return glob(dir_data, recursive=True)
+    return glob(imgdir, recursive=True)
 
 def calibrate_image(tiff):
     """ Calibrates a given Maxar 1B image using the Polar Geospatial Center (PGC) method
@@ -130,7 +144,7 @@ def convert_to_tiles(tiff):
     #     return "Image does not use the expected convention."
 
     # Six processes should be about 75% CPU utilization
-    subprocess.run([sys.executable, 'C:/Users/jeffrey.wyman/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
+    subprocess.run([sys.executable, 'C:/Users/USERNAMEHERE/AppData/Local/anaconda3/envs/gaia/Scripts/gdal2tiles.py',
                     '-r', 'cubic', '-z', '4-', '--processes=6', '-w', 'none', vrt_name,
                     tile_dir_name])
     return tile_dir_name
@@ -153,7 +167,6 @@ def import_pois(geojson_path):
     gdf = gpd.read_file(geojson_path)
 
     for index, row in gdf.iterrows():
-        #print(f"Processing row: {row['id']}")
         poi, created = POI.objects.update_or_create(
             sample_idx = row['id'],
             defaults={
@@ -196,12 +209,6 @@ def upload_to_auzre(local_file, azure_dir, content_type):
         with open(local_file, 'rb') as data:
             blob_client.upload_blob(data, content_settings=content_settings)
         print(f"Successfully uploaded {data} to {blob}")
-
-        # if os.path.exists(local_file):
-        #     os.remove(local_file)
-        #     print(f"Successfully deleted {local_file} from local machine.")
-        # else:
-        #     print(f"The file {local_file} does not exist.")
 
     except Exception as e:
         print(f"An error occured: {e}")
