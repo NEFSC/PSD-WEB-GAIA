@@ -1,23 +1,14 @@
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
 import django
-from django.utils import timezone
-from django.db import models
-from django.test import TestCase
-
-
-# Set up Django environment
 django.setup()
-
-# Import your models
 from django.contrib.auth.models import User
 from whale.models import PointsOfInterest
-from whale.models import BlindReviews
+from whale.models import Validation
 from faker import Faker
-import unittest
 
 # Print field names
-for field in BlindReviews._meta.get_fields():
+for field in Validation._meta.get_fields():
     print(field.name, field.get_internal_type())
 
 # Create a Faker instance
@@ -25,8 +16,8 @@ fake = Faker()
 
 poi = PointsOfInterest.objects.order_by('?').first()
 
-# Create a sample BlindReviews instance
-blind_review = BlindReviews.objects.create(
+# Create a sample Validation instance
+validation = Validation.objects.create(
     primary=poi,
     user1_id=User.objects.create(username=fake.user_name()),
     user1_classify=fake.random_element(PointsOfInterest.CLASSIFICATION_CHOICES)[0],
@@ -47,10 +38,10 @@ blind_review = BlindReviews.objects.create(
     final_review_date=fake.date_this_decade()
 )
 
-print("Sample BlindReviews instance created:", blind_review)
-for field in BlindReviews._meta.get_fields():
-    print(f"{field.name}: {getattr(blind_review, field.name)}")
-    print("\nFake data saved in BlindReviews instance:")
-    for field in BlindReviews._meta.get_fields():
+print("Sample Validation instance created:", validation)
+for field in Validation._meta.get_fields():
+    print(f"{field.name}: {getattr(validation, field.name)}")
+    print("\nFake data saved in Validation instance:")
+    for field in Validation._meta.get_fields():
         if field.concrete and not field.many_to_many:
-            print(f"{field.name}: {getattr(blind_review, field.name)}")
+            print(f"{field.name}: {getattr(validation, field.name)}")
