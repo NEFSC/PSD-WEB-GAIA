@@ -3,22 +3,6 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models as gis_models
 
 class AreaOfInterest(gis_models.Model):
-    """
-    A Django model representing an Area of Interest (AOI) with geographic information.
-
-    This model stores spatial data for areas of interest, including their names,
-    requestors, geometric boundaries, and area measurements.
-
-    Attributes:
-        id (AutoField): Primary key for the area of interest.
-        name (CharField): Name of the area of interest, limited to 50 characters.
-        requestor (CharField): Name of the person who requested the AOI, limited to 25 characters.
-        geometry (GeometryField): Geographic boundary data of the area.
-        sqkm (FloatField): Area measurement in square kilometers.
-
-    Returns:
-        str: String representation of the area of interest, using the name field.
-    """
     id = gis_models.AutoField(primary_key = True)
     name = gis_models.CharField(max_length = 50)
     requestor = gis_models.CharField(max_length = 25)
@@ -28,82 +12,32 @@ class AreaOfInterest(gis_models.Model):
     def __str__(self):
         return self.name
 
-class People(models.Model):
-    """
-    A Django model representing individuals in the system.
-
-    This model stores personal and organizational information about people.
-
-    Attributes:
-        id (AutoField): Primary key for the person record.
-        name (CharField): The person's full name, limited to 20 characters.
-        email (CharField): The person's email address, limited to 30 characters.
-        organization (CharField): The person's organization name, limited to 25 characters.
-        sub_organization (CharField): A subdivision or department within the organization, limited to 50 characters.
-        location (CharField): The person's physical location or address, limited to 50 characters.
-
-    Methods:
-        __str__: Returns the person's name as string representation.
-    """
-    id = models.AutoField(primary_key = True)
-    name = models.CharField(max_length = 20)
-    email = models.CharField(max_length = 30)
-    organization = models.CharField(max_length = 25)
-    sub_organization = models.CharField(max_length = 50)
-    location = models.CharField(max_length = 50)
-
-    def __str__(self):
-        return self.name
-
 class Targets(gis_models.Model):
-    """Target species model that holds information about each whale target.
-
-    This model represents individual whale target species and their scientific names.
-
-    Attributes:
-        id (AutoField): Primary key for the target species.
-        target (CharField): Common name of the whale species, max length 30 characters.
-        scientific_name (CharField): Scientific/Latin name of the species, max length 25 characters.
-
-    Returns:
-        str: The target (common) name of the whale species when object is converted to string.
-    """
     id = gis_models.AutoField(primary_key = True)
-    target = gis_models.CharField(max_length = 30)
-    scientific_name = gis_models.CharField(max_length = 25)
+    value = gis_models.CharField(max_length = 30)
+    label = gis_models.CharField(max_length = 25)
 
     def __str__(self):
-        return self.target
+        return self.label
 
+class Confidence(models.Model):
+    id = models.AutoField(primary_key=True)
+    value = models.CharField(max_length=10)
+    label = models.CharField(max_length=25)
 
+    def __str__(self):
+        return self.label
+    
+class Classification(models.Model):
+    id = models.AutoField(primary_key=True)
+    label = models.CharField(max_length=25)
+    value = models.CharField(max_length=25)
+
+    def __str__(self):
+        return self.label
+    
 # Needs to be revisited with cleaned data from Lauren
 class Tasking(models.Model):
-    """
-    A Django model representing a tasking entry for satellite imagery acquisition.
-    Attributes:
-        id (AutoField): Primary key for the tasking entry
-        dar (int): Digital Acquisition Request number
-        aoi (ForeignKey): Reference to an Area of Interest
-        location (str): Location identifier, max 12 chars
-        target (str): Target identifier, max 30 chars
-        requestor (ForeignKey): Reference to the person making the request
-        vendor (str): Vendor name, max 10 chars
-        mono_stereo (str): Type of imagery - either 'mono' or 'stereo'
-        date_entered (Date): Date when the tasking was entered
-        acquisition_start (Date): Start date for image acquisition
-        acquisition_end (Date): End date for image acquisition
-        ona_wv2 (str): WorldView-2 ONA identifier, max 10 chars
-        ona_wv3 (str): WorldView-3 ONA identifier, max 10 chars
-        tasking_description (str): Brief description of the tasking, max 10 chars
-        comments (str): Additional comments, max 250 chars
-        status (str): Current status of the tasking, max 8 chars
-        output_format (str): Required output format, max 7 chars
-        processing_level (str): Required processing level, max 41 chars
-        website_link (str): Related website URL, max 50 chars
-        permission_to_share (str): Sharing permissions details, max 500 chars
-    Returns:
-        str: String representation of the tasking entry ID
-    """
     MONO_STERO_CHOICES = [
         ('mono', 'Mono'),
         ('stereo', 'Stereo'),
@@ -114,7 +48,7 @@ class Tasking(models.Model):
     aoi = models.ForeignKey(AreaOfInterest, on_delete=models.DO_NOTHING)
     location = models.CharField(max_length = 12)
     target = models.CharField(max_length = 30)
-    requestor = models.ForeignKey(People, on_delete=models.DO_NOTHING)
+    requestor = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     vendor = models.CharField(max_length = 10)
     mono_stereo = models.CharField(max_length = 6, choices=MONO_STERO_CHOICES)
     date_entered = models.DateField()
@@ -386,93 +320,8 @@ class ExtractTransformLoad(gis_models.Model):
         return f"{self.id} {self.vendor_id} {self.entity_id}"
 
 class PointsOfInterest(gis_models.Model):
-    """
-    A Django model representing Points of Interest in satellite imagery, specifically designed for whale and marine observation.
-    This model stores geographical points of interest with associated metadata, classification information,
-    and review status. It supports a multi-user review process for identifying and classifying objects
-    in satellite imagery.
-    Attributes:
-        CLASSIFICATION_CHOICES (list): Predefined options for classifying observed objects
-        CONFIDENCE_CHOICES (list): Confidence levels for classifications
-        SPECIES_CHOICES (list): Available whale species options
-    Fields:
-        Identification:
-            id (int): Primary key
-            catalog_id (str): Catalog identifier
-            vendor_id (str): Vendor identifier
-            entity_id (str): Entity identifier
-        Geometric Properties:
-            sample_idx (str): Sample index identifier
-            area (float): Area measurement
-            deviation (float): Deviation measurement
-            epsg_code (str): EPSG coordinate system code
-            point (geometry): Geographical point location
-        Review Process:
-            status (str): Current review status
-            locked_by (User): User currently reviewing the point
-            review_count (int): Number of reviews completed
-            reviewed_by_users (ManyToManyField): Users who have reviewed this point
-        Metadata:
-            email (str): Associated email address
-            client_ip (str): Client IP address
-            out_time (date): Check-out timestamp
-            in_time (date): Check-in timestamp
-        Classification:
-            classification (str): Current classification
-            confidence (str): Confidence level
-            species (str): Species identification
-            comments (str): General comments
-        User Reviews:
-            user[1-3]_id (str): Reviewer IDs
-            user[1-3]_classification (str): Individual classifications
-            user[1-3]_comments (str): Individual comments
-            user[1-3]_species (str): Individual species identifications
-            user[1-3]_confidence (str): Individual confidence levels
-        Final Review:
-            final_review (str): Final classification
-            final_review_date (date): Date of final review
-    Meta:
-        constraints: Ensures unique combination of id, catalog_id, vendor_id, and entity_id
-    """
-    CLASSIFICATION_CHOICES = [
-        ('water', 'Water'),
-        ('cloud', 'Cloud'),
-        ('bird', 'Bird'),
-        ('waves', 'Waves'),
-        ('plane', 'Plane'),
-        ('ship', 'Ship'),
-        ('shadow', 'Shadow'),
-        ('oil', 'Oil'),
-        ('aquaculture', 'Aquaculture'),
-        ('debris', 'Debris'),
-        ('rock', 'Rock'),
-        ('mudflats_or_land', 'Mudflats or Water'),
-        ('buoy', 'Buoy'),
-        ('whale', 'Whale'),
-        ('zooplankton', 'Zooplankton'),
-        ('land', 'Land'),
-        ('unsure', 'Unsure'),
-    ]
-
-    CONFIDENCE_CHOICES = [
-        ('possible', 'Possible ( ≤ 75% )'),
-        ('probable', 'Probable ( 75 - 85% )'),
-        ('definite', 'Definite ( ≥ 85% )')
-    ]
-
-    SPECIES_CHOICES = [
-        ('unknown', 'Unkown'),
-        ('right', 'Right'),
-        ('humpback', 'Humpback'),
-        ('fin', 'Fin'),
-        ('sei', 'Sei'),
-        ('minke', 'Minke'),
-        ('beluga', 'Beluga'),
-        ('other', 'Other')
-    ]
-
     # Mandatory and from ETL
-    id = gis_models.IntegerField(primary_key = True)    
+    id = gis_models.AutoField(primary_key = True)
     catalog_id = gis_models.CharField(max_length = 16, null=True, blank=True)
     vendor_id = gis_models.CharField(max_length = 39, null=True, blank=True)
     entity_id = gis_models.CharField(max_length = 20, null=True, blank=True)
@@ -484,46 +333,26 @@ class PointsOfInterest(gis_models.Model):
     epsg_code = gis_models.CharField(max_length = 6, null=True, blank=True)
 
     # For review process
-    status = models.CharField(max_length = 20, default="Available")
-    locked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    review_count = models.IntegerField(default=0)
-    reviewed_by_users = models.ManyToManyField(User, related_name="reviewed_species", blank=True)
-    
-    email = gis_models.CharField(max_length = 35, null=True, blank=True)
-    client_ip = gis_models.CharField(max_length = 13, null=True, blank=True)
-    out_time = gis_models.DateField(null=True, blank=True)
-    in_time = gis_models.DateField(null=True, blank=True)
-    classification = gis_models.CharField(max_length = 20, choices=CLASSIFICATION_CHOICES, default='Unclassified')
-    confidence = gis_models.CharField(max_length = 10, choices=CONFIDENCE_CHOICES, default='NA')
-    species = gis_models.CharField(max_length = 50, choices=SPECIES_CHOICES, default='NA')
-    comments = gis_models.CharField(max_length = 500, null=True, blank=True)
-    user1_id = models.CharField(max_length=30, null=True, blank=True)
-    user1_classification = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
-    user1_comments = models.CharField(max_length=500, null=True, blank=True)
-    user1_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
-    user1_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
-    user2_id = models.CharField(max_length=30, null=True, blank=True)
-    user2_classification = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
-    user2_comments = models.CharField(max_length=500, null=True, blank=True)
-    user2_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
-    user2_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
-    user3_id = models.CharField(max_length=30, null=True, blank=True)
-    user3_classification = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
-    user3_comments = models.CharField(max_length=500, null=True, blank=True)
-    user3_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
-    user3_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
-    final_review = models.CharField(max_length=20, choices=CLASSIFICATION_CHOICES, null=True, blank=True)
+    cog_available = models.BooleanField(default=False)
+    final_species = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
+    final_classification = models.ForeignKey(Classification, on_delete=models.CASCADE, null=True, blank=True)
     final_review_date = models.DateField(null=True, blank=True)
-    final_species = models.CharField(max_length=50, choices=SPECIES_CHOICES, null=True, blank=True)
-    final_confidence = models.CharField(max_length=10, choices=CONFIDENCE_CHOICES, null=True, blank=True)
 
     # Mandatory
     point = gis_models.GeometryField(null=True, blank=True)
-
-    class Meta:
-        constraints = [
-            gis_models.UniqueConstraint(fields=['id' ,'catalog_id', 'vendor_id', 'entity_id'], name='fk_img_id')
-        ]
     
     def __str__(self):
-        return self.classification
+        return self
+    
+class Annotations(models.Model):
+    id = models.AutoField(primary_key = True)
+    poi = models.ForeignKey(PointsOfInterest, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    classification = models.ForeignKey(Classification, on_delete=models.CASCADE)
+    comments = models.CharField(max_length=500, null=True, blank=True)
+    confidence = models.ForeignKey(Confidence, on_delete=models.CASCADE, null=True, blank=True)
+    target = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return f"Annotation {self.id} by {self.user}"
+    
