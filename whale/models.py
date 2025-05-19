@@ -346,7 +346,7 @@ class PointsOfInterest(gis_models.Model):
     
 class Annotations(models.Model):
     id = models.AutoField(primary_key = True)
-    poi = models.ForeignKey(PointsOfInterest, on_delete=models.CASCADE)
+    poi = models.ForeignKey(PointsOfInterest, related_name='annotations', on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     classification = models.ForeignKey(Classification, on_delete=models.CASCADE)
     comments = models.CharField(max_length=500, null=True, blank=True)
@@ -355,4 +355,3 @@ class Annotations(models.Model):
 
     def __str__(self):
         return f"Annotation {self.id} by {self.user}"
-    
