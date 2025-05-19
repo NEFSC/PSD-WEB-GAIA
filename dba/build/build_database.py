@@ -5,9 +5,11 @@
 
 
 # Import Libraries
+import os
 import sqlite3
 
 
+# Define functions
 def initialize_spatialite(db):
     """ When provided with a path to a SQLite database, initializes
             the SpatiaLite components of the database.
@@ -44,8 +46,8 @@ def drop_table_if_exists(db, table_name):
         conn.close()
 
         print(f"Successfully dropped table {table_name}, if it existed...")
-        
-    with Exception as e:
+
+    except Exception as e:
         print(f"Failed to drop table with exception: {e}")
 
 def drop_trigger(db, trigger_name):
@@ -69,7 +71,7 @@ def drop_trigger(db, trigger_name):
 
         print(f"Successfully dropped trigger {trigger_name}, if it existed...")
         
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to drop table with exception: {e}")
 
 def create_aois(db):
@@ -111,7 +113,7 @@ def create_aois(db):
 
         print("Successfully created table WHALE AREASOFINTEREST")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_targets(db):
@@ -144,7 +146,7 @@ def create_targets(db):
 
         print("Successfully created table WHALE TARGETS")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_people(db):
@@ -182,7 +184,7 @@ def create_people(db):
 
         print("Successfully created table WHALE PEOPLE")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_tasking(db):
@@ -243,7 +245,7 @@ def create_tasking(db):
 
         print("Successfully created table WHALE TASKING")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_earthexplorer(db):
@@ -309,7 +311,7 @@ def create_earthexplorer(db):
 
         print("Successfully created table WHALE EARTHEXPLORER")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_geointdiscovery(db):
@@ -373,7 +375,7 @@ def create_geointdiscovery(db):
 
         print("Successfully created table WHALE EARTHEXPLORER")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_maxargeospatialplatform(db):
@@ -420,7 +422,7 @@ def create_maxargeospatialplatform(db):
 
         print("Successfully created table WHALE MAXARGEOSPATIALPLATFORM")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_etl(db):
@@ -510,7 +512,7 @@ def create_etl(db):
 
         print("Successfully created table ETL")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_etl_triggers(db):
@@ -556,7 +558,7 @@ def create_etl_triggers(db):
 
         print("Successfully created table ETL after EE insert")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create ETL after Earth Explorer insert trigger with exception: {e}")
 
     try:
@@ -594,8 +596,8 @@ def create_etl_triggers(db):
         conn.close()
 
         print("Successfully created table ETL after GEGD insert")
-        
-    with Exception as e:
+
+    except Exception as e:
         print(f"Failed to create ETL after Global Enhanced GEOINT Delivery insert trigger with exception: {e}")
 
     try:
@@ -634,7 +636,7 @@ def create_etl_triggers(db):
 
         print("Successfully created table ETL after MGP insert")
         
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create ETL after Maxar Geospatial Platform insert trigger with exception: {e}")
 
 def create_poitnsofinterest(db):
@@ -656,41 +658,94 @@ def create_poitnsofinterest(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS exploit(
-                id,
-                vendor_id,
-                entity_id,
-                cid  VARCHAR(20),
-                dar INTEGER,
-                poi INTEGER,
+            CREATE TABLE IF NOT EXISTS whale_pointsofinterest(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                vendor_id VARCHAR(39),
+                
                 sample_idx VARCHAR(40),
-                latitude NUMERIC(2, 6),
-                longitude NUMERIC(3, 6),
+                area NUMERIC(4, 6),
+                deviation NUMERIC(4, 6),
+                epsg_code VARCHAR(6),
+
+                status VARCHAR(20),
+                locked_by INTEGER,
+                review_count INTEGER,
+                reviewed_by_users,
+
                 email VARCHAR(35),
                 client_ip VARCHAR(13),
                 out_time DATE,
                 in_time DATE,
-                user_label VARCHAR(10),
+                
+                classification VARCHAR(20),
                 confidence VARCHAR(10),
-                species VARCHAR(25),
+                species VARCHAR(50),
                 comments VARCHAR(500),
-                FOREIGN KEY (id)
-                    REFERENCES etl(id),
-                FOREIGN KEY (vendor_id)
-                    REFERENCES etl(vendor_id),
-                FOREIGN KEY (entity_id)
-                    REFERENCES etl(entity_id),
-                FOREIGN KEY (cid)
-                    REFERENCES tasking(id),
-                FOREIGN KEY (dar)
-                    REFERENCES tasking(dar)
+                
+                user1_id VARCHAR(30),
+                user1_classification VARCHAR(20),
+                user1_comments VARCHAR(500),
+                user1_species VARCHAR(50),
+                user1_confidence VARCHAR(10),
+
+                user2_id VARCHAR(30),
+                user2_classification VARCHAR(20),
+                user2_comments VARCHAR(500),
+                user2_species VARCHAR(50),
+                user2_confidence VARCHAR(10),
+
+                user3_id VARCHAR(30),
+                user3_classification VARCHAR(20),
+                user3_comments VARCHAR(500),
+                user3_species VARCHAR(50),
+                user3_confidence VARCHAR(10),
+
+                final_review VARCHAR(20),
+                final_review_date DATE,
+                final_species VARCHAR(50),
+                final_confidence VARCHAR(10),
+
+                FOREIGN KEY (locked_by)
+                    REFERENCES auth_user(id)
             )
         ''')
         
+        c.execute('''SELECT AddGeometryColumn('whale_pointsofinterest', 'point', 4326, 'POINT')''')
+
         conn.commit()
         conn.close()
 
         print("Successfully created table WHALE POINTSOFINTEREST")
     
-    with Exception as e:
+    except Exception as e:
         print(f"Failed to create table with exception: {e}")
+
+def main(db):
+    """ Initalizes the SpatiaLite database for the GAIA application
+            using only the functions to build tables currently
+            relevant to the application as of 19 MAY 2025.
+
+        DB - Path to a database file
+    """
+    try:
+        initialize_spatialite(db)
+        print("Initialized SpatiaLite database!")
+    except Exception as e:
+        print(f"Failed to initialize SpatiaLite database!\n\t{e}")
+    
+    try:
+        create_poitnsofinterest(db)
+        print("Created Points of Interest table!")
+    except Exception as e:
+        print(f"Failed to create Points of Interest table!\n\t{e}")
+
+
+# User defined variables
+db = "../../../db.sqlite3"
+
+
+# Call main
+if __name__ == "__main__":
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.abspath(os.path.join(script_dir, db))
+    main(db_path)
