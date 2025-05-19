@@ -7,9 +7,18 @@
             <div class="usa-toggle-container">
                 <input class="usa-toggle" id="toggle-final-reviews" type="checkbox" {% if request.GET.showfinals == 'true' %}checked{% endif %} name="toggle-final-reviews" onchange="if(this.checked) window.location.href='?sort={% if request.GET.sort == "desc" %}asc{% else %}desc{% endif %}&showfinals=true'; else window.location.href='?sort={% if request.GET.sort == "desc" %}asc{% else %}desc{% endif %}&showfinals=false';">
                 <label class="usa-toggle__label" for="toggle-final-reviews">
-                    <span>Show Final Reviews</span>
+                    <span>Show Records with Final Reviews</span>
                 </label>
             </div>
+            {% if not page_obj %}
+            <div class="usa-alert usa-alert--warning" role="alert">
+              <div class="usa-alert__body">
+                <p class="usa-alert__text" style="margin-left: 0;">
+                    No results found.
+                </p>
+              </div>
+            </div>
+            {% else %}
             <table class="usa-table usa-table--bordered usa-table--striped">
                 <thead>
                     <tr>
@@ -31,15 +40,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for review in page_obj %}
-                    <tr>
-                        <td><a href="{% url 'annotation_page' %}?id={{ review.id }}">{{ review.id }}</a></td>
-                        <td>{% if review.user1_classification %}{{ review.user1_classification }}{% endif %}</td>
-                        <td>{% if review.user2_classification  %}{{ review.user2_classification }}{% endif %}</td>
-                        <td>{% if review.user3_classification  %}{{ review.user3_classification }}{% endif %}</td>
-                        <td>{% if review.final_review  %}{{ review.final_review }}{% endif %}</td>
-                        <td>{% if review.final_review_date  %}{{ review.final_review_date }}{% endif %}</td>
-                    </tr>
+                    {% for poi in page_obj %}
+                        <tr>
+                            <td><a href="{% url 'annotation_page' %}?id={{ review.id }}">{{ poi.id }}</a></td>
+                            {% for review in poi.three_reviews %}
+                                <td>{{ review.classification }}</td>
+                            {% endfor %}
+                            <td>{{ poi.final_classification }}</td>
+                            <td>{{ poi.final_review_date }}</td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -77,6 +86,7 @@
             {% endif %}
             </ul>
         </nav>
+        {% endif %}
     </div>
 </section>
 </body>
