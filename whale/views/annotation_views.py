@@ -19,6 +19,8 @@ def annotation_page(request):
     longitude, latitude = -70.183762, 42.049081
     id = request.GET.get('id')
     user = request.user
+    annotation = None
+    annotations = None
 
     def get_next_poi(user):
         # Filter POIs to only include those with less than 3 annotations
