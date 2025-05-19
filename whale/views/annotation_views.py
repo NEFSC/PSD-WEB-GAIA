@@ -1,176 +1,81 @@
-# Basic stack
-import os
-import sys
 import requests
 import datetime
 from datetime import datetime, timedelta
-import subprocess
-# Geospatial Stack
 from pyproj import CRS, Transformer
 
-# Azure stack
-from azure.core.credentials import AzureNamedKeyCredential
-from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions
 
-# Django stack
-import django
-from django.core.cache import cache
 from django.conf import settings
-
-from django.http import HttpResponse, HttpResponseForbidden
-
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from django.db.models import Q
+from django.db.models import Q, Count, Prefetch
 
-# GAIA stack
-from ..models import PointsOfInterest
-from ..forms import PointsOfInterestForm
+from ..models import PointsOfInterest, Annotations
+from ..forms import AnnotationForm
 from django.core.paginator import Paginator
 
 def annotation_page(request):
+    # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
+    longitude, latitude = -70.183762, 42.049081
     id = request.GET.get('id')
     user = request.user
-    if id:
-        try:
-            poi = PointsOfInterest.objects.get(id=id)
-            vendor_id = poi.vendor_id
-            form = PointsOfInterestForm(instance=poi)
-            
-            if user.is_superuser:
-                user_number = 0
-            # check if current user matches any existing review, or select first empty slot
-            if poi and (poi.user1_id is None or poi.user2_id is None or poi.user3_id is None):
-                if str(user) == str(poi.user1_id):
-                    user_number = 1
-                elif str(user) == str(poi.user2_id):
-                    user_number = 2
-                elif str(user) == str(poi.user3_id):
-                    user_number = 3
-                elif poi.user1_id is None:
-                    user_number = 1
-                elif poi.user2_id is None:
-                    user_number = 2
-                elif poi.user3_id is None:
-                    user_number = 3
-
-        except PointsOfInterest.DoesNotExist:
-            poi = None
-
-    # Debugging: Print out the form values
-    # print(f"Form values: {form}")
 
     def get_next_poi(user):
-        # For regular users, filter for POIs that exist, do not have three reviews, and are not reviewed by current user
-        unreviewed_pois = PointsOfInterest.objects.filter(Q(user1_id__isnull=True)).exclude(Q(user2_id=user) | Q(user3_id=user)).union(
-        PointsOfInterest.objects.filter(user2_id__isnull=True).exclude(Q(user1_id=user) | Q(user3_id=user))
-        ).union(
-        PointsOfInterest.objects.filter(user3_id__isnull=True).exclude(Q(user1_id=user) | Q(user2_id=user))
-        ).order_by('id')
+        # Filter POIs to only include those with less than 3 annotations
+        # and exclude those already annotated by current user
+        next_poi = PointsOfInterest.objects.exclude(
+            annotations__user_id=user.id
+        ).annotate(
+            annotation_count=Count('annotations')
+        ).filter(
+            annotation_count__lt=3,
+            cog_available=True
+        ).first()
 
-        unreviewed_pois = unreviewed_pois[:100]
-        for poi in unreviewed_pois:
-            print(f"Unreviewed POI ID: {poi.id}")
+        return next_poi
 
-        # If no unreviewed POIs are found, select any next POI
-        if not unreviewed_pois.exists():
-            unreviewed_pois = PointsOfInterest.objects.order_by('id')
-
-        # Iterate through each unreviewed points of interest until a valid COG is found in Azure
-        for poi in unreviewed_pois:
-            # Debug statement to see which POIs are being checked
-            print(f"Checking POI ID: {poi.id}")
-            exists, blob_name = cog_exists(poi.vendor_id)
-
-            if exists:
-                print(f"Found POI with COG - ID: {poi.id}, Vendor ID: {poi.vendor_id}")
-                return poi
-
-        print("No available POIs with valid COG found.")
-        return None
-    
-    def cog_exists(vendor_id):
-        """ Checks if a COG exists in Azure when provided with a Vendor ID.
-                Really a wrapper function that includes a check cache function.
-
-            Dependencies:
-                - check_cog_existence
-
-            VENDOR ID - Vendor ID value
-        """
-        cached_result = cache.get(f'cog_existence_{vendor_id}')
-        if cached_result is not None:
-            return cached_result
-
-        # Call real CHECK COG EXISTANCE function
-        exists, blob_name = check_cog_existence(vendor_id, directory='cogs/')
-        cache.set(f'cog_existence_{vendor_id}', (exists, blob_name), timeout=300)  # Cache COG existence for 5 minutes
-        return exists, blob_name
-
-    # Scenario 1: If no id, find the next unreviewed point of interest with a valid COG file in Azure.
     if id is None:
         poi = get_next_poi(user)
         if poi:
             return redirect(f'{request.path}?id={poi.id}')
 
-        # Error handle for when no available points of interest can be found with a corresponding
-        #      COG.
-        return render(request, 'annotation_page.html', {
-            'poi': None,
-            'poi_form': None,
-            'vendor_id': None,
-            'longitude': None,
-            'latitude': None,
-            'error_message': "No available POIs with valid COG found.",
-            'cog_url': f"{blob_name}" if exists else None
-        })
-
-    # Scenario 2: If id, retrieve the specific point of interest
-    if id:
+    elif id:
         try:
             poi = PointsOfInterest.objects.get(id=id)
+            vendor_id = poi.vendor_id
             
+            if user.is_superuser:
+                annotations = Annotations.objects.filter(poi=poi)
+            try:
+                annotation = Annotations.objects.select_related(
+                    'classification', 
+                    'target',
+                    'confidence'
+                ).get(poi=poi, user_id=user.id)
+            except Annotations.DoesNotExist:
+                annotation = Annotations(poi=poi, user_id=user.id)
+            form = AnnotationForm(instance=annotation)
+
         except PointsOfInterest.DoesNotExist:
             poi = None
 
-    # Classification form (i.e., PointsOfInterestForm) handling
     if request.method == "POST":
-        form = PointsOfInterestForm(request.POST, instance=poi)
+        form = AnnotationForm(request.POST, instance=annotation)
         print(request.POST)
         if form.is_valid():
-            if user_number == 1:
-                poi.save(update_fields=['user1_id', 'user1_classification', 'user1_comments', 'user1_species', 'user1_confidence'])
-            elif user_number == 2:
-                poi.save(update_fields=['user2_id', 'user2_classification', 'user2_comments', 'user2_species', 'user2_confidence'])
-            elif user_number == 3:
-                poi.save(update_fields=['user3_id', 'user3_classification', 'user3_comments', 'user3_species', 'user3_confidence'])
-            elif user_number == 0:
+            if user.is_superuser and annotations.count() > 2:
                 poi.final_review_date = datetime.now()
-                poi.save(update_fields=['final_review', 'final_species', 'final_confidence', 'final_review_date'])
-
-            print(f"Data saved:")  #  Debugging: Confirm save
-            # Print all fields of poi
-            for field in poi._meta.fields:
-                field_name = field.name
-                field_value = getattr(poi, field_name)
-                print(f"{field_name}: {field_value}")
+                poi.final_classification = form.cleaned_data['classification']
+                poi.final_species = form.cleaned_data['target']
+                poi.save(update_fields=['final_species', 'final_classification', 'final_review_date'])
+            else:
+                annotation = form.save()
             poi = get_next_poi(user)
             if poi:
                 return redirect(f'{request.path}?id={poi.id}')
         else:
-            print("Form is invalid")  #  Debugging: Identify validation errors
-            print(form.errors)  # Print validation errors
-            # Reload the page to display the errors
-            return render(request, 'annotation_page.html', {
-                'poi': poi,
-                'user_number': user_number,
-                'poi_form': form,
-                'vendor_id': vendor_id,
-                'longitude': longitude,
-                'latitude': latitude,
-                'error_message': "Form validation failed. Please correct the errors below.",
-                'cog_url': f"{blob_name}" if exists else None
-            })
-    
+            print("Form is invalid")
+            print(form.errors)
 
     # Since the points were generated from projected imagery, we need to transform them to
     #      geographic coordinates (i.e., EPSG:4326) to show them.
@@ -180,97 +85,20 @@ def annotation_page(request):
         target_crs = CRS("EPSG:4326")
         transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
         easting, northing = poi.point.coords
+        print(f"easting: {easting}, northing: {northing}")
         longitude, latitude = transformer.transform(easting, northing)
-        
-    else:
-        # Have a fallback location of Fisherman's Wharf, Provincetown, MA.
-        longitude, latitude = -70.183762, 42.049081
 
-    # Check if the COG file for the vendor ID exists
-    if vendor_id:
-        modified_vendor_id = vendor_id.replace("P1BS", "S1BS")
-        exists, blob_name = cog_exists(modified_vendor_id)
-        if not exists:
-
-            # Error handling for when a point of interest might exist, but no COG
-            return render(request, 'annotation_page.html', {
-                'poi': poi,
-                'user_number': user_number,
-                'poi_form': form,
-                'vendor_id': vendor_id,
-                'longitude': longitude,
-                'latitude': latitude,
-                'error_message': f"COG of vendor id {vendor_id} has not been uploaded to Azure yet. Please check back later.",
-                'cog_url': None
-            })
-
-    # If everything passes, render the page. Still have some COG error handling.
     return render(request, 'annotation_page.html', {
         'poi': poi,
-        'user_number': user_number,
-        'poi_form': form,
+        'annotation': annotation,
+        'annotations': annotations,
+        'user_is_superuser': user.is_superuser,
+        'form': form,
         'vendor_id': vendor_id,
         'longitude': longitude,
         'latitude': latitude,
         'error_message': None,
-        'cog_url': f"{blob_name}" if exists else None
     })
-
-def cog_view(request, vendor_id=None):
-    """ Supporting view for the annotation page which serves out the COGs. 
-    
-        Dependencies:
-            - generate_sas_token
-    """
-    
-    print(f"\n\nIncoming vendor_id: {vendor_id}")
-    
-    blob_name = vendor_id
-    print(f"YOUR BLOB NAME IS: {blob_name}")
-
-    try:
-        blob_url = generate_sas_token(blob_name)
-        print(f"Constructed Blob URL with SAS Token: {blob_url}")
-
-        session = requests.Session()
-        retries = requests.adapters.Retry(total = 5, backoff_factor = 1, status_forcelist = [500, 502, 503, 504])
-        adapter = requests.adapters.HTTPAdapter(max_retries = retries)
-        session.mount('https://', adapter)
-
-        range_header = request.META.get('HTTP_RANGE', None)
-        headers = {}
-
-        if range_header:
-            start, end = range_header.strip().split('=')[1].split('-')
-            headers['Range'] = f"bytes={start}-{end}" if end else f"bytes={start}-"
-
-        response = requests.get(blob_url, headers=headers, timeout = 10)
-
-        print(f"Response Status Code: {response.status_code}")
-        #print(f"Response Text: {response.text}")
-        #print(f"Response Headers: {response.headers}")
-
-        if response.status_code in [200, 206]:
-            print("Successful status code {response.status_code}")
-
-            if range_header:
-                content_range = response.headers.get('Content-Range')
-                tile_response = HttpResponse(response.content, content_type = 'image/tiff', status = 206)
-                tile_response['Content-Range'] = content_range
-                tile_response['Accept-Ranges'] = 'bytes'
-                tile_response['Content-Length'] = len(response.content)
-            else:
-                tile_response = HttpResponse(response.content, content="image/tiff")
-                
-            return tile_response
-            
-        else:
-            return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
-            
-    except requests.exceptions.RequestException as e:
-        return HttpResponse(f"Network error: {str(e)}", status = 503)
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=403)
 
 def proxy_openlayers_js(request):
     """ Proxy view for serving OpenLayers supporting COG viewing. """
@@ -317,7 +145,7 @@ def generate_sas_token(blob_name):
             blob_name = blob_path,
             account_key = account_key,
             permission = BlobSasPermissions(read=True),
-            expiry = datetime.now(datetime.timezone.utc) + timedelta(hours=1)
+            expiry = datetime.now() + timedelta(hours=1)
         )
     
         blob_url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_path}?{sas_token}"
@@ -328,65 +156,25 @@ def generate_sas_token(blob_name):
         print(f"Error generating SAS token for blob '{blob_name}': {e}")
         return None
 
-def check_cog_existence(vendor_id, directory=None):
-    """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
-    
-    account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
-    account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
-    container_name = settings.AZURE_CONTAINER_NAME
-
-    vendor_id = vendor_id.replace('P1BS', 'S1BS')
-    
-    try:
-        credential = AzureNamedKeyCredential(account_name, account_key)
-    
-        blob_service_client = BlobServiceClient(
-            account_url = f"https://{account_name}.blob.core.windows.net/",
-            credential=credential
-        )
-    
-        container_client = blob_service_client.get_container_client(container_name)
-    
-        prefix = directory if directory else ""
-        
-        blobs = container_client.list_blobs(name_starts_with=prefix)
-        for blob in blobs:
-            if vendor_id in blob.name:
-                print(f"Your validated blob name is: {blob.name}")
-                return True, blob.name
-    
-        return False, None
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return False, None
-
-def generate_interesting_points_subprocess(geotiff, out_geojson, method="big_window", difference='20'):
-    """Executes Microsoft's generate_intersting_points.py"""
-    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'microsoft', 'generate_interesting_points.py')
-    subprocess.run([sys.executable, script_path, '--input_url', geotiff, '--output_fn', out_geojson, '--method', method, '--difference_threshold', difference, '--overwrite'])
-
 def validation(request):
     sort_order = request.GET.get('sort', 'asc')
     show_final_reviews = request.GET.get('showfinals', 'false')
+    page_number = request.GET.get('page')
 
-    base_query = PointsOfInterest.objects.all().filter(
-        (Q(user1_classification__icontains='whale') & Q(user2_classification__icontains='whale')) | 
-        (Q(user2_classification__icontains='whale') & Q(user3_classification__icontains='whale')) |
-        (Q(user1_classification__icontains='whale') & Q(user3_classification__icontains='whale'))
-    )
+    POIs = PointsOfInterest.objects.annotate(
+        num_reviews=Count('annotations', filter=Q(annotations__classification=14))
+    ).filter(num_reviews=2)
 
     if show_final_reviews == 'false':
-        base_query = base_query.filter(final_review__isnull=True)
+        POIs = POIs.filter(final_classification__isnull=True)
 
-    reviews_list = base_query.values(
-        'id', 'user1_id', 'user2_id', 'user3_id', 'user1_classification', 
-        'user2_classification', 'user3_classification', 'final_review', 'final_review_date'
-    ).order_by('-id' if sort_order == 'desc' else 'id')
+    three_reviews = Annotations.objects.all().order_by('id')
 
-    paginator = Paginator(reviews_list, 100)  # Show 100 reviews per page
+    POIs = POIs.prefetch_related(
+        Prefetch('annotations', queryset=three_reviews, to_attr='three_reviews')
+    ).order_by('id')
 
-    page_number = request.GET.get('page')
+    paginator = Paginator(POIs, 100)
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'validation_page.html', {'page_obj': page_obj, 'sort_order': sort_order})
