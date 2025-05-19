@@ -42,7 +42,7 @@
   {% endif %}
   <div class="grid-row flex-justify-center">
     <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
-      {% if user_number == 0 %}
+      {% if user_is_superuser and annotations|length > 2 %}
       <div class="usa-section-heading padding-top-2">
         <h2>Existing Reviews</h2>
       </div>
@@ -58,27 +58,16 @@
         </tr>
           </thead>
           <tbody>
+        {% for annotation in annotations %}
         <tr>
-          <td data-label="User ID">{{ poi.user1_id }}</td>
-          <td data-label="Classification">{% if poi.user1_classification %}{{ poi.user1_classification }}{% endif %}</td>
-          <td data-label="Species">{% if poi.user1_species %}{{ poi.user1_species }}{% endif %}</td>
-          <td data-label="Confidence">{% if poi.user1_confidence %}{{ poi.user1_confidence }}{% endif %}</td>
-          <td data-label="Comments">{% if poi.user1_comments %}{{ poi.user1_comments }}{% endif %}</td>
+          <td data-label="User ID">{{ annotation.user_id }}</td>
+          <td data-label="Classification">{{ annotation.classification }}</td>
+          <td data-label="Species">{{ annotation.target }}</td>
+          <td data-label="Confidence">{{ annotation.confidence }}</td>
+          <td data-label="Comments">{{ annotation.comments }}</td>
         </tr>
-        <tr>
-          <td data-label="User ID">{{ poi.user2_id }}</td>
-          <td data-label="Classification">{% if poi.user2_classification %}{{ poi.user2_classification }}{% endif %}</td>
-          <td data-label="Species">{% if poi.user2_species %}{{ poi.user2_species }}{% endif %}</td>
-          <td data-label="Confidence">{% if poi.user2_confidence %}{{ poi.user2_confidence }}{% endif %}</td>
-          <td data-label="Comments">{% if poi.user2_comments %}{{ poi.user2_comments }}{% endif %}</td>
-        </tr>
-        <tr>
-          <td data-label="User ID">{{ poi.user3_id }}</td>
-          <td data-label="Classification">{% if poi.user3_classification %}{{ poi.user3_classification }}{% endif %}</td>
-          <td data-label="Species">{% if poi.user3_species %}{{ poi.user3_species }}{% endif %}</td>
-          <td data-label="Confidence">{% if poi.user3_confidence %}{{ poi.user3_confidence }}{% endif %}</td>
-          <td data-label="Comments">{% if poi.user3_comments %}{{ poi.user3_comments }}{% endif %}</td>
-        </tr>
+        {% endfor %}
+        
           </tbody>
         </table>
       </div>
@@ -157,18 +146,14 @@
           <form method="post">
             {% csrf_token %}
             <div class="grid-row">
-              {% if user_number != 0 %}
+              {% if not user_is_superuser or annotations|length < 2 %}
                 <div class="grid-col-4 padding-1">
                   <label class="usa-label" for="comments-textarea"
                     >Comments</label
                   >
                   <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                  {{ poi_form.user1_comments }}
-                {% elif user_number == 2 %}
-                  {{ poi_form.user2_comments }}
-                {% elif user_number == 3 %}
-                  {{ poi_form.user3_comments }}
+                {% if not user_is_superuser or annotations|length < 2 %}
+                  {{ form.comments }}
                 {% endif %}
                 </div>
               {% endif %}
@@ -177,53 +162,33 @@
                   >Classify</label
                 >
                 <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                  {{ poi_form.user1_classification }}
-                {% elif user_number == 2 %}
-                  {{ poi_form.user2_classification }}
-                {% elif user_number == 3 %}
-                  {{ poi_form.user3_classification }}
-                {% elif user_number == 0 %}
-                  {{ poi_form.final_review }}
-                {% endif %}
+                  {{ form.classification }}
               </div>
             </div>
             <div class="grid-row">
               <div id="species-div" class="grid-col-4 padding-1">
                 <label class="usa-label" for="">Species</label>
                 <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                {{ poi_form.user1_species }}
-              {% elif user_number == 2 %}
-                {{ poi_form.user2_species }}
-              {% elif user_number == 3 %}
-                {{ poi_form.user3_species }}
-              {% elif user_number == 0 %}
-                  {{ poi_form.final_species }}
-              {% endif %}
+                {% if not user_is_superuser or annotations|length < 2 %}
+                  {{ form.target }}
+                {% endif %}
               </div>
               <div id="confidence-div" class="grid-col-4 padding-1">
                 <label class="usa-label" for="">Confidence</label>
                 <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                  {{ poi_form.user1_confidence }}
-                {% elif user_number == 2 %}
-                  {{ poi_form.user2_confidence }}
-                {% elif user_number == 3 %}
-                  {{ poi_form.user3_confidence }}
-                {% elif user_number == 0 %}
-                  {{ poi_form.final_confidence }}
+                {% if not user_is_superuser or annotations|length < 2 %}
+                  {{ form.confidence }}
                 {% endif %}
               </div>
-                <input type="hidden" name="{% if user_number == 1 %}user1_id{% elif user_number == 2 %}user2_id{% elif user_number == 3 %}user3_id{% endif %}" value="{{ request.user.username }}">
-                
-                <input type="hidden" name="form_type" value="poi_form">
+                <input type="hidden" name="poi" value="{{ poi.id }}">
+                <input type="hidden" name="user" value="{{ user.id }}">
+                <input type="hidden" name="form_type" value="form">
                 <div class="grid-col-12" style="display: flex; justify-content: flex-end;">
                   <button
-                    class="usa-button usa-button--big {% if user_number == 0 %}usa-button--secondary{% endif %}"
+                    class="usa-button usa-button--big {% if not user_is_superuser %}usa-button--secondary{% endif %}"
                     type="submit"
                   >
-                    {% if user_number == 0 %}Adjudicate{% else %}Submit{% endif %}
+                    {% if user_is_superuser and annotations|length > 2 %}Adjudicate{% else %}Submit{% endif %}
                   </button>
                 </div>
             </div>
@@ -267,8 +232,8 @@
           const confidenceRadios = confidenceDiv.querySelectorAll("input[type='radio']");
 
           function toggleDivs() {
-        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='whale']");
-        if (whaleButton.classList.contains("usa-button--active")) {
+        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
           speciesDiv.style.display = "block";
           confidenceDiv.style.display = "block";
         } else {
