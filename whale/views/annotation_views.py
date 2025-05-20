@@ -33,7 +33,7 @@ def annotation_page(request):
             annotation_count=Count('annotations')
         ).filter(
             annotation_count__lt=3,
-            cog_available=True
+            cog_url__isnull=False
         ).first()
 
         return next_poi
@@ -101,7 +101,6 @@ def annotation_page(request):
         'longitude': longitude,
         'latitude': latitude,
         'error_message': None,
-        'cog_url': None, #temporary fix until we get cog_url working again
     })
 
 def proxy_openlayers_js(request):

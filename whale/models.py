@@ -333,7 +333,7 @@ class PointsOfInterest(gis_models.Model):
     epsg_code = gis_models.CharField(max_length = 6, null=True, blank=True)
 
     # For review process
-    cog_available = models.BooleanField(default=False)
+    cog_url = models.URLField(max_length=200, blank=True, null=True)
     final_species = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
     final_classification = models.ForeignKey(Classification, on_delete=models.CASCADE, null=True, blank=True)
     final_review_date = models.DateField(null=True, blank=True)
