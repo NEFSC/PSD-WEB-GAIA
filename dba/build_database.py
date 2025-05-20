@@ -26,7 +26,6 @@ def initialize_spatialite(db):
     conn.commit()
     conn.close()
 
-drop_table_if_exists("../db.sqlite3", 'whale_pointsofinterest')
 def drop_table_if_exists(db, table_name):
     """ When provided with a path to a SpatiaLite database and a table name
             within that database, drop that table from that database so long
@@ -670,10 +669,7 @@ def create_poitnsofinterest(db):
                 deviation NUMERIC(4, 6),
                 epsg_code VARCHAR(6),
                   
-                cog_url VARCHAR(200),
-                final_species VARCHAR(50),
-                final_classification VARCHAR(50),
-                final_review_date DATE
+                cog_url VARCHAR(200)
             )
         ''')
         
