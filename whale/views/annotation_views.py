@@ -75,9 +75,6 @@ def cog_view(request, vendor_id=None):
         return HttpResponse(f"Network error: {str(e)}", status = 503)
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=403)
-   
-
-
 
 
 def check_cog_existence(vendor_id, directory=None):
