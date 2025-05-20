@@ -26,6 +26,7 @@ def initialize_spatialite(db):
     conn.commit()
     conn.close()
 
+drop_table_if_exists("../db.sqlite3", 'whale_pointsofinterest')
 def drop_table_if_exists(db, table_name):
     """ When provided with a path to a SpatiaLite database and a table name
             within that database, drop that table from that database so long
