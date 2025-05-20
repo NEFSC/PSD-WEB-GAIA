@@ -56,10 +56,9 @@ def annotation_page(request):
                 ).get(poi=poi, user_id=user.id)
             except Annotations.DoesNotExist:
                 annotation = Annotations(poi=poi, user_id=user.id)
-            form = AnnotationForm(instance=annotation)
-
         except PointsOfInterest.DoesNotExist:
             poi = None
+        form = AnnotationForm(instance=annotation)
 
     if request.method == "POST":
         form = AnnotationForm(request.POST, instance=annotation)
@@ -100,6 +99,7 @@ def annotation_page(request):
         'longitude': longitude,
         'latitude': latitude,
         'error_message': None,
+        'cog_url': None, #temporary fix until we get cog_url working again
     })
 
 def proxy_openlayers_js(request):
