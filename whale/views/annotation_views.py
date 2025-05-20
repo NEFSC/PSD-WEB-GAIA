@@ -21,9 +21,9 @@ def annotation_page(request):
     user = request.user
     annotation = None
     annotations = None
-    form = None
+    form = AnnotationForm(instance=annotation, initial={})
     vendor_id = None
-    
+
     def get_next_poi(user):
         # Filter POIs to only include those with less than 3 annotations
         # and exclude those already annotated by current user
@@ -60,7 +60,7 @@ def annotation_page(request):
                 annotation = Annotations(poi=poi, user_id=user.id)
         except PointsOfInterest.DoesNotExist:
             poi = None
-    form = AnnotationForm(instance=annotation)
+    form = AnnotationForm(instance=annotation, initial={})
 
     if request.method == "POST":
         form = AnnotationForm(request.POST, instance=annotation)
