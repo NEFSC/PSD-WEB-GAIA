@@ -22,7 +22,8 @@ def annotation_page(request):
     annotation = None
     annotations = None
     form = None
-
+    vendor_id = None
+    
     def get_next_poi(user):
         # Filter POIs to only include those with less than 3 annotations
         # and exclude those already annotated by current user
