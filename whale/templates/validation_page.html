@@ -42,7 +42,7 @@
                 <tbody>
                     {% for poi in page_obj %}
                         <tr>
-                            <td><a href="{% url 'annotation_page' %}?id={{ review.id }}">{{ poi.id }}</a></td>
+                            <td><a href="{% url 'annotation_page' %}?id={{ poi.id }}">{{ poi.id }}</a></td>
                             {% for review in poi.three_reviews %}
                                 <td>{{ review.classification }}</td>
                             {% endfor %}
