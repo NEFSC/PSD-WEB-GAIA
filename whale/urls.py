@@ -17,11 +17,14 @@ URL Patterns:
     - 'proxy/ol-webgl.js': Proxy for WebGL JavaScript
     - 'validation/': Validation page
 """
-
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth.decorators import login_required
 from . import views
 from .views.annotation_views import proxy_openlayers_js, proxy_webgls_js
+from django.conf import settings
+from django.conf.urls.static import static
+
+import debug_toolbar
 
 urlpatterns = [
     path('', login_required(views.landing_page), name='landing_page'),
@@ -35,4 +38,9 @@ urlpatterns = [
     path('proxy/openlayers.js', proxy_openlayers_js, name='proxy_openlayers_js'),
     path('proxy/ol-webgl.js', proxy_webgls_js, name='proxy_webgls_js'),
     path('validation/', login_required(views.validation), name='validation'),
+    
 ]
+
+urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

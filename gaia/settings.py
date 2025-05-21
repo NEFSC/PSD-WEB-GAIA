@@ -14,6 +14,15 @@ import os
 import json
 from pathlib import Path
 from sys import platform
+INTERNAL_IPS = [
+    '127.0.0.1',
+    'localhost',
+    '::1',
+]
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: DEBUG,
+}
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,7 +51,7 @@ with open(SECRETS_FILE) as f:
 SECRET_KEY = secrets['DJANGO_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
                  'test-gaia.fisheries.noaa.gov',
@@ -58,6 +67,7 @@ ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
 # Application definition
 
 INSTALLED_APPS = [
+    'debug_toolbar',
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -84,6 +94,7 @@ Q_CLUSTER = {
 }
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

@@ -3,6 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - django-debug-toolbar
   - openssl=3.3.*        # Ensures compatibility with libgdal-core
   - libgdal=3.9.1 
   - django
