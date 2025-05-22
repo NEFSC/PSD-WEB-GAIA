@@ -334,9 +334,9 @@ class PointsOfInterest(gis_models.Model):
 
     # For review process
     cog_url = models.URLField(max_length=200, blank=True, null=True)
-    # final_species = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
-    # final_classification = models.ForeignKey(Classification, on_delete=models.CASCADE, null=True, blank=True)
-    # final_review_date = models.DateField(null=True, blank=True)
+    final_species = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
+    final_classification = models.ForeignKey(Classification, on_delete=models.CASCADE, null=True, blank=True)
+    final_review_date = models.DateField(null=True, blank=True)
 
     # Mandatory
     point = gis_models.GeometryField(null=True, blank=True)
