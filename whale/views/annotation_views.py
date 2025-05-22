@@ -2,158 +2,17 @@ import requests
 import datetime
 from datetime import datetime, timedelta
 from pyproj import CRS, Transformer
-
-from azure.storage.blob import generate_blob_sas, BlobSasPermissions
-
+from azure.core.credentials import AzureNamedKeyCredential
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient
+from django.core.cache import cache
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.db.models import Q, Count, Prefetch
 
 from ..models import PointsOfInterest, Annotations
 from ..forms import AnnotationForm
 from django.core.paginator import Paginator
-
-def cog_view(request, vendor_id=None):
-    """ Supporting view for the annotation page which serves out the COGs.
-   
-        Dependencies:
-            - generate_sas_token
-    """
-   
-    print(f"\n\nIncoming vendor_id: {vendor_id}")
-   
-    blob_name = vendor_id
-    print(f"YOUR BLOB NAME IS: {blob_name}")
-
-
-    try:
-        blob_url = generate_sas_token(blob_name)
-        print(f"Constructed Blob URL with SAS Token: {blob_url}")
-
-
-        session = requests.Session()
-        retries = requests.adapters.Retry(total = 5, backoff_factor = 1, status_forcelist = [500, 502, 503, 504])
-        adapter = requests.adapters.HTTPAdapter(max_retries = retries)
-        session.mount('https://', adapter)
-
-
-        range_header = request.META.get('HTTP_RANGE', None)
-        headers = {}
-
-
-        if range_header:
-            start, end = range_header.strip().split('=')[1].split('-')
-            headers['Range'] = f"bytes={start}-{end}" if end else f"bytes={start}-"
-
-
-        response = requests.get(blob_url, headers=headers, timeout = 10)
-
-
-        print(f"Response Status Code: {response.status_code}")
-
-
-        if response.status_code in [200, 206]:
-            print("Successful status code {response.status_code}")
-
-
-            if range_header:
-                content_range = response.headers.get('Content-Range')
-                tile_response = HttpResponse(response.content, content_type = 'image/tiff', status = 206)
-                tile_response['Content-Range'] = content_range
-                tile_response['Accept-Ranges'] = 'bytes'
-                tile_response['Content-Length'] = len(response.content)
-            else:
-                tile_response = HttpResponse(response.content, content="image/tiff")
-               
-            return tile_response
-           
-        else:
-            return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
-           
-    except requests.exceptions.RequestException as e:
-        return HttpResponse(f"Network error: {str(e)}", status = 503)
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=403)
-
-
-def check_cog_existence(vendor_id, directory=None):
-    """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
-   
-    account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
-    account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
-    container_name = settings.AZURE_CONTAINER_NAME
-
-
-    vendor_id = vendor_id.replace('P1BS', 'S1BS')
-   
-    try:
-        credential = AzureNamedKeyCredential(account_name, account_key)
-   
-        blob_service_client = BlobServiceClient(
-            account_url = f"https://{account_name}.blob.core.windows.net/",
-            credential=credential
-        )
-   
-        container_client = blob_service_client.get_container_client(container_name)
-   
-        prefix = directory if directory else ""
-       
-        blobs = container_client.list_blobs(name_starts_with=prefix)
-        for blob in blobs:
-            if vendor_id in blob.name:
-                print(f"Your validated blob name is: {blob.name}")
-                return True, blob.name
-   
-        return False, None
-
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return False, None
-   
-def cog_exists(vendor_id):
-    """ Checks if a COG exists in Azure when provided with a Vendor ID.
-            Really a wrapper function that includes a check cache function.
-
-
-        Dependencies:
-            - check_cog_existence
-
-
-        VENDOR ID - Vendor ID value
-    """
-    cached_result = cache.get(f'cog_existence_{vendor_id}')
-    if cached_result is not None:
-        return cached_result
-
-
-    # Call real CHECK COG EXISTANCE function
-    exists, blob_name = check_cog_existence(vendor_id, directory='cogs/')
-    cache.set(f'cog_existence_{vendor_id}', (exists, blob_name), timeout=300)  # Cache COG existence for 5 minutes
-    return exists, blob_name
-
-
-=============================
- if vendor_id:
-        modified_vendor_id = vendor_id.replace("P1BS", "S1BS")
-        exists, blob_name = cog_exists(modified_vendor_id)
-        if not exists:
-
-
-            # Error handling for when a point of interest might exist, but no COG
-            return render(request, 'annotation_page.html', {
-                'poi': poi,
-                'annotation': annotation,
-                'annotations': annotations,
-                'user_number': user_number,
-                'form': form,
-                'vendor_id': vendor_id,
-                'longitude': longitude,
-                'latitude': latitude,
-                'error_message': f"COG of vendor id {vendor_id} has not been uploaded to Azure yet. Please check back later.",
-                'cog_url': None
-            })
 
 def annotation_page(request):
     # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
@@ -164,6 +23,24 @@ def annotation_page(request):
     annotations = None
     form = AnnotationForm(instance=annotation, initial={})
     vendor_id = None
+
+    def cog_exists(vendor_id):
+        """ Checks if a COG exists in Azure when provided with a Vendor ID.
+                Really a wrapper function that includes a check cache function.
+
+            Dependencies:
+                - check_cog_existence
+
+            VENDOR ID - Vendor ID value
+        """
+        cached_result = cache.get(f'cog_existence_{vendor_id}')
+        if cached_result is not None:
+            return cached_result
+
+        # Call real CHECK COG EXISTANCE function
+        blob_name = check_cog_existence(vendor_id, directory='cogs/')
+        cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  # Cache COG existence for 5 minutes
+        return blob_name 
 
     def get_next_poi(user):
         # Filter POIs to only include those with less than 3 annotations
@@ -176,7 +53,6 @@ def annotation_page(request):
             annotation_count__lt=3,
             cog_url__isnull=False
         ).first()
-
         return next_poi
 
     if id is None:
@@ -232,6 +108,7 @@ def annotation_page(request):
         print(f"easting: {easting}, northing: {northing}")
         longitude, latitude = transformer.transform(easting, northing)
 
+    cogurl = cog_exists(poi.vendor_id)
     return render(request, 'annotation_page.html', {
         'poi': poi,
         'annotation': annotation,
@@ -242,6 +119,8 @@ def annotation_page(request):
         'longitude': longitude,
         'latitude': latitude,
         'error_message': None,
+        'cogurl': f"{cogurl}"
+        
     })
 
 def proxy_openlayers_js(request):
@@ -255,6 +134,74 @@ def proxy_webgls_js(request):
     url = "https://cdn.jsdelivr.net/npm/ol-webgl/dist/ol-webgl.min.js"
     response = requests.get(url)
     return HttpResponse(response.content, content_type="application/javascript")
+
+def convert_date_or_none(date_str):
+    """ Used to convert date formats from USGS EarthExplorer and NGA GEGD. """
+    success = False
+    
+    if date_str and date_str != "None":
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                result = datetime.datetime.strptime(date_str, fmt)
+                success = True
+                return result
+            except ValueError:
+                continue
+        if not success:
+            return datetime.datetime.strptime(date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
+        raise ValueError(f"Date string {date_str} does not match supported formats!")
+    return None
+
+def cog_view(request, vendor_id=None):
+    """ Supporting view for the exploitation page which serves out the COGs. 
+    
+        Dependencies:
+            - generate_sas_token
+    """
+
+    try:
+        blob_url = generate_sas_token(vendor_id)
+        print(f"Constructed Blob URL with SAS Token: {blob_url}")
+
+        session = requests.Session()
+        retries = requests.adapters.Retry(total = 5, backoff_factor = 1, status_forcelist = [500, 502, 503, 504])
+        adapter = requests.adapters.HTTPAdapter(max_retries = retries)
+        session.mount('https://', adapter)
+
+        range_header = request.META.get('HTTP_RANGE', None)
+        headers = {}
+
+        if range_header:
+            start, end = range_header.strip().split('=')[1].split('-')
+            headers['Range'] = f"bytes={start}-{end}" if end else f"bytes={start}-"
+
+        response = requests.get(blob_url, headers=headers, timeout = 10)
+
+        print(f"Response Status Code: {response.status_code}")
+        #print(f"Response Text: {response.text}")
+        #print(f"Response Headers: {response.headers}")
+
+        if response.status_code in [200, 206]:
+            print("Successful status code {response.status_code}")
+
+            if range_header:
+                content_range = response.headers.get('Content-Range')
+                tile_response = HttpResponse(response.content, content_type = 'image/tiff', status = 206)
+                tile_response['Content-Range'] = content_range
+                tile_response['Accept-Ranges'] = 'bytes'
+                tile_response['Content-Length'] = len(response.content)
+            else:
+                tile_response = HttpResponse(response.content, content_type="image/tiff")
+                
+            return tile_response
+            
+        else: 
+            return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
+            
+    except requests.exceptions.RequestException as e:
+        return HttpResponse(f"Network error: {str(e)}", status = 503)
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=403)
 
 def convert_date_or_none(date_str):
     """ Used to convert date formats from USGS EarthExplorer and NGA GEGD. """
@@ -299,6 +246,39 @@ def generate_sas_token(blob_name):
     except Exception as e:
         print(f"Error generating SAS token for blob '{blob_name}': {e}")
         return None
+
+def check_cog_existence(vendor_id, directory=None):
+    """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
+    
+    account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
+    account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
+    container_name = settings.AZURE_CONTAINER_NAME
+
+    vendor_id = vendor_id.replace('P1BS', 'S1BS')
+    
+    try:
+        credential = AzureNamedKeyCredential(account_name, account_key)
+    
+        blob_service_client = BlobServiceClient(
+            account_url = f"https://{account_name}.blob.core.windows.net/",
+            credential=credential
+        )
+    
+        container_client = blob_service_client.get_container_client(container_name)
+    
+        prefix = directory if directory else ""
+        
+        blobs = container_client.list_blobs(name_starts_with=prefix)
+        for blob in blobs:
+            if vendor_id in blob.name:
+                print(f"Your validated blob name is: {blob.name}")
+                return blob.name
+    
+        return False, None
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False, None
 
 def validation(request):
     sort_order = request.GET.get('sort', 'asc')

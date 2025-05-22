@@ -1,7 +1,8 @@
 {% load static %} {% include 'sections/header.html' %}
 <style>
-  #gdal-map {
-    height: 700px;
+  #gdal-map, #osm-map {
+    height: 50vh;
+    width: 100%;
     position: relative;
   }
   #layer-switcher {
@@ -262,7 +263,7 @@
 		// Ensure variables are passed correctly
 		const latitude = {{ latitude }}; //42.049081 //;
 		const longitude = {{ longitude }};  //-70.183762 //;
-		const cogUrl = "{{ cog_url }}";
+		const cogUrl = "{{ cogurl }}";
 
 		// Map Initialization
 		window.onload = function() {
