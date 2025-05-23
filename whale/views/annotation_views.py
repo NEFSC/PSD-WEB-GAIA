@@ -27,11 +27,6 @@ def annotation_page(request):
     def cog_exists(vendor_id):
         """ Checks if a COG exists in Azure when provided with a Vendor ID.
                 Really a wrapper function that includes a check cache function.
-
-            Dependencies:
-                - check_cog_existence
-
-            VENDOR ID - Vendor ID value
         """
         cached_result = cache.get(f'cog_existence_{vendor_id}')
         if cached_result is not None:
@@ -91,9 +86,6 @@ def annotation_page(request):
             poi = get_next_poi(user)
             if poi:
                 return redirect(f'{request.path}?id={poi.id}')
-        else:
-            print("Form is invalid")
-            print(form.errors)
 
     # Since the points were generated from projected imagery, we need to transform them to
     #      geographic coordinates (i.e., EPSG:4326) to show them.
@@ -116,18 +108,12 @@ def annotation_page(request):
         'vendor_id': vendor_id,
         'longitude': longitude,
         'latitude': latitude,
-        'error_message': None,
+        'error_message': form.errors,
         'cogurl': cogurl
-        
     })
 
 def cog_view(request, vendor_id=None):
-    """ Supporting view for the exploitation page which serves out the COGs. 
-    
-        Dependencies:
-            - generate_sas_token
-    """
-
+    # Supporting view for the exploitation page which serves out the COGs. 
     try:
         blob_url = generate_sas_token(vendor_id)
         print(f"Constructed Blob URL with SAS Token: {blob_url}")
@@ -146,8 +132,6 @@ def cog_view(request, vendor_id=None):
 
         response = requests.get(blob_url, headers=headers, timeout = 10)
 
-        # print(f"Response Status Code: {response.status_code}")
-
         if response.status_code in [200, 206]:
             print("Successful status code {response.status_code}")
 
@@ -158,10 +142,8 @@ def cog_view(request, vendor_id=None):
                 tile_response['Accept-Ranges'] = 'bytes'
                 tile_response['Content-Length'] = len(response.content)
             else:
-                tile_response = HttpResponse(response.content, content_type="image/tiff")
-                
+                tile_response = HttpResponse(response.content, content_type="image/tiff")   
             return tile_response
-            
         else: 
             return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
             
