@@ -37,5 +37,6 @@ urlpatterns = [
     path('dissemination/', login_required(views.dissemination_page), name='dissemination_page'),
     path('proxy/openlayers.js', proxy_openlayers_js, name='proxy_openlayers_js'),
     path('proxy/ol-webgl.js', proxy_webgls_js, name='proxy_webgls_js'),
-    path('validation/', user_passes_test(is_superuser)(views.validation), name='validation'),
+    path('validation/', user_passes_test(is_superuser, login_url='/access-denied/')(views.validation), name='validation'),
+    path('access-denied/', views.access_denied, name='access_denied'),
 ]
