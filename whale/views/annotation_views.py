@@ -27,17 +27,11 @@ def annotation_page(request):
     def cog_exists(vendor_id):
         """ Checks if a COG exists in Azure when provided with a Vendor ID.
                 Really a wrapper function that includes a check cache function.
-
-            Dependencies:
-                - check_cog_existence
-
-            VENDOR ID - Vendor ID value
         """
         cached_result = cache.get(f'cog_existence_{vendor_id}')
         if cached_result is not None:
             return cached_result
 
-        # Call real CHECK COG EXISTANCE function
         blob_name = check_cog_existence(vendor_id, directory='cogs/')
         cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  # Cache COG existence for 5 minutes
         return blob_name 
@@ -81,7 +75,6 @@ def annotation_page(request):
 
     if request.method == "POST":
         form = AnnotationForm(request.POST, instance=annotation)
-        print(request.POST)
         if form.is_valid():
             if user.is_superuser and annotations.count() > 2:
                 poi.final_review_date = datetime.now()
@@ -93,9 +86,6 @@ def annotation_page(request):
             poi = get_next_poi(user)
             if poi:
                 return redirect(f'{request.path}?id={poi.id}')
-        else:
-            print("Form is invalid")
-            print(form.errors)
 
     # Since the points were generated from projected imagery, we need to transform them to
     #      geographic coordinates (i.e., EPSG:4326) to show them.
@@ -118,10 +108,49 @@ def annotation_page(request):
         'vendor_id': vendor_id,
         'longitude': longitude,
         'latitude': latitude,
-        'error_message': None,
-        'cogurl': f"{cogurl}"
-        
+        'error_message': form.errors,
+        'cogurl': cogurl
     })
+
+def cog_view(request, vendor_id=None):
+    # Supporting view for the exploitation page which serves out the COGs. 
+    try:
+        blob_url = generate_sas_token(vendor_id)
+        print(f"Constructed Blob URL with SAS Token: {blob_url}")
+
+        session = requests.Session()
+        retries = requests.adapters.Retry(total = 5, backoff_factor = 1, status_forcelist = [500, 502, 503, 504])
+        adapter = requests.adapters.HTTPAdapter(max_retries = retries)
+        session.mount('https://', adapter)
+
+        range_header = request.META.get('HTTP_RANGE', None)
+        headers = {}
+
+        if range_header:
+            start, end = range_header.strip().split('=')[1].split('-')
+            headers['Range'] = f"bytes={start}-{end}" if end else f"bytes={start}-"
+
+        response = requests.get(blob_url, headers=headers, timeout = 10)
+
+        if response.status_code in [200, 206]:
+            print("Successful status code {response.status_code}")
+
+            if range_header:
+                content_range = response.headers.get('Content-Range')
+                tile_response = HttpResponse(response.content, content_type = 'image/tiff', status = 206)
+                tile_response['Content-Range'] = content_range
+                tile_response['Accept-Ranges'] = 'bytes'
+                tile_response['Content-Length'] = len(response.content)
+            else:
+                tile_response = HttpResponse(response.content, content_type="image/tiff")   
+            return tile_response
+        else: 
+            return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
+            
+    except requests.exceptions.RequestException as e:
+        return HttpResponse(f"Network error: {str(e)}", status = 503)
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=403)
 
 def proxy_openlayers_js(request):
     """ Proxy view for serving OpenLayers supporting COG viewing. """
@@ -152,81 +181,13 @@ def convert_date_or_none(date_str):
         raise ValueError(f"Date string {date_str} does not match supported formats!")
     return None
 
-def cog_view(request, vendor_id=None):
-    """ Supporting view for the exploitation page which serves out the COGs. 
-    
-        Dependencies:
-            - generate_sas_token
-    """
-
-    try:
-        blob_url = generate_sas_token(vendor_id)
-        print(f"Constructed Blob URL with SAS Token: {blob_url}")
-
-        session = requests.Session()
-        retries = requests.adapters.Retry(total = 5, backoff_factor = 1, status_forcelist = [500, 502, 503, 504])
-        adapter = requests.adapters.HTTPAdapter(max_retries = retries)
-        session.mount('https://', adapter)
-
-        range_header = request.META.get('HTTP_RANGE', None)
-        headers = {}
-
-        if range_header:
-            start, end = range_header.strip().split('=')[1].split('-')
-            headers['Range'] = f"bytes={start}-{end}" if end else f"bytes={start}-"
-
-        response = requests.get(blob_url, headers=headers, timeout = 10)
-
-        print(f"Response Status Code: {response.status_code}")
-        #print(f"Response Text: {response.text}")
-        #print(f"Response Headers: {response.headers}")
-
-        if response.status_code in [200, 206]:
-            print("Successful status code {response.status_code}")
-
-            if range_header:
-                content_range = response.headers.get('Content-Range')
-                tile_response = HttpResponse(response.content, content_type = 'image/tiff', status = 206)
-                tile_response['Content-Range'] = content_range
-                tile_response['Accept-Ranges'] = 'bytes'
-                tile_response['Content-Length'] = len(response.content)
-            else:
-                tile_response = HttpResponse(response.content, content_type="image/tiff")
-                
-            return tile_response
-            
-        else: 
-            return HttpResponseForbidden(f"Error fetching COG: {response.status_code} - {response.text}")
-            
-    except requests.exceptions.RequestException as e:
-        return HttpResponse(f"Network error: {str(e)}", status = 503)
-    except Exception as e:
-        return HttpResponse(f"Error: {str(e)}", status=403)
-
-def convert_date_or_none(date_str):
-    """ Used to convert date formats from USGS EarthExplorer and NGA GEGD. """
-    success = False
-    
-    if date_str and date_str != "None":
-        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
-            try:
-                result = datetime.datetime.strptime(date_str, fmt)
-                success = True
-                return result
-            except ValueError:
-                continue
-        if not success:
-            return datetime.datetime.strptime(date_str, "%Y/%m/%d").strftime("%Y-%m-%d")
-        raise ValueError(f"Date string {date_str} does not match supported formats!")
-    return None
-
 def generate_sas_token(blob_name):
     """ Generates a Shared Access Signature (SAS) Token on-the-fly. """
     try:
         account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
         account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
         container_name = settings.AZURE_CONTAINER_NAME
-
+ 
         blob_path = 'cogs/' + blob_name
         print(f"Your blob path is: {blob_path}")
         
@@ -236,7 +197,7 @@ def generate_sas_token(blob_name):
             blob_name = blob_path,
             account_key = account_key,
             permission = BlobSasPermissions(read=True),
-            expiry = datetime.now() + timedelta(hours=1)
+            expiry = datetime.now() + timedelta(hours=2)
         )
     
         blob_url = f"https://{account_name}.blob.core.windows.net/{container_name}/{blob_path}?{sas_token}"
