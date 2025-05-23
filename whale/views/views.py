@@ -1,5 +1,6 @@
 import os
 import django
+from django.shortcuts import render
 
 ########################################################################################################################
 #
@@ -12,6 +13,9 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
 os.environ["CPL_DEBUG"] = "ON" # Should enable GDAL debuggin
 django.setup()
+
+def access_denied(request):
+    return render(request, 'access_denied.html', status=403)
 
 
 
