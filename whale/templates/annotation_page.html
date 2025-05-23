@@ -53,7 +53,7 @@
           <tbody>
         {% for annotation in annotations %}
         <tr>
-          <td data-label="User ID">{{ annotation.user_id }}</td>
+            <td data-label="User">{{ annotation.user.username }}</td>
           <td data-label="Classification">{{ annotation.classification }}</td>
           <td data-label="Species">{{ annotation.target }}</td>
           <td data-label="Confidence">{{ annotation.confidence }}</td>
