@@ -230,12 +230,15 @@ def check_cog_existence(vendor_id, directory=None):
         prefix = directory if directory else ""
         
         blobs = container_client.list_blobs(name_starts_with=prefix)
-        for blob in blobs:
-            if vendor_id in blob.name:
-                print(f"Your validated blob name is: {blob.name}")
-                return blob.name
+        blob_names = [blob.name for blob in blobs]
+        blob_name = [blob_name for blob_name in blob_names if vendor_id in blob_name][0]
+        return blob_name
+        # for blob in blobs:
+        #     if vendor_id in blob.name:
+        #         print(f"Your validated blob name is: {blob.name}")
+        #         return blob.name
     
-        return False, None
+        # return False, None
 
     except Exception as e:
         print(f"An error occurred: {e}")
