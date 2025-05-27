@@ -45,7 +45,6 @@ def annotation_page(request):
             annotation_count=Count('annotations')
         ).filter(
             annotation_count__lt=3,
-            cog_url__isnull=False
         ).first()
         return next_poi
 
