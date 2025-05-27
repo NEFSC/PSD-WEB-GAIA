@@ -17,8 +17,13 @@
     z-index: 1000;
   }
 </style>
-<section class="usa-section padding-top-0">
-  <h1>Annotation</h1>
+<section class="usa-section padding-top-0 padding-bottom-0">
+  <div class="grid-row">
+    <div class="grid-col-3"></div>
+    <div class="grid-col-3">
+      <h1>Annotation</h1>
+    </div>
+  </div>
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -46,7 +51,7 @@
       <div class="usa-section-heading padding-top-2">
         <h2>Existing Reviews</h2>
       </div>
-      <div class="usa-table-container">
+      <div class="usa-table-container--scrollable" tabindex="0">
         <table class="usa-table usa-table--stacked-header">
           <thead>
         <tr>
@@ -95,7 +100,7 @@
           <div id="pointer-switcher">
           </div>
         </div>
-        <div class="grid-row controls flex-row">
+        <div class="grid-row controls flex-row" style="position:relative; top:69vh; z-index: 3;">
           <div class="grid-col">
             <label for="exposure">Brightness: </label>
             <input
@@ -154,28 +159,28 @@
                 <hr class="usa-hr" />
                   {{ form.classification }}
               </div>
-              <div id="species-div" class="grid-col-4 padding-1">
-                <label class="usa-label" for="">Species</label>
-                <hr class="usa-hr" />
-                {% if not user_is_superuser or annotations|length < 2 %}
+              {% if not user_is_superuser or annotations|length < 2 %}
+                <div id="species-div" class="grid-col-4 padding-1">
+                  <label class="usa-label" for="">Species</label>
+                  <hr class="usa-hr" />
                   {{ form.target }}
-                {% endif %}
-              </div>
-              <div id="confidence-div" class="grid-col-4 padding-1">
-                <label class="usa-label" for="">Confidence</label>
-                <hr class="usa-hr" />
-                {% if not user_is_superuser or annotations|length < 2 %}
+                </div>
+              {% endif %}
+              {% if not user_is_superuser or annotations|length < 2 %}
+                <div id="confidence-div" class="grid-col-4 padding-1">
+                  <label class="usa-label" for="">Confidence</label>
+                  <hr class="usa-hr" />
                   {{ form.confidence }}
-                {% endif %}
-              </div>
+                </div>
+              {% endif %}
             </div>
             
                 <input type="hidden" name="poi" value="{{ poi.id }}">
                 <input type="hidden" name="user" value="{{ user.id }}">
                 <input type="hidden" name="form_type" value="form">
-                <div class="grid-col-auto" style="display: flex; justify-content: flex-end;">
+                <div class="grid-row padding-top-4 padding-2">
                   <button
-                    class="usa-button usa-button--big {% if not user_is_superuser %}usa-button--secondary{% endif %}"
+                    class="usa-button usa-button--big {% if user_is_superuser and annotations|length > 2  %}usa-button--secondary{% endif %}"
                     type="submit"
                   >
                     {% if user_is_superuser and annotations|length > 2 %}Adjudicate{% else %}Submit{% endif %}
