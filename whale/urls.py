@@ -19,9 +19,12 @@ URL Patterns:
 """
 
 from django.urls import path
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from . import views
 from .views.annotation_views import proxy_openlayers_js, proxy_webgls_js
+
+def is_superuser(user):
+    return user.is_superuser
 
 urlpatterns = [
     path('', login_required(views.landing_page), name='landing_page'),
@@ -30,9 +33,10 @@ urlpatterns = [
     path('processing/', login_required(views.processing_page), name='processing_page'),
     path('annotation/', login_required(views.annotation_page), name='annotation_page'),
     path('annotation/<int:item_id>', login_required(views.annotation_page), name='annotation_page'),
-    # path('annotation/cogs/<str:vendor_id>/', views.cog_view, name='cog_view'),
+    path('annotation/cogs/<str:vendor_id>/', views.cog_view, name='cog_view'),
     path('dissemination/', login_required(views.dissemination_page), name='dissemination_page'),
     path('proxy/openlayers.js', proxy_openlayers_js, name='proxy_openlayers_js'),
     path('proxy/ol-webgl.js', proxy_webgls_js, name='proxy_webgls_js'),
-    path('validation/', login_required(views.validation), name='validation'),
+    path('validation/', user_passes_test(is_superuser, login_url='/access-denied/')(views.validation), name='validation'),
+    path('access-denied/', views.access_denied, name='access_denied'),
 ]

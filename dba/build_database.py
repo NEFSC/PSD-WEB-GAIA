@@ -660,53 +660,16 @@ def create_poitnsofinterest(db):
         c.execute('''
             CREATE TABLE IF NOT EXISTS whale_pointsofinterest(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                catalog_id VARCHAR(16),
+                entity_id VARCHAR(20),
                 vendor_id VARCHAR(39),
                 
                 sample_idx VARCHAR(40),
                 area NUMERIC(4, 6),
                 deviation NUMERIC(4, 6),
                 epsg_code VARCHAR(6),
-
-                status VARCHAR(20),
-                locked_by INTEGER,
-                review_count INTEGER,
-                reviewed_by_users,
-
-                email VARCHAR(35),
-                client_ip VARCHAR(13),
-                out_time DATE,
-                in_time DATE,
-                
-                classification VARCHAR(20),
-                confidence VARCHAR(10),
-                species VARCHAR(50),
-                comments VARCHAR(500),
-                
-                user1_id VARCHAR(30),
-                user1_classification VARCHAR(20),
-                user1_comments VARCHAR(500),
-                user1_species VARCHAR(50),
-                user1_confidence VARCHAR(10),
-
-                user2_id VARCHAR(30),
-                user2_classification VARCHAR(20),
-                user2_comments VARCHAR(500),
-                user2_species VARCHAR(50),
-                user2_confidence VARCHAR(10),
-
-                user3_id VARCHAR(30),
-                user3_classification VARCHAR(20),
-                user3_comments VARCHAR(500),
-                user3_species VARCHAR(50),
-                user3_confidence VARCHAR(10),
-
-                final_review VARCHAR(20),
-                final_review_date DATE,
-                final_species VARCHAR(50),
-                final_confidence VARCHAR(10),
-
-                FOREIGN KEY (locked_by)
-                    REFERENCES auth_user(id)
+                  
+                cog_url VARCHAR(200)
             )
         ''')
         
