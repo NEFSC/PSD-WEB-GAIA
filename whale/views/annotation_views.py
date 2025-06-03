@@ -81,7 +81,9 @@ def annotation_page(request):
                 poi.final_species = form.cleaned_data['target']
                 poi.save(update_fields=['final_species', 'final_classification', 'final_review_date'])
             else:
-                annotation = form.save()
+                annotation = form.save(commit=False)
+                annotation.full_clean()
+                annotation.save()
             poi = get_next_poi(user)
             if poi:
                 return redirect(f'{request.path}?id={poi.id}')
