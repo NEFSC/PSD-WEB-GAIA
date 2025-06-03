@@ -22,7 +22,7 @@
           href="{% static 'favicon/favicon-16x16.png' %}">
     <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
   </head>
-  <body>
+  <body style="min-height: 100vh; display: flex; flex-direction: column;">
     <script src="{% static 'uswds/uswds.min.js' %}"></script>
     <a class="usa-skipnav" href="#main-content">Skip to main content</a>
     <section class="usa-banner" aria-label="Official government website">
@@ -114,15 +114,17 @@
           </button>
           <ul class="usa-nav__primary usa-accordion">
             <li class="usa-nav__primary-item">
-              <form id="logout-form"
+                {% if user.is_authenticated %}
+                <form id="logout-form"
                     action="{% url 'logout' %}"
                     method="POST"
                     style="display: inline">
-                {% csrf_token %}
-                <button href="" class="usa-nav-link">
+                  {% csrf_token %}
+                  <button href="" class="usa-nav-link">
                   <span>Logout</span>
-                </button>
-              </form>
+                  </button>
+                </form>
+                {% endif %}
             </li>
           </ul>
           <div class="buttons">

@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import json
 from pathlib import Path
-import sys
 from sys import platform
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -207,7 +206,7 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
-LONGIN_URL = '/login/'
+LOGIN_URL = '/login/'
 
 
 # Static files (CSS, JavaScript, Images)
@@ -215,6 +214,9 @@ LONGIN_URL = '/login/'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Enable WhiteNoise storage for static files (only for dev environments without a reverse-proxy)
 if not DEBUG:
@@ -232,9 +234,6 @@ AZURE_STORAGE_ACCOUNT_NAME = 'gaianoaastorage'
 AZURE_STORAGE_ACCOUNT_KEY = secrets['AZURE_KEY']
 AZURE_CONTAINER_NAME = 'data'
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
 
 # Avoid CSRF verfication failures
 CSRF_TRUSTED_ORIGINS = [

@@ -1,7 +1,8 @@
 {% load static %} {% include 'sections/header.html' %}
 <style>
   #gdal-map {
-    height: 700px;
+    height: 50vh;
+    width: 100%;
     position: relative;
   }
   #layer-switcher {
@@ -16,16 +17,13 @@
     z-index: 1000;
   }
 </style>
-<section class="grid-container usa-section padding-top-0">
-  <h1>Exploitation</h1>
-  {% if poi.final_review %}
-  <div class="usa-alert usa-alert--warning">
-    <div class="usa-alert__body">
-      <h3 class="usa-alert__heading">Notice</h3>
-      <p class="usa-alert__text">This entry has already been finalized.</p>
+<section class="usa-section padding-top-0 padding-bottom-0">
+  <div class="grid-row">
+    <div class="grid-col-3"></div>
+    <div class="grid-col-3">
+      <h1>Annotation</h1>
     </div>
   </div>
-  {% endif %}
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -40,13 +38,20 @@
     </div>
   </div>
   {% endif %}
-  <div class="grid-row flex-justify-center">
-    <div class="grid-col-12 tablet:grid-col-10 desktop:grid-col-12">
-      {% if user_number == 0 %}
+  <div class="grid-row flex-justify">
+      {% if poi %}
+        <div class="grid-col-2 padding-left-2 padding-top-2">
+          <p><strong>Catalog ID:</strong> {{ poi.catalog_id }}</p>
+          <p><strong>Vendor ID:</strong> {{ poi.vendor_id }}</p>
+          <p><strong>Entity ID:</strong> {{ poi.entity_id }}</p>
+          <p><strong>Interesting Point ID:</strong> {{ poi.id }}</p>
+          <p><strong>Date:</strong> 12/16/2024</p>
+          <p><strong>Location:</strong> Cape Cod, MA</p>
+          {% if user_is_superuser and annotations|length > 2 %}
       <div class="usa-section-heading padding-top-2">
         <h2>Existing Reviews</h2>
       </div>
-      <div class="usa-table-container">
+      <div class="usa-table-container--scrollable" tabindex="0">
         <table class="usa-table usa-table--stacked-header">
           <thead>
         <tr>
@@ -58,50 +63,25 @@
         </tr>
           </thead>
           <tbody>
+        {% for annotation in annotations %}
         <tr>
-          <td data-label="User ID">{{ poi.user1_id }}</td>
-          <td data-label="Classification">{% if poi.user1_classification %}{{ poi.user1_classification }}{% endif %}</td>
-          <td data-label="Species">{% if poi.user1_species %}{{ poi.user1_species }}{% endif %}</td>
-          <td data-label="Confidence">{% if poi.user1_confidence %}{{ poi.user1_confidence }}{% endif %}</td>
-          <td data-label="Comments">{% if poi.user1_comments %}{{ poi.user1_comments }}{% endif %}</td>
+          <td data-label="User">{{ annotation.user.username }}</td>
+          <td data-label="Classification">{{ annotation.classification }}</td>
+          <td data-label="Species">{{ annotation.target }}</td>
+          <td data-label="Confidence">{{ annotation.confidence }}</td>
+          <td data-label="Comments">{{ annotation.comments }}</td>
         </tr>
-        <tr>
-          <td data-label="User ID">{{ poi.user2_id }}</td>
-          <td data-label="Classification">{% if poi.user2_classification %}{{ poi.user2_classification }}{% endif %}</td>
-          <td data-label="Species">{% if poi.user2_species %}{{ poi.user2_species }}{% endif %}</td>
-          <td data-label="Confidence">{% if poi.user2_confidence %}{{ poi.user2_confidence }}{% endif %}</td>
-          <td data-label="Comments">{% if poi.user2_comments %}{{ poi.user2_comments }}{% endif %}</td>
-        </tr>
-        <tr>
-          <td data-label="User ID">{{ poi.user3_id }}</td>
-          <td data-label="Classification">{% if poi.user3_classification %}{{ poi.user3_classification }}{% endif %}</td>
-          <td data-label="Species">{% if poi.user3_species %}{{ poi.user3_species }}{% endif %}</td>
-          <td data-label="Confidence">{% if poi.user3_confidence %}{{ poi.user3_confidence }}{% endif %}</td>
-          <td data-label="Comments">{% if poi.user3_comments %}{{ poi.user3_comments }}{% endif %}</td>
-        </tr>
+        {% endfor %}
+        
           </tbody>
         </table>
       </div>
       {% endif %}
-      {% if poi %}
-      <div class="usa-section-heading padding-top-2">
-        <h2>POI Details</h2>
-      </div>
-      <div class="grid-row">
-        <div class="grid-col-6">
-          <p><strong>Catalog ID:</strong> {{ poi.catalog_id }}</p>
-          <p><strong>Vendor ID:</strong> {{ poi.vendor_id }}</p>
-          <p><strong>Entity ID:</strong> {{ poi.entity_id }}</p>
         </div>
-        <div class="grid-col-6">
-          <p><strong>Interesting Point ID:</strong> {{ poi.id }}</p>
-          <p><strong>Date:</strong> 12/16/2024</p>
-          <p><strong>Location:</strong> Cape Cod, MA</p>
-        </div>
-      </div>
-      <div class="container">
-        <div id="osm-map" class="map"></div>
-        <div id="gdal-map" class="map padding-bottom-5">
+      
+      <div class="grid-container" style="margin-left:0;margin-right:0;width: 55%;max-width: 100%;height:70vh;">
+        <div id="osm-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 55%; height: 70vh; z-index: 1;"></div>
+        <div id="gdal-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 55%; height: 70vh; z-index: 2;">
           <div id="layer-switcher">
             <label>
               <input type="radio" name="layer" value="street" />
@@ -111,12 +91,17 @@
             <label>
               <input type="radio" name="layer" value="satellite" checked />
               Satellite
+            </label><br>
+            <label>
+              <input type="checkbox" name="pointer" value="checked" checked />
+              Pointer
             </label>
           </div>
+          <div id="pointer-switcher">
+          </div>
         </div>
-
-        <div class="grid-row controls">
-          <div class="grid-col-4">
+        <div class="grid-row controls flex-row" style="position:relative; top:69vh; z-index: 3;">
+          <div class="grid-col">
             <label for="exposure">Brightness: </label>
             <input
               type="range"
@@ -127,7 +112,7 @@
               value="0"
             />
           </div>
-          <div class="grid-col-4">
+          <div class="grid-col">
             <label for="contrast">Contrast: </label>
             <input
               type="range"
@@ -138,7 +123,7 @@
               value="0"
             />
           </div>
-          <div class="grid-col-4">
+          <div class="grid-col">
             <label for="saturation">Saturation: </label>
             <input
               type="range"
@@ -150,80 +135,58 @@
             />
           </div>
         </div>
-        <div class="form-container">
-          <form method="post">
+        
+      </div>
+      <div class="grid-col-3 form-container padding-2">
+          <form id="annotation_form" method="post">
             {% csrf_token %}
             <div class="grid-row">
-              {% if user_number != 0 %}
-                <div class="grid-col-4 padding-1">
+              {% if not user_is_superuser or annotations|length < 2 %}
+                <div class="grid-row padding-1">
                   <label class="usa-label" for="comments-textarea"
                     >Comments</label
                   >
                   <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                  {{ poi_form.user1_comments }}
-                {% elif user_number == 2 %}
-                  {{ poi_form.user2_comments }}
-                {% elif user_number == 3 %}
-                  {{ poi_form.user3_comments }}
+                {% if not user_is_superuser or annotations|length < 2 %}
+                  {{ form.comments }}
                 {% endif %}
                 </div>
               {% endif %}
-              <div class="grid-col-8 padding-1">
+              <div class="grid-col-row padding-1">
                 <label class="usa-label" for="classification-buttongroup"
                   >Classify</label
                 >
                 <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                  {{ poi_form.user1_classification }}
-                {% elif user_number == 2 %}
-                  {{ poi_form.user2_classification }}
-                {% elif user_number == 3 %}
-                  {{ poi_form.user3_classification }}
-                {% elif user_number == 0 %}
-                  {{ poi_form.final_review }}
-                {% endif %}
+                  {{ form.classification }}
               </div>
-            </div>
-            <div class="grid-row">
-              <div id="species-div" class="grid-col-4 padding-1">
-                <label class="usa-label" for="">Species</label>
-                <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                {{ poi_form.user1_species }}
-              {% elif user_number == 2 %}
-                {{ poi_form.user2_species }}
-              {% elif user_number == 3 %}
-                {{ poi_form.user3_species }}
-              {% elif user_number == 0 %}
-                  {{ poi_form.final_species }}
+              {% if not user_is_superuser or annotations|length < 2 %}
+                <div id="species-div" class="grid-col-4 padding-1">
+                  <label class="usa-label" for="">Species</label>
+                  <hr class="usa-hr" />
+                  {{ form.target }}
+                </div>
               {% endif %}
-              </div>
-              <div id="confidence-div" class="grid-col-4 padding-1">
-                <label class="usa-label" for="">Confidence</label>
-                <hr class="usa-hr" />
-                {% if user_number == 1 %}
-                  {{ poi_form.user1_confidence }}
-                {% elif user_number == 2 %}
-                  {{ poi_form.user2_confidence }}
-                {% elif user_number == 3 %}
-                  {{ poi_form.user3_confidence }}
-                {% elif user_number == 0 %}
-                  {{ poi_form.final_confidence }}
-                {% endif %}
-              </div>
-                <input type="hidden" name="{% if user_number == 1 %}user1_id{% elif user_number == 2 %}user2_id{% elif user_number == 3 %}user3_id{% endif %}" value="{{ request.user.username }}">
-                
-                <input type="hidden" name="form_type" value="poi_form">
-                <div class="grid-col-12" style="display: flex; justify-content: flex-end;">
+              {% if not user_is_superuser or annotations|length < 2 %}
+                <div id="confidence-div" class="grid-col-4 padding-1">
+                  <label class="usa-label" for="">Confidence</label>
+                  <hr class="usa-hr" />
+                  {{ form.confidence }}
+                </div>
+              {% endif %}
+            </div>
+            
+                <input type="hidden" name="poi" value="{{ poi.id }}">
+                <input type="hidden" name="user" value="{{ user.id }}">
+                <input type="hidden" name="form_type" value="form">
+                <div class="grid-row padding-top-4 padding-2">
                   <button
-                    class="usa-button usa-button--big {% if user_number == 0 %}usa-button--secondary{% endif %}"
+                    class="usa-button usa-button--big {% if user_is_superuser and annotations|length > 2  %}usa-button--secondary{% endif %}"
                     type="submit"
                   >
-                    {% if user_number == 0 %}Adjudicate{% else %}Submit{% endif %}
+                    {% if user_is_superuser and annotations|length > 2 %}Adjudicate{% else %}Submit{% endif %}
                   </button>
                 </div>
-            </div>
+            
           </form>
 
           {% else %}
@@ -231,7 +194,7 @@
 
           {% endif %}
         </div>
-      </div>
+        </div>
       <script>
         document.addEventListener("DOMContentLoaded", () => {
           document
@@ -264,8 +227,8 @@
           const confidenceRadios = confidenceDiv.querySelectorAll("input[type='radio']");
 
           function toggleDivs() {
-        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='whale']");
-        if (whaleButton.classList.contains("usa-button--active")) {
+        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
           speciesDiv.style.display = "block";
           confidenceDiv.style.display = "block";
         } else {
@@ -284,7 +247,32 @@
           toggleDivs();
         });
       </script>
+      <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+      <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("#annotation_form");
 
+      form.addEventListener("submit", (e) => {
+        e.preventDefault(); // Prevent immediate form submission
+        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+          confetti({
+            startVelocity: 50,
+            spread: 90,
+            particleCount: 50,
+            origin: { y: 0.4 }
+          });
+        
+          // Wait 1 second before submitting the form
+          setTimeout(() => {
+            form.submit();
+          }, 1500);
+        } else {
+          form.submit(); // Submit immediately if not whale classification
+        }
+      });
+    });
+      </script>
       <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
       <link
         rel="stylesheet"
@@ -302,7 +290,7 @@
 		// Ensure variables are passed correctly
 		const latitude = {{ latitude }}; //42.049081 //;
 		const longitude = {{ longitude }};  //-70.183762 //;
-		const cogUrl = "{{ cog_url }}";
+		const cogUrl = "{{ cogurl }}";
 
 		// Map Initialization
 		window.onload = function() {
@@ -322,10 +310,18 @@
 			const vectorSource = new ol.source.Vector({ features: [point] });
 			const vectorLayer = new ol.layer.Vector({
 				source: vectorSource,
-				style: new ol.style.Style({
-					image: new ol.style.Icon({ src: 'https://maps.google.com/mapfiles/ms/micons/red-dot.png', scale: 1 })
-				}),
-			});
+        style: new ol.style.Style({
+            image: new ol.style.RegularShape({
+            fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
+            stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
+            points: 4,
+            radius: 32,
+            angle: 0
+          })
+        }),
+        
+				});
+
 
 			const variables = {
 				exposure: 0,
@@ -387,9 +383,12 @@
         		cogLayer.setVisible(value === 'satellite');
         	});
         });
+        document.querySelector('input[name="pointer"]').addEventListener('change', (event) => {
+          vectorLayer.setVisible(event.target.checked);
+        });
 	  	}
       </script>
-    </div>
+    
   </div>
 </section>
 </body>

@@ -1,8 +1,41 @@
+"""
+Django forms module for whale observation and satellite imagery data management.
+
+This module provides form classes for handling various aspects of whale observation data
+and satellite imagery queries. It includes forms for API queries, data processing,
+and whale observation recording with custom USWDS-styled widgets.
+
+Classes:
+    APIQueryForm: Form for querying various satellite imagery APIs with authentication
+        and search parameters.
+    
+    ProcessingForm: Form for processing and filtering ETL data based on various parameters
+        including spatial bounds, dates, and vendor information.
+    
+    USWDSButtonGroupWidget: Custom widget implementing USWDS-styled button groups with
+        special handling for "Unsure" and "Whale" options.
+    
+    USWDSRadioButtonGroupWidget: Custom widget for rendering USWDS-styled radio button
+        groups.
+    
+    PointsOfInterestForm: ModelForm for managing whale observation data from multiple
+        users with fields for classification, species identification, and confidence
+        levels.
+
+Dependencies:
+    - Django forms and GIS forms
+    - datetime for default date handling
+    - Custom models (AreaOfInterest, ExtractTransformLoad, PointsOfInterest)
+    - Django utilities (safestring, forms.utils)
+
+Note:
+    All custom widgets follow USWDS (U.S. Web Design System) styling guidelines
+    for consistent government web design standards.
+"""
+
 from datetime import datetime
 from django import forms
-from django.contrib.gis import forms as gis_forms
-from .models import AreaOfInterest, ExtractTransformLoad
-from .models import PointsOfInterest
+from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Targets
 from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
 
@@ -247,21 +280,18 @@ class PointsOfInterestForm(forms.ModelForm):
     """
     class Meta:
         model = PointsOfInterest
-        fields = ['user1_id', 'user1_comments', 'user1_classification', 'user1_species', 'user1_confidence', 'user2_id', 'user2_comments', 'user2_classification', 'user2_species', 'user2_confidence', 'user3_id', 'user3_comments', 'user3_classification', 'user3_species', 'user3_confidence', 'final_review', 'final_species', 'final_confidence']
+        fields = ['id', 'final_review_date', 'final_species', 'final_classification']
         widgets = {
-            'user1_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
-            'user1_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
-            'user1_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
-            'user1_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
-            'user2_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
-            'user2_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
-            'user2_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
-            'user2_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
-            'user3_comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
-            'user3_classification': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
-            'user3_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
-            'user3_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES),
-            'final_review': USWDSButtonGroupWidget(choices=PointsOfInterest.CLASSIFICATION_CHOICES),
-            'final_species': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.SPECIES_CHOICES),
-            'final_confidence': USWDSRadioButtonGroupWidget(choices=PointsOfInterest.CONFIDENCE_CHOICES)
+
+        }
+
+class AnnotationForm(forms.ModelForm):
+    class Meta:
+        model = Annotations
+        fields = ['poi', 'user', 'classification', 'comments', 'confidence', 'target']
+        widgets = {
+            'comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'classification': USWDSButtonGroupWidget(choices=Classification),
+            'target': USWDSRadioButtonGroupWidget(choices=Targets),
+            'confidence': USWDSRadioButtonGroupWidget(choices=Confidence),
         }
