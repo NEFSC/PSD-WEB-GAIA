@@ -191,7 +191,10 @@ class USWDSButtonGroupWidget(forms.Widget):
                 button_attrs['class'] += ' usa-button--outline'
             if str(value) == str(val):
                 button_attrs['class'] += ' usa-button--active'
-            button_html = f'<button {flatatt(button_attrs)}>{label}</button>'
+            submit_script = "" if label == "Whale" else "this.form.submit();"
+            button_html = f'''<button {flatatt(button_attrs)} onclick="
+                this.parentElement.nextElementSibling.value = this.dataset.value;
+                {submit_script}">{label}</button>'''
             buttons.append(button_html)
 
         hidden_input = f'<input type="hidden" name="{name}" value="{value or ""}" {flatatt(attrs)}>'
