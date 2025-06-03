@@ -161,14 +161,14 @@
               </div>
               {% if not user_is_superuser or annotations|length < 2 %}
                 <div id="species-div" class="grid-col-4 padding-1">
-                  <label class="usa-label" for="">Species</label>
+                  <label class="usa-label" for="">Species <span class="text-red">*</span></label>
                   <hr class="usa-hr" />
                   {{ form.target }}
                 </div>
               {% endif %}
               {% if not user_is_superuser or annotations|length < 2 %}
                 <div id="confidence-div" class="grid-col-4 padding-1">
-                  <label class="usa-label" for="">Confidence</label>
+                  <label class="usa-label" for="">Confidence <span class="text-red">*</span></label>
                   <hr class="usa-hr" />
                   {{ form.confidence }}
                 </div>
