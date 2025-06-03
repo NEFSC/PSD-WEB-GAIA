@@ -295,3 +295,12 @@ class AnnotationForm(forms.ModelForm):
             'target': USWDSRadioButtonGroupWidget(choices=Targets),
             'confidence': USWDSRadioButtonGroupWidget(choices=Confidence),
         }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        classification = cleaned_data.get('classification')
+        target = cleaned_data.get('target')
+        confidence = cleaned_data.get('confidence')
+
+        if (str(classification).lower() == "whale") and (not target or not confidence):
+            raise forms.ValidationError("Target and Confidence are required when Classification is Animal.")
