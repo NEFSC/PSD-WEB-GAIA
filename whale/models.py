@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models as gis_models
+from django.core.exceptions import ValidationError
 
 class AreaOfInterest(gis_models.Model):
     id = gis_models.AutoField(primary_key = True)
@@ -354,3 +355,11 @@ class Annotations(models.Model):
 
     def __str__(self):
         return f"Annotation {self.id} by {self.user}"
+    
+    def clean(self):
+        super().clean()
+        if self.classification == 14:
+            if not self.target:
+                raise ValidationError({'Target': 'This field cannot be null when classification is Animal.'})
+            if not self.confidence:
+                raise ValidationError({'Confidence': 'This field cannot be null when classification is Animal.'})
