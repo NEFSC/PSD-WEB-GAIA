@@ -216,6 +216,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     BASE_DIR / "static",
+    BASE_DIR / "static/uswds",  # Add your app's static directory
 ]
 
 # Enable WhiteNoise storage for static files (only for dev environments without a reverse-proxy)
