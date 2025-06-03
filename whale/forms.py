@@ -293,7 +293,7 @@ class AnnotationForm(forms.ModelForm):
         model = Annotations
         fields = ['poi', 'user', 'classification', 'comments', 'confidence', 'target']
         widgets = {
-            'comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'comments': forms.TextInput(attrs={'maxlength': 500, 'class': 'usa-input', 'id':'comments-textarea'}),
             'classification': USWDSButtonGroupWidget(choices=Classification),
             'target': USWDSRadioButtonGroupWidget(choices=Targets),
             'confidence': USWDSRadioButtonGroupWidget(choices=Confidence),
