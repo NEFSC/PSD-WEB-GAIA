@@ -137,13 +137,13 @@
         </div>
         
       </div>
-      <div class="grid-col-3 form-container padding-2">
+      <div class="grid-col-3 form-container padding-x-2">
           <form id="annotation_form" method="post">
             {% csrf_token %}
             <div class="grid-row">
               {% if not user_is_superuser or annotations|length < 2 %}
-                <div class="grid-row padding-1">
-                  <label class="usa-label" for="comments-textarea"
+                <div class="grid-row padding-x-1">
+                  <label class="usa-label margin-top-0" for="comments-textarea"
                     >Comments</label
                   >
                   <hr class="usa-hr" />
@@ -160,14 +160,14 @@
                   {{ form.classification }}
               </div>
               {% if not user_is_superuser or annotations|length < 2 %}
-                <div id="species-div" class="grid-col-4 padding-1">
+                <div id="species-div" class="grid-col padding-1">
                   <label class="usa-label" for="">Species <span class="text-red">*</span></label>
                   <hr class="usa-hr" />
                   {{ form.target }}
                 </div>
               {% endif %}
               {% if not user_is_superuser or annotations|length < 2 %}
-                <div id="confidence-div" class="grid-col-4 padding-1">
+                <div id="confidence-div" class="grid-col padding-1">
                   <label class="usa-label" for="">Confidence <span class="text-red">*</span></label>
                   <hr class="usa-hr" />
                   {{ form.confidence }}
