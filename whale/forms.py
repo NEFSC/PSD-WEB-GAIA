@@ -35,7 +35,7 @@ Note:
 
 from datetime import datetime
 from django import forms
-from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Targets
+from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Target
 from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
 
@@ -191,7 +191,10 @@ class USWDSButtonGroupWidget(forms.Widget):
                 button_attrs['class'] += ' usa-button--outline'
             if str(value) == str(val):
                 button_attrs['class'] += ' usa-button--active'
-            button_html = f'<button {flatatt(button_attrs)}>{label}</button>'
+            submit_script = "" if label == "Whale" else "this.form.submit();"
+            button_html = f'''<button {flatatt(button_attrs)} onclick="
+                this.parentElement.nextElementSibling.value = this.dataset.value;
+                {submit_script}">{label}</button>'''
             buttons.append(button_html)
 
         hidden_input = f'<input type="hidden" name="{name}" value="{value or ""}" {flatatt(attrs)}>'
@@ -290,8 +293,17 @@ class AnnotationForm(forms.ModelForm):
         model = Annotations
         fields = ['poi', 'user', 'classification', 'comments', 'confidence', 'target']
         widgets = {
-            'comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
+            'comments': forms.TextInput(attrs={'maxlength': 500, 'class': 'usa-input', 'id':'comments-textarea'}),
             'classification': USWDSButtonGroupWidget(choices=Classification),
-            'target': USWDSRadioButtonGroupWidget(choices=Targets),
+            'target': USWDSRadioButtonGroupWidget(choices=Target),
             'confidence': USWDSRadioButtonGroupWidget(choices=Confidence),
         }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        classification = cleaned_data.get('classification')
+        target = cleaned_data.get('target')
+        confidence = cleaned_data.get('confidence')
+
+        if (str(classification).lower() == "whale") and (not target or not confidence):
+            raise forms.ValidationError("Target and Confidence are required when Classification is Animal.")

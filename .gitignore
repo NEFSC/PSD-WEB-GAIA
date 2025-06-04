@@ -7,7 +7,6 @@ imagery_utils/
 *.sqlite3
 *.db
 *.log
-*.json
 python
 gaia/__pycache__/settings.cpython-311.pyc
 static/admin/*
@@ -18,3 +17,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
+gaia/secrets.json
+.vscode/launch.json
+.vscode/settings.json
