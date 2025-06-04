@@ -116,9 +116,9 @@ def create_aois(db):
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
-def create_targets(db):
+def create_target(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE TARGETS if it does not exist. Targets are target
+            table WHALE TARGET if it does not exist. Target are target
             species.
 
         FIELDS: ID, Target, and Scientific Name
@@ -134,7 +134,7 @@ def create_targets(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_targets(
+            CREATE TABLE IF NOT EXISTS whale_target(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 target VARCHAR(30),
                 scientific_name VARCHAR(25),
@@ -144,7 +144,7 @@ def create_targets(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE TARGETS")
+        print("Successfully created table WHALE TARGET")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
@@ -234,7 +234,7 @@ def create_tasking(db):
                 FOREIGN KEY (aoi)
                     REFERENCES aoi(id),
                 FOREIGN KEY (target)
-                    REFERENCES targets(target),
+                    REFERENCES target(target),
                 FOREIGN KEY (requestor)
                     REFERENCES people(name)
             )

@@ -5,15 +5,15 @@ Note: AreaOfInterest admin configuration is currently commented out.  It needs a
 """
 
 from django.contrib import admin
-from .models import AreaOfInterest, Targets, Classification, Confidence
+from .models import AreaOfInterest, Target, Classification, Confidence
 
 # @admin.register(AreaOfInterest)
 # class AreaOfInterestAdmin(admin.ModelAdmin):
 #     list_display = ('name',)
 #     search_fields = ['name']
 
-@admin.register(Targets)
-class TargetsAdmin(admin.ModelAdmin):
+@admin.register(Target)
+class TargetAdmin(admin.ModelAdmin):
     list_display = ('value',)
     search_fields = ['value', 'scientific_name']
 
