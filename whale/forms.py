@@ -35,7 +35,7 @@ Note:
 
 from datetime import datetime
 from django import forms
-from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Targets
+from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Target
 from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
 
@@ -295,7 +295,7 @@ class AnnotationForm(forms.ModelForm):
         widgets = {
             'comments': forms.TextInput(attrs={'maxlength': 500, 'class': 'usa-input', 'id':'comments-textarea'}),
             'classification': USWDSButtonGroupWidget(choices=Classification),
-            'target': USWDSRadioButtonGroupWidget(choices=Targets),
+            'target': USWDSRadioButtonGroupWidget(choices=Target),
             'confidence': USWDSRadioButtonGroupWidget(choices=Confidence),
         }
     

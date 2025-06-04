@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='Targets',
+            name='Target',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('value', models.CharField(max_length=30)),
@@ -169,7 +169,7 @@ class Migration(migrations.Migration):
                 ('final_review_date', models.DateField(blank=True, null=True)),
                 ('point', django.contrib.gis.db.models.fields.GeometryField(blank=True, null=True, srid=4326)),
                 ('final_classification', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='whale.classification')),
-                ('final_species', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='whale.targets')),
+                ('final_species', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='whale.target')),
             ],
         ),
         migrations.CreateModel(
@@ -181,7 +181,7 @@ class Migration(migrations.Migration):
                 ('classification', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='whale.classification')),
                 ('confidence', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='whale.confidence')),
                 ('poi', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='annotations', to='whale.pointsofinterest')),
-                ('target', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='whale.targets')),
+                ('target', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='whale.target')),
             ],
         ),
         migrations.CreateModel(
