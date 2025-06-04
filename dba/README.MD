@@ -29,7 +29,7 @@ Portions of this work were migrated from [SDB](https://github.com/JWall5/SDB) an
 	 - _Log_ - Creates a table for logging every time the ETL trigger fires supporting troubleshooting.
 	 - _MGP_ - Using an Area of Interest, from the AOIs table mentioned above, queries Maxar's Geospatial Platform API for data over a given time period, builds the `MGP` table from these results, and then populates the table with these values. Other notebooks are intended to be used for adding further records.
 	 - _People_ - Builds the `people` table from a flat file database, i.e. CSV, using names as the primary key which are assumed to be unique strings for this project. Other notebooks are intended to be used for adding further records.
-	 - _Targets_ - Builds the `targets` table from a flat file database using names (i.e., scientific and common names) as the primary key which are assumed to be unique strings for this project. Other notebooks are intended to be used for adding further records.
+	 - _Target_ - Builds the `target` table from a flat file database using names (i.e., scientific and common names) as the primary key which are assumed to be unique strings for this project. Other notebooks are intended to be used for adding further records.
 	 - _Tasking_ - Builds the `tasking` table from a flat file database of CIDR requests using the CIDR identifier as the primary key opposed to DAR and AOI.
 	 - _Triggers_ - Updates the `ETL` table to be updated with a trigger by updates to the `EE`, `GEGD`, and `MGP` tables.
 
@@ -40,7 +40,7 @@ Migrate SpatiaLite records to a GeoDjango SpatiaLite database ensuring the objec
 	 - _GEGD2Django_
 	 - _MGP2Django_
 	 - _People2Django_
-	 - _Targets2Django_
+	 - _Target2Django_
 	 - _Taskings2Django_
 
 **QA/QC**
