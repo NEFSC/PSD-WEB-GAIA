@@ -53,8 +53,8 @@ RUN conda env create -f environment.yml && \
     conda clean -a
 
 # Activate the conda environment
-ENV CONDA_DEFAULT_ENV gaia
-ENV PATH /opt/conda/envs/$CONDA_DEFAULT_ENV/bin:$PATH
+ENV CONDA_DEFAULT_ENV=gaia
+ENV PATH=/opt/conda/envs/$CONDA_DEFAULT_ENV/bin:$PATH
 
 # Set up Spatialite
 RUN mkdir -p /etc/sqlite && \
