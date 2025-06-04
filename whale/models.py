@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models as gis_models
+from django.core.exceptions import ValidationError
 
 class AreaOfInterest(gis_models.Model):
     id = gis_models.AutoField(primary_key = True)
@@ -12,7 +13,7 @@ class AreaOfInterest(gis_models.Model):
     def __str__(self):
         return self.name
 
-class Targets(gis_models.Model):
+class Target(gis_models.Model):
     id = gis_models.AutoField(primary_key = True)
     value = gis_models.CharField(max_length = 30)
     label = gis_models.CharField(max_length = 25)
@@ -333,7 +334,7 @@ class PointsOfInterest(gis_models.Model):
     epsg_code = gis_models.CharField(max_length = 6, null=True, blank=True)
 
     # For review process
-    final_species = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
+    final_species = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
     final_classification = models.ForeignKey(Classification, on_delete=models.CASCADE, null=True, blank=True)
     final_review_date = models.DateField(null=True, blank=True)
 
@@ -350,7 +351,15 @@ class Annotations(models.Model):
     classification = models.ForeignKey(Classification, on_delete=models.CASCADE)
     comments = models.CharField(max_length=500, null=True, blank=True)
     confidence = models.ForeignKey(Confidence, on_delete=models.CASCADE, null=True, blank=True)
-    target = models.ForeignKey(Targets, on_delete=models.CASCADE, null=True, blank=True)
+    target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"Annotation {self.id} by {self.user}"
+    
+    def clean(self):
+        super().clean()
+        if self.classification == 14:
+            if not self.target:
+                raise ValidationError({'Target': 'This field cannot be null when classification is Animal.'})
+            if not self.confidence:
+                raise ValidationError({'Confidence': 'This field cannot be null when classification is Animal.'})

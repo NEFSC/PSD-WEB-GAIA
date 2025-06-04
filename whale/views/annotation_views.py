@@ -81,7 +81,9 @@ def annotation_page(request):
                 poi.final_species = form.cleaned_data['target']
                 poi.save(update_fields=['final_species', 'final_classification', 'final_review_date'])
             else:
-                annotation = form.save()
+                annotation = form.save(commit=False)
+                annotation.full_clean()
+                annotation.save()
             poi = get_next_poi(user)
             if poi:
                 return redirect(f'{request.path}?id={poi.id}')
@@ -250,12 +252,12 @@ def validation(request):
 
     POIs = PointsOfInterest.objects.annotate(
         num_reviews=Count('annotations', filter=Q(annotations__classification=14))
-    ).filter(num_reviews=2)
+    ).filter(num_reviews__gte=2)
 
     if show_final_reviews == 'false':
-        POIs = POIs.filter(final_classification__isnull=True)
+        POIs = POIs.filter(final_classification_id__isnull=True)
 
-    three_reviews = Annotations.objects.all().order_by('id')
+    three_reviews = Annotations.objects.all().order_by('id')[:3]
 
     POIs = POIs.prefetch_related(
         Prefetch('annotations', queryset=three_reviews, to_attr='three_reviews')
