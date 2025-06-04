@@ -149,7 +149,6 @@
               <div class="grid-col-row padding-1">
                 {{ form.classification }}
               </div>
-              {% if not user_is_superuser or annotations|length <= 2 %}
                 <div id="species-div" class="grid-col padding-1">
                   <label class="usa-label" for="">Species <span class="text-red">*</span></label>
                   <hr class="usa-hr" />
@@ -160,7 +159,6 @@
                   <hr class="usa-hr" />
                   {{ form.confidence }}
                 </div>
-              {% endif %}
             </div>
             
                 <input type="hidden" name="poi" value="{{ poi.id }}">
