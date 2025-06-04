@@ -147,11 +147,7 @@
             {% csrf_token %}
             <div class="grid-row">
               <div class="grid-col-row padding-1">
-                <label class="usa-label" for="classification-buttongroup"
-                  >Classify</label
-                >
-                <hr class="usa-hr" />
-                  {{ form.classification }}
+                {{ form.classification }}
               </div>
               {% if not user_is_superuser or annotations|length <= 2 %}
                 <div id="species-div" class="grid-col padding-1">
