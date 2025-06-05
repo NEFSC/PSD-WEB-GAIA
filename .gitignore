@@ -8,11 +8,10 @@ imagery_utils/
 *.db
 *.log
 python
-gaia/__pycache__/settings.cpython-311.pyc
+gaia/__pycache__/*
 static/admin/*
 static/gis/*
 static/uswds/img/material-icons/*
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,3 +19,5 @@ __pycache__/
 gaia/secrets.json
 .vscode/launch.json
 .vscode/settings.json
+staticfiles/*
+whale/management/commands/__pycache__/*
