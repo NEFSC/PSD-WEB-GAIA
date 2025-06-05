@@ -1,0 +1,38 @@
+services:
+  web:
+    build: .
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - ./whale:/app/whale
+    expose:
+      - "8000"
+    command: ${BUILT_IN_SERVER_CMD:-/bin/bash -c "source activate gaia && gunicorn gaia.wsgi:application --bind 0.0.0.0:8000"}
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - static_volume:/static
+      - media_volume:/media
+      - ${NGINX_CONF:-./dev.nginx.conf}:/etc/nginx/conf.d/default.conf
+      - ./certbot/www/:/var/www/certbot/:ro
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+    depends_on:
+      - web
+    command: /bin/sh -c "chmod -R 755 /static && nginx -g 'daemon off;'"
+  certbot:
+    # only use this service to renew the certificate
+    # Try a dry-run first with nginx service running: docker compose run certbot renew --dry-run
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+    profiles:
+      # Example usage: docker-compose --profile certbot up
+      - certbot # This profile is used to run the certbot service for certificate renewal
+
+volumes:
+  static_volume:
+  media_volume:

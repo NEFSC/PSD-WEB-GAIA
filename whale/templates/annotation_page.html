@@ -1,0 +1,384 @@
+{% load static %} {% include 'sections/header.html' %}
+<style>
+  #gdal-map {
+    height: 50vh;
+    width: 100%;
+    position: relative;
+  }
+  #layer-switcher {
+    position: absolute;
+    bottom: 4rem;
+    right: 1rem;
+    width: 8rem;
+    background: white;
+    padding: 10px;
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow for better visibility */
+    z-index: 1000;
+  }
+</style>
+<section class="usa-section padding-top-0 padding-bottom-0">
+  <div class="grid-row">
+    <div class="grid-col-3"></div>
+    <div class="grid-col-3">
+      <h1>Annotation</h1>
+    </div>
+  </div>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  {% if error_message %}
+  <div class="usa-alert usa-alert--error">
+    <div class="usa-alert__body">
+      <h3 class="usa-alert__heading">Error</h3>
+      <p class="usa-alert__text">An error has occurred:</p>
+    {{ error_message }}
+    </div>
+  </div>
+  {% endif %}
+  <div class="grid-row flex-justify">
+      {% if poi %}
+        <div class="grid-col-2 padding-left-2 padding-top-2">
+          <p><strong>Catalog ID:</strong> {{ poi.catalog_id }}</p>
+          <p><strong>Vendor ID:</strong> {{ poi.vendor_id }}</p>
+          <p><strong>Entity ID:</strong> {{ poi.entity_id }}</p>
+          <p><strong>Interesting Point ID:</strong> {{ poi.id }}</p>
+          {% if user_is_superuser and annotations|length > 2 %}
+      <div class="usa-section-heading padding-top-2">
+        <h2>Existing Reviews</h2>
+      </div>
+      <div class="usa-table-container--scrollable" tabindex="0">
+        <table class="usa-table usa-table--stacked-header">
+          <thead>
+        <tr>
+          <th scope="col">User ID</th>
+          <th scope="col">Classification</th>
+          <th scope="col">Species</th>
+          <th scope="col">Confidence</th>
+          <th scope="col">Comments</th>
+        </tr>
+          </thead>
+          <tbody>
+        {% for annotation in annotations %}
+        <tr>
+          <td data-label="User">{{ annotation.user.username }}</td>
+          <td data-label="Classification">{{ annotation.classification }}</td>
+          <td data-label="Species">{{ annotation.target }}</td>
+          <td data-label="Confidence">{{ annotation.confidence }}</td>
+          <td data-label="Comments">{{ annotation.comments }}</td>
+        </tr>
+        {% endfor %}
+        
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      {% if not user_is_superuser or annotations|length <= 2 %}
+                <div class="grid-row padding-x-1">
+                  <label class="usa-label" for="comments-textarea"
+                    >Comments</label>
+                  {{ form.comments }}
+                </div>
+              {% endif %}
+        </div>
+      
+      <div class="grid-container" style="margin-left:0;margin-right:0;width: 55%;max-width: 100%;height:70vh;">
+        <div id="osm-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 55%; height: 70vh; z-index: 1;"></div>
+        <div id="gdal-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 55%; height: 70vh; z-index: 2;">
+          <div id="layer-switcher">
+            <label>
+              <input type="radio" name="layer" value="street" />
+              Street Map
+            </label>
+            <br />
+            <label>
+              <input type="radio" name="layer" value="satellite" checked />
+              Satellite
+            </label><br>
+            <label>
+              <input type="checkbox" name="pointer" value="checked" checked />
+              Pointer
+            </label>
+          </div>
+          <div id="pointer-switcher">
+          </div>
+        </div>
+        <div class="grid-row controls flex-row" style="position:relative; top:69vh; z-index: 3;">
+          <div class="grid-col">
+            <label for="exposure">Brightness: </label>
+            <input
+              type="range"
+              id="exposure"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              value="0"
+            />
+          </div>
+          <div class="grid-col">
+            <label for="contrast">Contrast: </label>
+            <input
+              type="range"
+              id="contrast"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              value="0"
+            />
+          </div>
+          <div class="grid-col">
+            <label for="saturation">Saturation: </label>
+            <input
+              type="range"
+              id="saturation"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              value="0"
+            />
+          </div>
+        </div>
+        
+      </div>
+      <div class="grid-col-3 form-container padding-x-2">
+          <form id="annotation_form" method="post">
+            {% csrf_token %}
+            <div class="grid-row">
+              <div class="grid-col-row padding-1">
+                {{ form.classification }}
+              </div>
+              {% if not user_is_superuser or annotations|length <= 2 %}
+                <div id="species-div" class="grid-col padding-1">
+                  <label class="usa-label" for="">Species <span class="text-red">*</span></label>
+                  <hr class="usa-hr" />
+                  {{ form.target }}
+                </div>
+                <div id="confidence-div" class="grid-col padding-1">
+                  <label class="usa-label" for="">Confidence <span class="text-red">*</span></label>
+                  <hr class="usa-hr" />
+                  {{ form.confidence }}
+                </div>
+              {% endif %}
+            </div>
+            
+                <input type="hidden" name="poi" value="{{ poi.id }}">
+                <input type="hidden" name="user" value="{{ user.id }}">
+                <input type="hidden" name="form_type" value="form">
+                <div class="grid-row padding-top-4 padding-2">
+                  <button
+                    class="usa-button usa-button--big {% if user_is_superuser and annotations|length > 2  %}usa-button--secondary{% endif %}"
+                    type="submit"
+                  >
+                    {% if user_is_superuser and annotations|length > 2 %}Adjudicate{% else %}Submit{% endif %}
+                  </button>
+                </div>
+            
+          </form>
+
+          {% else %}
+          <h1>No points of interest available.</h1>
+
+          {% endif %}
+        </div>
+        </div>
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          document
+            .querySelectorAll("#classification-buttongroup button")
+            .forEach((button) => {
+              button.addEventListener("click", function () {
+                const group = this.closest("#classification-buttongroup");
+                const hiddenInput = group.nextElementSibling;
+
+                // Remove active class from all buttons
+                group.querySelectorAll("button").forEach((btn) => {
+                  btn.classList.remove("usa-button--active");
+                });
+
+                // Add active class to the clicked button
+                this.classList.add("usa-button--active");
+
+                // Update the hidden input value
+                hiddenInput.value = this.getAttribute("data-value");
+              });
+            });
+        });
+      </script>
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const buttons = document.querySelectorAll("#classification-buttongroup button");
+          const speciesDiv = document.getElementById("species-div");
+          const confidenceDiv = document.getElementById("confidence-div");
+          const speciesRadios = speciesDiv.querySelectorAll("input[type='radio']");
+          const confidenceRadios = confidenceDiv.querySelectorAll("input[type='radio']");
+
+          function toggleDivs() {
+        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+          speciesDiv.style.display = "block";
+          confidenceDiv.style.display = "block";
+        } else {
+          speciesDiv.style.display = "none";
+          confidenceDiv.style.display = "none";
+          speciesRadios.forEach(radio => radio.checked = false);
+          confidenceRadios.forEach(radio => radio.checked = false);
+        }
+          }
+
+          buttons.forEach((button) => {
+        button.addEventListener("click", toggleDivs);
+          });
+
+          // Initial check
+          toggleDivs();
+        });
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+      <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("#annotation_form");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault(); // Prevent immediate form submission
+        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+          confetti({
+            startVelocity: 50,
+            spread: 90,
+            particleCount: 50,
+            origin: { y: 0.4 }
+          });
+        
+          // Wait 1 second before submitting the form
+          setTimeout(() => {
+            form.submit();
+          }, 1500);
+        } else {
+          form.submit(); // Submit immediately if not whale classification
+        }
+      });
+    });
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ol@10.1.0/ol.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/ol@v10.1.0/dist/ol.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.0/proj4.js"></script>
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+      />
+
+      <script>
+		// Ensure variables are passed correctly
+		const latitude = {{ latitude }}; //42.049081 //;
+		const longitude = {{ longitude }};  //-70.183762 //;
+		const cogUrl = "{{ cogurl }}";
+
+		// Map Initialization
+		window.onload = function() {
+			// Initialize maps, points, and other layers here
+			initializeMaps();
+		};
+
+		function initializeMaps() {
+			// Re-initialize the maps based on the provided latitude, longitude, and COG URL
+			const point = new ol.Feature({
+				geometry: new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude])),
+				name: 'Point of Interest',
+			});
+
+			const cogSource = new ol.source.GeoTIFF({ sources: [{ url: cogUrl }] });
+			const baseLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
+			const vectorSource = new ol.source.Vector({ features: [point] });
+			const vectorLayer = new ol.layer.Vector({
+				source: vectorSource,
+        style: new ol.style.Style({
+            image: new ol.style.RegularShape({
+            fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
+            stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
+            points: 4,
+            radius: 32,
+            angle: 0
+          })
+        }),
+        
+				});
+
+
+			const variables = {
+				exposure: 0,
+				contrast: 0,
+				saturation: 0,
+			};
+
+        // Initialize the COG image layer
+        const cogLayer = new ol.layer.WebGLTile({
+			style: {
+				exposure: ['var', 'exposure'],
+				contrast: ['var', 'contrast'],
+				saturation: ['var', 'saturation'],
+				variables: variables,
+			},
+			source: cogSource,
+			attributions: 'GAIA',
+		});
+
+		//Variable handling
+		let variable;
+		for (variable in variables) {
+			const name = variable;
+			const element = document.getElementById(name);
+			const value = variables[name];
+			element.value = value.toString();
+			document.getElementById(name).innerText = value.toFixed(2);
+			element.addEventListener('input', function (event) {
+				const value = parseFloat(event.target.value);
+				document.getElementById(name).innerText = value.toFixed(2);
+				const updates = {};
+				updates[name] = value;
+				cogLayer.updateStyleVariables(updates);
+			});
+		}
+
+		const osmMap = new ol.Map({
+			target: 'osm-map',
+			layers: [baseLayer, vectorLayer],
+			view: new ol.View({
+				center: ol.proj.fromLonLat([longitude, latitude]),
+				zoom: 18,
+			}),
+		});
+
+		const gdalMap = new ol.Map({
+			target: 'gdal-map',
+			layers: [baseLayer, cogLayer, vectorLayer],
+			view: osmMap.getView(),
+		});
+
+		const scaleLineControl = new ol.control.ScaleLine();
+		gdalMap.addControl(scaleLineControl)
+
+        document.querySelectorAll('input[name="layer"]').forEach((input) => {
+        	input.addEventListener('change', (event) => {
+        		const value = event.target.value;
+        		baseLayer.setVisible(value === 'street');
+        		cogLayer.setVisible(value === 'satellite');
+        	});
+        });
+        document.querySelector('input[name="pointer"]').addEventListener('change', (event) => {
+          vectorLayer.setVisible(event.target.checked);
+        });
+	  	}
+      </script>
+    
+  </div>
+</section>
+</body>
+{% include 'sections/footer.html' %}
+</html>

@@ -1,0 +1,75 @@
+# This Dockerfile sets up a development environment for debugging with VS Code
+# It uses Miniconda as the base image and sets up:
+# - A non-root user for security
+# - Spatialite and GDAL for spatial database functionality
+# - A conda environment with project dependencies
+# - SQLite configuration for spatial extensions
+# - Development server on port 8000
+#
+# Key features:
+# - Non-root user for improved security
+# - Spatialite support for spatial database operations
+# - Conda environment for dependency management
+# - Debug-ready configuration
+# - Whitenoise for static file serving in development
+
+FROM continuumio/miniconda3:latest
+
+# Define build arguments with default values (overriden in .env file)
+ARG UID=1000
+ARG GID=1000
+ARG USER=mengland
+ARG GROUP=mengland
+
+# env variables
+ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    openssl \
+    libsqlite3-mod-spatialite \
+    sqlite3  \
+    gdal-bin \
+    nano \
+    faker \
+    binutils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user and group
+RUN groupadd --gid=${GID} -r ${GROUP} && \
+    useradd --uid=${UID} -r -g ${GROUP} -m ${USER}
+
+# create conda env and install dependencies
+COPY environment.yml .
+RUN conda env create -f environment.yml && \
+    conda clean -a
+
+# Activate the conda environment
+ENV CONDA_DEFAULT_ENV gaia
+ENV PATH /opt/conda/envs/$CONDA_DEFAULT_ENV/bin:$PATH
+
+# Set up Spatialite
+RUN mkdir -p /etc/sqlite && \
+    echo ".load /usr/lib/mod_spatialite.so" > /etc/sqlite/sqlite3.conf && \
+    echo "SELECT load_extension('mod_spatialite');" > /etc/sqlite/spatialite.init
+
+# Set application directory
+WORKDIR /app
+
+RUN mkdir -p logs
+
+# Change ownership to the non-root user
+RUN chown -R ${GROUP}:${USER} /etc/sqlite
+
+# Install whitenoise to serve static files with gunicorn (not for production)
+RUN conda install -c conda-forge whitenoise
+
+# expose port 8000 for external access
+EXPOSE 8000
+
+# Switch to the non-root user
+USER ${USER}
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["/bin/bash", "-c", "python manage.py runserver 0.0.0.0:8000"]

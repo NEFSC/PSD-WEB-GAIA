@@ -1,0 +1,20 @@
+name: CI Dev
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  call-workflow:
+    name: 🐟 Pipeline 🐟
+    uses: ./.github/workflows/CI_reuse.yml
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+      pull-requests: read
+    with:
+      appname: gaia # this should be all lower case
+    secrets: inherit
