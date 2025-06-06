@@ -13,17 +13,17 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import json
 from pathlib import Path
-import sys
 from sys import platform
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 if platform == "linux":
-    GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    #GDAL_LIBRARY_PATH = '/anaconda/envs/gaia/lib/libgdal.so'
+    GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH", "/opt/conda/envs/gaia/lib/libgdal.so")
     #GEOS_LIBRARY_PATH = '/anaconda/envs/gaia/lib/geos_c.so'
-    SPATIALITE_LIBRARY_PATH = '/anaconda/envs/gaia/lib/mod_spatialite.so'
+    SPATIALITE_LIBRARY_PATH = '/opt/conda/envs/gaia/lib/mod_spatialite.so'
+
 elif platform == "win32":
     USER_HOME = os.path.expanduser("~")
     CONDA_PREFIX = os.environ.get("CONDA_PREFIX", "")    
@@ -42,25 +42,31 @@ with open(SECRETS_FILE) as f:
 SECRET_KEY = secrets['DJANGO_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
+                 'test-gaia.fisheries.noaa.gov',
                  '52.170.141.35',
-                 '127.0.0.1']
+                 '127.0.0.1',
+                 'localhost',
+                 'gaia.fisheries.noaa.gov',
+                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                 'gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                 'gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'django.contrib.auth',
     'whale',
-    'django_q',
+    #'django_q',
     #'corsheaders',
 ]
 
@@ -89,12 +95,16 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
+if not DEBUG:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')  # Add WhiteNoise middleware only when not in debug mode
+
 ROOT_URLCONF = 'gaia.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates',
+                 BASE_DIR / 'whale/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -116,7 +126,10 @@ WSGI_APPLICATION = 'gaia.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.spatialite',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'OPTIONS': {
+            'timeout': 60,
+        },
     }
 }
 
@@ -124,23 +137,39 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'file': {
+        'db_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/django_sqlite.log'),
             'formatter': 'verbose',
         },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/main.log'),
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django.db.backends': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
+            'handlers': ['db_file'],
+            'level': 'INFO',
             'propagate': False,
         },
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+
     },
     'formatters': {
         'verbose': {
             'format': '{asctime} {levelname} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
             'style': '{',
         },
     },
@@ -177,17 +206,18 @@ USE_TZ = True
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
-LONGIN_URL = '/login/'
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+LOGIN_URL = '/login/'
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS =  [
-    os.path.join(BASE_DIR, 'whale', 'static')
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    BASE_DIR / "static/uswds",
 ]
+
+# Enable WhiteNoise storage for static files (only for dev environments without a reverse-proxy)
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -201,7 +231,31 @@ AZURE_STORAGE_ACCOUNT_NAME = 'gaianoaastorage'
 AZURE_STORAGE_ACCOUNT_KEY = secrets['AZURE_KEY']
 AZURE_CONTAINER_NAME = 'data'
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
+
+# Avoid CSRF verfication failures
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8080',  # Add the origin used in your requests
+    'https://dev-gaia.fisheries.noaa.gov',
+    'http://dev-gaia.fisheries.noaa.gov'
 ]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Email server configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = secrets.get('EMAIL_SERVER', 'smtp.gmail.com')  # Default to 'smtp.gmail.com' if not in secrets
+EMAIL_PORT = int(secrets.get('EMAIL_PORT', 587))  # Default to 587 for TLS
+EMAIL_USE_TLS = True  # Use TLS for secure email
+EMAIL_HOST_USER = secrets.get('EMAIL_USERNAME', '')
+EMAIL_HOST_PASSWORD = secrets.get('EMAIL_PASSWORD', '')
+
+# Email server configuration for testing
+# EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_mail")
+# print("EMAIL_BACKEND:", EMAIL_BACKEND)
+# print("EMAIL_HOST:", EMAIL_HOST)
+# print("EMAIL_PORT:", EMAIL_PORT)
+# print("EMAIL_USE_TLS:", EMAIL_USE_TLS)
+# print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
+
+DEFAULT_FROM_EMAIL = 'no-reply@noaa.gov'
