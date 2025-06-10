@@ -296,19 +296,17 @@
 			const cogSource = new ol.source.GeoTIFF({ sources: [{ url: cogUrl }] });
 			const baseLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
 			const vectorSource = new ol.source.Vector({ features: [point] });
-			const vectorLayer = new ol.layer.Vector({
-				source: vectorSource,
+      const vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
         style: new ol.style.Style({
-          image: new ol.style.RegularShape({
-          fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
-          stroke: new ol.style.Stroke({ 
-            color: 'rgba(128, 128, 128, 0.3)',
-            width: 2,
-            lineDash: [3, 3] // Creates a dotted line pattern
-          }),
-          points: 4,
-          radius: 64,
-          angle: 0
+          image: new ol.style.Circle({
+            fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
+            stroke: new ol.style.Stroke({ 
+              color: 'rgba(128, 128, 128, 0.3)',
+              width: 2,
+              lineDash: [3, 3] // Creates a dotted line pattern
+            }),
+            radius: 64
           })
         }),
         
