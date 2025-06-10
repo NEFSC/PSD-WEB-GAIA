@@ -299,12 +299,16 @@
 			const vectorLayer = new ol.layer.Vector({
 				source: vectorSource,
         style: new ol.style.Style({
-            image: new ol.style.RegularShape({
-            fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
-            stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
-            points: 4,
-            radius: 32,
-            angle: 0
+          image: new ol.style.RegularShape({
+          fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
+          stroke: new ol.style.Stroke({ 
+            color: 'rgba(128, 128, 128, 0.3)',
+            width: 2,
+            lineDash: [3, 3] // Creates a dotted line pattern
+          }),
+          points: 4,
+          radius: 64,
+          angle: 0
           })
         }),
         
