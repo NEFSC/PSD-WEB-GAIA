@@ -1,8 +1,8 @@
 
 """
-Django Application Configuration for Whale app.
+Django Application Configuration for Animal app.
 
-This class extends Django's AppConfig to provide custom configuration for the Whale application.
+This class extends Django's AppConfig to provide custom configuration for the Animal application.
 It includes functionality to configure Git settings and synchronize repositories.
 
 Methods:
@@ -19,7 +19,7 @@ from django.apps import AppConfig
 from django.core.management import call_command
 import subprocess
 
-class WhaleConfig(AppConfig):
+class AnimalConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'animal'
 
