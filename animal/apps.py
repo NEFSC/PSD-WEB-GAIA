@@ -21,7 +21,7 @@ import subprocess
 
 class WhaleConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'whale'
+    name = 'animal'
 
     def read(self):
         try:

@@ -215,8 +215,8 @@
           const confidenceRadios = confidenceDiv.querySelectorAll("input[type='radio']");
 
           function toggleDivs() {
-        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
-        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+        const animalButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (animalButton && animalButton.classList.contains("usa-button--active")) {
           speciesDiv.style.display = "block";
           confidenceDiv.style.display = "block";
         } else {
@@ -242,8 +242,8 @@
 
       form.addEventListener("submit", (e) => {
         e.preventDefault(); // Prevent immediate form submission
-        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
-        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+        const animalButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (animalButton && animalButton.classList.contains("usa-button--active")) {
           confetti({
             startVelocity: 50,
             spread: 90,
@@ -256,7 +256,7 @@
             form.submit();
           }, 1500);
         } else {
-          form.submit(); // Submit immediately if not whale classification
+          form.submit(); // Submit immediately if not animal classification
         }
       });
     });

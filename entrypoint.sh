@@ -6,9 +6,9 @@ set -e
 source /opt/conda/etc/profile.d/conda.sh
 conda activate gaia
 
-# Unapply all migrations for the whale app
-#echo "Unapplying all migrations for the whale app"
-#python manage.py migrate whale zero
+# Unapply all migrations for the animal app
+#echo "Unapplying all migrations for the animal app"
+#python manage.py migrate animal zero
 
 # Create new migrations
 echo "Creating new migrations"

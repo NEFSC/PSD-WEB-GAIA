@@ -45,7 +45,7 @@ Migrate SpatiaLite records to a GeoDjango SpatiaLite database ensuring the objec
 
 **QA/QC**
      - _00 QA/QC Objects_ - Helps in assuring that SQLite tables are spatially enabled, i.e. SpatiaLite, and are properly modeled by GeoDjango. This notebook also documents a lot of the validation needed to configure GeoDjango components.
-	 - _ee review_ - Helps reviewing that objects are correctly stored and modeled within `whale_earthexplorer`
+	 - _ee review_ - Helps reviewing that objects are correctly stored and modeled within `animal_earthexplorer`
 	 - _etl review_ - Similar to the above _ee review_, but for `ETL`.
 	 - _etl scratch_ - Experiments using the `ETL` table.
 	 - _interesting points_ - Experimental code to generate and load interesting points through the back door.

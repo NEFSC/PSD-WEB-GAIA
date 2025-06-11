@@ -4,14 +4,14 @@ from django.db import migrations
 
 trigger_sql = """
 CREATE TRIGGER adjudicate_trigger
-AFTER UPDATE ON whale_annotations
+AFTER UPDATE ON animal_annotations
 BEGIN
-    UPDATE whale_pointsofinterest 
+    UPDATE animal_pointsofinterest 
     SET final_classification_id = (
         SELECT classification_id 
         FROM (
             SELECT classification_id, COUNT(*) as count
-            FROM whale_annotations
+            FROM animal_annotations
             WHERE poi_id = NEW.poi_id
             GROUP BY classification_id
             HAVING COUNT(*) >= 3
@@ -22,7 +22,7 @@ BEGIN
     WHERE id = NEW.poi_id
     AND EXISTS (
         SELECT 1
-        FROM whale_annotations
+        FROM animal_annotations
         WHERE poi_id = NEW.poi_id
         GROUP BY classification_id
         HAVING COUNT(*) >= 3
@@ -39,7 +39,7 @@ DROP TRIGGER IF EXISTS adjudicate_trigger;
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('whale', '0001_initial'),
+        ('animal', '0001_initial'),
     ]
 
     operations = [

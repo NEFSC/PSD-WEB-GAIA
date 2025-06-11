@@ -1,9 +1,9 @@
 """
-Django forms module for whale observation and satellite imagery data management.
+Django forms module for animal observation and satellite imagery data management.
 
-This module provides form classes for handling various aspects of whale observation data
+This module provides form classes for handling various aspects of animal observation data
 and satellite imagery queries. It includes forms for API queries, data processing,
-and whale observation recording with custom USWDS-styled widgets.
+and animal observation recording with custom USWDS-styled widgets.
 
 Classes:
     APIQueryForm: Form for querying various satellite imagery APIs with authentication
@@ -13,12 +13,12 @@ Classes:
         including spatial bounds, dates, and vendor information.
     
     USWDSButtonGroupWidget: Custom widget implementing USWDS-styled button groups with
-        special handling for "Unsure" and "Whale" options.
+        special handling for "Unsure" and "Animal" options.
     
     USWDSRadioButtonGroupWidget: Custom widget for rendering USWDS-styled radio button
         groups.
     
-    PointsOfInterestForm: ModelForm for managing whale observation data from multiple
+    PointsOfInterestForm: ModelForm for managing animal observation data from multiple
         users with fields for classification, species identification, and confidence
         levels.
 
@@ -143,7 +143,7 @@ class USWDSButtonGroupWidget(forms.Widget):
     """A custom widget class implementing a USWDS (U.S. Web Design System) styled button group.
 
     This widget creates a group of buttons following USWDS styling guidelines, with special
-    handling for "Unsure" and "Whale" options. It includes a hidden input to store the
+    handling for "Unsure" and "Animal" options. It includes a hidden input to store the
     selected value.
 
     Args:
@@ -157,7 +157,7 @@ class USWDSButtonGroupWidget(forms.Widget):
 
     Methods:
         render(name, value, attrs=None, renderer=None): Renders the button group HTML.
-            Special styling is applied to "Unsure" and "Whale" buttons using USWDS classes.
+            Special styling is applied to "Unsure" and "Animal" buttons using USWDS classes.
             Selected buttons receive an 'usa-button--active' class.
 
     Returns:
@@ -172,9 +172,9 @@ class USWDSButtonGroupWidget(forms.Widget):
             attrs = {}
         attrs['id'] = attrs.get('id', f'id_{name}')
 
-        # Reorder choices to prioritize "Unsure" and "Whale"
+        # Reorder choices to prioritize "Unsure" and "Animal"
         def prioritize_choice(choice):
-            return (choice[1] not in {"Unsure", "Whale"}, choice[1])
+            return (choice[1] not in {"Unsure", "Animal"}, choice[1])
 
         reordered_choices = sorted(self.choices, key=prioritize_choice)
 
@@ -187,11 +187,11 @@ class USWDSButtonGroupWidget(forms.Widget):
                 'class': 'usa-button margin-1',
                 'data-value': val,
             }
-            if label in {"Unsure", "Whale"}:
+            if label in {"Unsure", "Animal"}:
                 button_attrs['class'] += ' usa-button--outline'
             if str(value) == str(val):
                 button_attrs['class'] += ' usa-button--active'
-            submit_script = "" if label == "Whale" else "this.form.submit();"
+            submit_script = "" if label == "Animal" else "this.form.submit();"
             button_html = f'''<button {flatatt(button_attrs)} onclick="
                 this.parentElement.nextElementSibling.value = this.dataset.value;
                 {submit_script}">{label}</button>'''
@@ -252,9 +252,9 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
 
 class PointsOfInterestForm(forms.ModelForm):
     """
-    PointsOfInterestForm is a Django ModelForm for managing whale observation data from three users.
+    PointsOfInterestForm is a Django ModelForm for managing animal observation data from three users.
 
-    This form allows multiple users to input their observations about potential whale sightings,
+    This form allows multiple users to input their observations about potential animal sightings,
     with fields for classification, species identification, confidence levels and comments.
     It also includes final review fields for consensus determination.
 
@@ -262,7 +262,7 @@ class PointsOfInterestForm(forms.ModelForm):
     - user{n}_id: Unique identifier for the user
     - user{n}_comments: Free-text observations (max 500 chars)
     - user{n}_classification: Type of observation (uses USWDS button group)  
-    - user{n}_species: Identified whale species (uses USWDS radio buttons)
+    - user{n}_species: Identified animal species (uses USWDS radio buttons)
     - user{n}_confidence: Confidence in identification (uses USWDS radio buttons)
 
     Final review fields:
@@ -305,5 +305,5 @@ class AnnotationForm(forms.ModelForm):
         target = cleaned_data.get('target')
         confidence = cleaned_data.get('confidence')
 
-        if (str(classification).lower() == "whale") and (not target or not confidence):
+        if (str(classification).lower() == "animal") and (not target or not confidence):
             raise forms.ValidationError("Target and Confidence are required when Classification is Animal.")
