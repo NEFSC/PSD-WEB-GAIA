@@ -326,6 +326,7 @@ class PointsOfInterest(gis_models.Model):
     catalog_id = gis_models.CharField(max_length = 16, null=True, blank=True)
     vendor_id = gis_models.CharField(max_length = 39, null=True, blank=True)
     entity_id = gis_models.CharField(max_length = 20, null=True, blank=True)
+    date_image_taken = models.DateField(null=True, blank=True)
 
     # From Generate Interesting Points
     sample_idx = gis_models.CharField(max_length = 40, null=True, blank=True)
@@ -352,6 +353,7 @@ class Annotations(models.Model):
     comments = models.CharField(max_length=500, null=True, blank=True)
     confidence = models.ForeignKey(Confidence, on_delete=models.CASCADE, null=True, blank=True)
     target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"Annotation {self.id} by {self.user}"
