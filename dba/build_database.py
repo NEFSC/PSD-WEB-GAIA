@@ -1,6 +1,6 @@
 # Written by John Wall (john.wall@noaa.gov)
 #
-# Functions for initializing the SpatiaLite Database for the WHALE system
+# Functions for initializing the SpatiaLite Database for the ANIMAL system
 
 
 
@@ -76,7 +76,7 @@ def drop_trigger(db, trigger_name):
 
 def create_aois(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE AREASOFINTEREST if it does not exist.
+            table ANIMAL AREASOFINTEREST if it does not exist.
 
         FIELDS: ID, Name, Requestor, and SqKm
 
@@ -111,14 +111,14 @@ def create_aois(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE AREASOFINTEREST")
+        print("Successfully created table ANIMAL AREASOFINTEREST")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_target(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE TARGET if it does not exist. Target are target
+            table ANIMAL TARGET if it does not exist. Target are target
             species.
 
         FIELDS: ID, Target, and Scientific Name
@@ -144,16 +144,16 @@ def create_target(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE TARGET")
+        print("Successfully created table ANIMAL TARGET")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_people(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE PEOPLE if it does not exist. These are the people
+            table ANIMAL PEOPLE if it does not exist. These are the people
             who are tasking for collection or managing projects within
-            WHALE opposed to end users.
+            ANIMAL opposed to end users.
 
         FIELDS: ID, Name, Email, Organization, Sub-Organization,
             and Location.
@@ -182,14 +182,14 @@ def create_people(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE PEOPLE")
+        print("Successfully created table ANIMAL PEOPLE")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_tasking(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE TASKING if it does not exist. Taskings represent
+            table ANIMAL TASKING if it does not exist. Taskings represent
             who is tasking where for what collection of what.
 
         FIELDS: ID, DAR, AOI, Location, Target, Requestor, Vendor,
@@ -243,14 +243,14 @@ def create_tasking(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE TASKING")
+        print("Successfully created table ANIMAL TASKING")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_earthexplorer(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE EARTHEXPLORER if it does not exist.
+            table ANIMAL EARTHEXPLORER if it does not exist.
 
         FIELDS: Entity ID, AOI ID, Catalog ID, Acquisition Date, Vendor
             Vendor ID, Cloud Cover, Satellite, Sensor, Number of Bands,
@@ -309,14 +309,14 @@ def create_earthexplorer(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE EARTHEXPLORER")
+        print("Successfully created table ANIMAL EARTHEXPLORER")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_geointdiscovery(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE GEOINTDISCOVERY if it does not exist.
+            table ANIMAL GEOINTDISCOVERY if it does not exist.
 
         FIELDS: ID, AOI ID, Legacy ID, Facordy Order Number,
             Acquisition Date, Source, Source Unit, Product Type,
@@ -373,14 +373,14 @@ def create_geointdiscovery(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE EARTHEXPLORER")
+        print("Successfully created table ANIMAL EARTHEXPLORER")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_maxargeospatialplatform(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE MAXARGEOSPATIALPLATFORM if it does not exist.
+            table ANIMAL MAXARGEOSPATIALPLATFORM if it does not exist.
 
         FIELDS: ID, AOI ID, Platform, Instruments, Ground Sampling Distance,
             Panchromatic Image Resolution (average), Multispectral Image
@@ -420,7 +420,7 @@ def create_maxargeospatialplatform(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE MAXARGEOSPATIALPLATFORM")
+        print("Successfully created table ANIMAL MAXARGEOSPATIALPLATFORM")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
@@ -430,7 +430,7 @@ def create_etl(db):
             table ETL if it does not exist. This is a denormalized table
             which needs to be updated based on triggers created by
             CREATE ETL TRIGGERS. The ETL table represents the initializing
-            table for further work within the WHALE application.
+            table for further work within the ANIMAL application.
 
         FIELDS: AOI ID, ID, Vendor ID, Entity ID, Vendor, Satellite
             Pixel Size X, Pixel Size Y, Date, Publish Date, Geometry
@@ -641,7 +641,7 @@ def create_etl_triggers(db):
 
 def create_poitnsofinterest(db):
     """ When provided with a path to a SpatiaLite database, create the
-            WHALE POINTSOFINTEREST table.
+            ANIMAL POINTSOFINTEREST table.
 
         FIELDS: ID, Vendor ID, Entity ID, CID, DAR, POI, Sample Index,
             Latitude, Longitude, Email, Client IP, Out Time, In Time,
@@ -678,7 +678,7 @@ def create_poitnsofinterest(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE POINTSOFINTEREST")
+        print("Successfully created table ANIMAL POINTSOFINTEREST")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
