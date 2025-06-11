@@ -20,4 +20,4 @@ gaia/secrets.json
 .vscode/launch.json
 .vscode/settings.json
 staticfiles/*
-whale/management/commands/__pycache__/*
+animal/management/commands/__pycache__/*

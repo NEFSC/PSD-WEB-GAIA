@@ -1,7 +1,7 @@
 """
-URL configuration for GAIA project's whale application.
+URL configuration for GAIA project's animal application.
 
-This module contains URL patterns for various views within the whale application.
+This module contains URL patterns for various views within the animal application.
 Each path maps a URL pattern to a specific view function, with most routes requiring user authentication.
 
 URL Patterns:
