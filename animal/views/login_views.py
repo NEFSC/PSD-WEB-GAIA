@@ -26,9 +26,4 @@ def login_view(request):
     return render(request, 'login.html', {'form': form})
 
 def landing_page(request):
-    """ A basic landing page for the WHale Active Learning Environment (WHALE)
-            Tasking, Collection, Processing, Annotation, and Dissimination
-            (TCPED) pages. Each TCPED task has its own page linked to this
-            one.
-    """
     return render(request, 'landing_page.html')

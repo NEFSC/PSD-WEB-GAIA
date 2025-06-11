@@ -408,7 +408,7 @@ def get_aoi(db, dar_id):
     
     c = conn.cursor()
     
-    sql_string = f"SELECT id, name, sqkm, AsText(geometry) FROM whale_areaofinterest WHERE id={dar_id}"
+    sql_string = f"SELECT id, name, sqkm, AsText(geometry) FROM animal_areaofinterest WHERE id={dar_id}"
     df = pd.read_sql_query(sql_string, conn)
     df = df.rename(columns={'AsText(geometry)': 'geometry'}, errors='raise')
     df['geometry'] = shapely.wkt.loads(df['geometry'])
