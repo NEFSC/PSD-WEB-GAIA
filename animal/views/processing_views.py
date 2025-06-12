@@ -480,7 +480,7 @@ def processing_page(request):
             selected_ids = request.POST.getlist('select_images')
             if selected_ids:
                 user_email = request.user.email
-                task_id = async_task('whale.tasks.process_etl_data', filtered_data)
+                task_id = async_task('animal.tasks.process_etl_data', filtered_data)
                 return render(request, 'processing_page.html', {'task_id': task_id})
   
     return render(request, 'processing_page.html', {'form': form})

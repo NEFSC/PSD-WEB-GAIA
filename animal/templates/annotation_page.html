@@ -215,8 +215,8 @@
           const confidenceRadios = confidenceDiv.querySelectorAll("input[type='radio']");
 
           function toggleDivs() {
-        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
-        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+        const animalButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (animalButton && animalButton.classList.contains("usa-button--active")) {
           speciesDiv.style.display = "block";
           confidenceDiv.style.display = "block";
         } else {
@@ -242,8 +242,8 @@
 
       form.addEventListener("submit", (e) => {
         e.preventDefault(); // Prevent immediate form submission
-        const whaleButton = document.querySelector("#classification-buttongroup button[data-value='14']");
-        if (whaleButton && whaleButton.classList.contains("usa-button--active")) {
+        const animalButton = document.querySelector("#classification-buttongroup button[data-value='14']");
+        if (animalButton && animalButton.classList.contains("usa-button--active")) {
           confetti({
             startVelocity: 50,
             spread: 90,
@@ -256,7 +256,7 @@
             form.submit();
           }, 1500);
         } else {
-          form.submit(); // Submit immediately if not whale classification
+          form.submit(); // Submit immediately if not animal classification
         }
       });
     });
@@ -296,15 +296,17 @@
 			const cogSource = new ol.source.GeoTIFF({ sources: [{ url: cogUrl }] });
 			const baseLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
 			const vectorSource = new ol.source.Vector({ features: [point] });
-			const vectorLayer = new ol.layer.Vector({
-				source: vectorSource,
+      const vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
         style: new ol.style.Style({
-            image: new ol.style.RegularShape({
+          image: new ol.style.Circle({
             fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
-            stroke: new ol.style.Stroke({ color: 'red', width: 2 }),
-            points: 4,
-            radius: 32,
-            angle: 0
+            stroke: new ol.style.Stroke({ 
+              color: 'rgba(128, 128, 128, 0.3)',
+              width: 2,
+              lineDash: [3, 3] // Creates a dotted line pattern
+            }),
+            radius: 64
           })
         }),
         

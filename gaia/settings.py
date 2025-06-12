@@ -65,7 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'django.contrib.auth',
-    'whale',
+    'animal',
     #'django_q',
     #'corsheaders',
 ]
@@ -104,7 +104,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [BASE_DIR / 'templates',
-                 BASE_DIR / 'whale/templates'],
+                 BASE_DIR / 'animal/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -1,6 +1,6 @@
 # Written by John Wall (john.wall@noaa.gov)
 #
-# Functions for initializing the SpatiaLite Database for the WHALE system
+# Functions for initializing the SpatiaLite Database for the ANIMAL system
 
 
 
@@ -76,7 +76,7 @@ def drop_trigger(db, trigger_name):
 
 def create_aois(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE AREASOFINTEREST if it does not exist.
+            table ANIMAL AREASOFINTEREST if it does not exist.
 
         FIELDS: ID, Name, Requestor, and SqKm
 
@@ -98,7 +98,7 @@ def create_aois(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_areaofinterest(
+            CREATE TABLE IF NOT EXISTS animal_areaofinterest(
                 id INTEGER PRIMARY KEY,
                 name VARCHAR(50),
                 requestor VARCHAR(25),
@@ -106,19 +106,19 @@ def create_aois(db):
             )
         ''')
         
-        c.execute('''SELECT AddGeometryColumn('whale_areaofinterest', 'geom', 4326, 'POLYGON')''')
+        c.execute('''SELECT AddGeometryColumn('animal_areaofinterest', 'geom', 4326, 'POLYGON')''')
         
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE AREASOFINTEREST")
+        print("Successfully created table ANIMAL AREASOFINTEREST")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_target(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE TARGET if it does not exist. Target are target
+            table ANIMAL TARGET if it does not exist. Target are target
             species.
 
         FIELDS: ID, Target, and Scientific Name
@@ -134,7 +134,7 @@ def create_target(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_target(
+            CREATE TABLE IF NOT EXISTS animal_target(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 target VARCHAR(30),
                 scientific_name VARCHAR(25),
@@ -144,16 +144,16 @@ def create_target(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE TARGET")
+        print("Successfully created table ANIMAL TARGET")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_people(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE PEOPLE if it does not exist. These are the people
+            table ANIMAL PEOPLE if it does not exist. These are the people
             who are tasking for collection or managing projects within
-            WHALE opposed to end users.
+            ANIMAL opposed to end users.
 
         FIELDS: ID, Name, Email, Organization, Sub-Organization,
             and Location.
@@ -169,7 +169,7 @@ def create_people(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_people(
+            CREATE TABLE IF NOT EXISTS animal_people(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name VARCHAR(20),
                 email VARCHAR(30),
@@ -182,14 +182,14 @@ def create_people(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE PEOPLE")
+        print("Successfully created table ANIMAL PEOPLE")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_tasking(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE TASKING if it does not exist. Taskings represent
+            table ANIMAL TASKING if it does not exist. Taskings represent
             who is tasking where for what collection of what.
 
         FIELDS: ID, DAR, AOI, Location, Target, Requestor, Vendor,
@@ -210,7 +210,7 @@ def create_tasking(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_tasking(
+            CREATE TABLE IF NOT EXISTS animal_tasking(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 dar INTEGER,
                 aoi INTEGER,
@@ -243,14 +243,14 @@ def create_tasking(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE TASKING")
+        print("Successfully created table ANIMAL TASKING")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_earthexplorer(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE EARTHEXPLORER if it does not exist.
+            table ANIMAL EARTHEXPLORER if it does not exist.
 
         FIELDS: Entity ID, AOI ID, Catalog ID, Acquisition Date, Vendor
             Vendor ID, Cloud Cover, Satellite, Sensor, Number of Bands,
@@ -272,7 +272,7 @@ def create_earthexplorer(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_earthexplorer(
+            CREATE TABLE IF NOT EXISTS animal_earthexplorer(
                 entity_id VARCHAR(20) PRIMARY KEY,
                 aoi_id VARCHAR(4),
                 catalog_id VARCHAR(16),
@@ -309,14 +309,14 @@ def create_earthexplorer(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE EARTHEXPLORER")
+        print("Successfully created table ANIMAL EARTHEXPLORER")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_geointdiscovery(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE GEOINTDISCOVERY if it does not exist.
+            table ANIMAL GEOINTDISCOVERY if it does not exist.
 
         FIELDS: ID, AOI ID, Legacy ID, Facordy Order Number,
             Acquisition Date, Source, Source Unit, Product Type,
@@ -338,7 +338,7 @@ def create_geointdiscovery(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_geointdiscovery(
+            CREATE TABLE IF NOT EXISTS animal_geointdiscovery(
                 id VARCHAR(32) PRIMARY KEY,
                 aoi_id VARCHAR(4),
                 legacy_id VARCHAR(16),
@@ -373,14 +373,14 @@ def create_geointdiscovery(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE EARTHEXPLORER")
+        print("Successfully created table ANIMAL EARTHEXPLORER")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
 
 def create_maxargeospatialplatform(db):
     """ When provided with a path to a SpatiaLite database, create the
-            table WHALE MAXARGEOSPATIALPLATFORM if it does not exist.
+            table ANIMAL MAXARGEOSPATIALPLATFORM if it does not exist.
 
         FIELDS: ID, AOI ID, Platform, Instruments, Ground Sampling Distance,
             Panchromatic Image Resolution (average), Multispectral Image
@@ -398,7 +398,7 @@ def create_maxargeospatialplatform(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_maxargeospatialplatform(
+            CREATE TABLE IF NOT EXISTS animal_maxargeospatialplatform(
                 id VARCHAR(16) PRIMARY KEY,
                 aoi_id VARCHAR(4),
                 platform VARCHAR(11),
@@ -420,7 +420,7 @@ def create_maxargeospatialplatform(db):
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE MAXARGEOSPATIALPLATFORM")
+        print("Successfully created table ANIMAL MAXARGEOSPATIALPLATFORM")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
@@ -430,7 +430,7 @@ def create_etl(db):
             table ETL if it does not exist. This is a denormalized table
             which needs to be updated based on triggers created by
             CREATE ETL TRIGGERS. The ETL table represents the initializing
-            table for further work within the WHALE application.
+            table for further work within the ANIMAL application.
 
         FIELDS: AOI ID, ID, Vendor ID, Entity ID, Vendor, Satellite
             Pixel Size X, Pixel Size Y, Date, Publish Date, Geometry
@@ -461,7 +461,7 @@ def create_etl(db):
                        e.acquisition_date AS date,
                        Date(e.publish_date) AS publish_date,
                        AsText(e.bounds) as geometry
-                   FROM whale_earthexplorer e
+                   FROM animal_earthexplorer e
                 
                 UNION
                 
@@ -477,8 +477,8 @@ def create_etl(db):
                        Date(g.acquisition_date) AS date,
                        NULL AS publish_date,
                        AsText(g.geometry) AS geometry
-                   FROM whale_geointdiscovery g
-                LEFT JOIN whale_earthexplorer e ON g.legacy_id = e.catalog_id
+                   FROM animal_geointdiscovery g
+                LEFT JOIN animal_earthexplorer e ON g.legacy_id = e.catalog_id
                     WHERE
                         e.catalog_id IS NULL
                 
@@ -496,9 +496,9 @@ def create_etl(db):
                        Date(datetime) AS date,
                        NULL AS publish_date,
                        AsText(m.bbox) AS geometry
-                   FROM whale_maxargeospatialplatform m
-                LEFT JOIN whale_earthexplorer e ON m.id = e.catalog_id
-                LEFT JOIN whale_geointdiscovery g ON m.id = g.legacy_id
+                   FROM animal_maxargeospatialplatform m
+                LEFT JOIN animal_earthexplorer e ON m.id = e.catalog_id
+                LEFT JOIN animal_geointdiscovery g ON m.id = g.legacy_id
                     WHERE
                         e.catalog_id IS NULL AND g.legacy_id IS NULL;
         ''')
@@ -531,7 +531,7 @@ def create_etl_triggers(db):
         
         c.execute('''
             CREATE TRIGGER update_etl_after_ee_insert
-                AFTER INSERT ON whale_earthexplorer
+                AFTER INSERT ON animal_earthexplorer
                     BEGIN
                         INSERT INTO etl (table_name, aoi_id, id, vendor_id, entity_id, vendor, platform, pixel_size_x, pixel_size_y, date, publish_date, geometry)
                         SELECT
@@ -549,7 +549,7 @@ def create_etl_triggers(db):
                            AsText(NEW.bounds) as geometry;
         
                         INSERT INTO trigger_log (trigger_name, action, log_message)
-                        VALUES ('update_etl_after_ee_insert', 'INSERT', 'trigger fired after INSERT on whale_earthexplorer');
+                        VALUES ('update_etl_after_ee_insert', 'INSERT', 'trigger fired after INSERT on animal_earthexplorer');
                     END;
         ''')
         
@@ -570,7 +570,7 @@ def create_etl_triggers(db):
         
         c.execute('''
             CREATE TRIGGER update_etl_after_gegd_insert
-                AFTER INSERT ON whale_geointdiscovery
+                AFTER INSERT ON animal_geointdiscovery
                     BEGIN
                         INSERT INTO etl (table_name, aoi_id, id, vendor_id, entity_id, vendor, platform, pixel_size_x, pixel_size_y, date, publish_date, geometry)
                         SELECT
@@ -588,7 +588,7 @@ def create_etl_triggers(db):
                            AsText(NEW.geometry) as geometry;
         
                         INSERT INTO trigger_log (trigger_name, action, log_message)
-                        VALUES ('update_etl_after_gegd_insert', 'INSERT', 'trigger fired after INSERT on whale_geointdiscovery');
+                        VALUES ('update_etl_after_gegd_insert', 'INSERT', 'trigger fired after INSERT on animal_geointdiscovery');
                     END;
         ''')
         
@@ -609,7 +609,7 @@ def create_etl_triggers(db):
         
         c.execute('''
             CREATE TRIGGER update_etl_after_mgp_insert
-                AFTER INSERT ON whale_maxargeospatialplatform
+                AFTER INSERT ON animal_maxargeospatialplatform
                     BEGIN
                         INSERT INTO etl (table_name, aoi_id, id, vendor_id, entity_id, vendor, platform, pixel_size_x, pixel_size_y, date, publish_date, geometry)
                         SELECT
@@ -627,7 +627,7 @@ def create_etl_triggers(db):
                            AsText(NEW.bbox) as geometry;
         
                         INSERT INTO trigger_log (trigger_name, action, log_message)
-                        VALUES ('update_etl_after_mgp_insert', 'INSERT', 'trigger fired after INSERT on whale_maxargeospatialplatform');
+                        VALUES ('update_etl_after_mgp_insert', 'INSERT', 'trigger fired after INSERT on animal_maxargeospatialplatform');
                     END;
         ''')
         
@@ -641,7 +641,7 @@ def create_etl_triggers(db):
 
 def create_poitnsofinterest(db):
     """ When provided with a path to a SpatiaLite database, create the
-            WHALE POINTSOFINTEREST table.
+            ANIMAL POINTSOFINTEREST table.
 
         FIELDS: ID, Vendor ID, Entity ID, CID, DAR, POI, Sample Index,
             Latitude, Longitude, Email, Client IP, Out Time, In Time,
@@ -658,7 +658,7 @@ def create_poitnsofinterest(db):
         c = conn.cursor()
         
         c.execute('''
-            CREATE TABLE IF NOT EXISTS whale_pointsofinterest(
+            CREATE TABLE IF NOT EXISTS animal_pointsofinterest(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 catalog_id VARCHAR(16),
                 entity_id VARCHAR(20),
@@ -673,12 +673,12 @@ def create_poitnsofinterest(db):
             )
         ''')
         
-        c.execute('''SELECT AddGeometryColumn('whale_pointsofinterest', 'point', 4326, 'POINT')''')
+        c.execute('''SELECT AddGeometryColumn('animal_pointsofinterest', 'point', 4326, 'POINT')''')
 
         conn.commit()
         conn.close()
 
-        print("Successfully created table WHALE POINTSOFINTEREST")
+        print("Successfully created table ANIMAL POINTSOFINTEREST")
     
     except Exception as e:
         print(f"Failed to create table with exception: {e}")
