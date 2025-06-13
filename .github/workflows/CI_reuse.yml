@@ -7,10 +7,14 @@ on:
       appname:
         required: true
         type: string
+      django_env:
+        required: true
+        type: string
 
 env:
   APPNAME: ${{ inputs.appname }}  # this should be all lower case
   REGISTRY: ghcr.io
+  DJANGO_ENV: ${{ inputs.django-env }}  # or staging, development
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
