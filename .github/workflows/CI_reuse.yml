@@ -87,19 +87,16 @@ jobs:
       uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
     - name: Update Azure Container App
       uses: azure/cli@v2
       with:
         azcliversion: latest
         inlineScript: |
           LATEST_REVISION=$(az containerapp update \
-            --name ${{ env.APPNAME }} \
-            --resource-group gaia-application-resource-group \
-            --image ${{ env.REGISTRY }}/${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}:${{ needs.build-and-push-to-github.outputs.BUILD_ID }} \
-            --query 'properties.latestRevisionName') \
-            --settings BUILD_DATE="${{ needs.build-and-push-to-github.outputs.BUILD_DATE }}
+          --name ${{ env.APPNAME }} \
+          --resource-group gaia-application-resource-group \
+          --settings BUILD_DATE="${{ needs.build-and-push-to-github.outputs.BUILD_DATE }} \
+          --image ${{ env.REGISTRY }}/${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}:${{ needs.build-and-push-to-github.outputs.BUILD_ID }} \
+          --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
-      env:
-          DJANGO_ENV: ${{ inputs.djangoenv }}
