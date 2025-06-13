@@ -102,5 +102,3 @@ jobs:
             --settings BUILD_DATE="${{ needs.build-and-push-to-github.outputs.BUILD_DATE }}
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
-      env:
-          DJANGO_ENV: ${{ inputs.djangoenv }}
