@@ -79,12 +79,12 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
-ENVIRONMENT = os.getenv('DJANGO_ENV', 'development')  # default fallback
+DJANGO_ENV = os.environ.get('django_env', 'development')  # default fallback
 
-if ENVIRONMENT == 'production':
+if DJANGO_ENV == 'production':
     DEBUG = False
     ALLOWED_HOSTS = ['gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
-elif ENVIRONMENT == 'test':
+elif DJANGO_ENV == 'test':
     DEBUG = True
     ALLOWED_HOSTS = ['gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io']
 else:
