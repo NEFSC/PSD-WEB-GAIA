@@ -79,7 +79,7 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
-ENVIRONMENT = os.getenv('django_env', 'development')  # default fallback
+ENVIRONMENT = os.getenv('DJANGO_ENV', 'development')  # default fallback
 
 if ENVIRONMENT == 'production':
     DEBUG = False
