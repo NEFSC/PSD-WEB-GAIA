@@ -95,7 +95,6 @@ jobs:
           LATEST_REVISION=$(az containerapp update \
           --name ${{ env.APPNAME }} \
           --resource-group gaia-application-resource-group \
-          --settings BUILD_DATE="${{ needs.build-and-push-to-github.outputs.BUILD_DATE }} \
           --image ${{ env.REGISTRY }}/${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}:${{ needs.build-and-push-to-github.outputs.BUILD_ID }} \
           --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
