@@ -101,3 +101,6 @@ jobs:
             --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
+      env:
+          DJANGO_ENV: production
+          BUILD_DATE: ${{ env.BUILD_DATE }}
