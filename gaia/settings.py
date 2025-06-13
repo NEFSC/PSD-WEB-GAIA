@@ -79,20 +79,16 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
-DJANGO_ENV = os.environ.get('django_env', 'development')  # default fallback
-
-if DJANGO_ENV == 'production':
-    DEBUG = False
-    ALLOWED_HOSTS = ['gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
-elif DJANGO_ENV == 'test':
-    DEBUG = False
-    ALLOWED_HOSTS = ['gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io']
-else:
-    DEBUG = False
-    ALLOWED_HOSTS = [
-                    'localhost',
-                    'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
-                    '127.0.0.1',
+DEBUG = False
+ALLOWED_HOSTS = [
+                'localhost',
+                'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                'dev-gaia.fisheries.noaa.gov',
+                'test-gaia.fisheries.noaa.gov',
+                '52.170.141.35',
+                '127.0.0.1',
+                'localhost',
+                'gaia.fisheries.noaa.gov'
                     ]
 
 if not DEBUG:
@@ -112,6 +108,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'gaia.context_processors.environment',
             ],
         },
     },
