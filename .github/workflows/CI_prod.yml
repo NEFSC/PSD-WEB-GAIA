@@ -17,5 +17,5 @@ jobs:
       pull-requests: read
     with:
       appname: gaia-prod # this should be all lower case
-      DJANGO_ENV: production
+      djangoenv: production
     secrets: inherit
