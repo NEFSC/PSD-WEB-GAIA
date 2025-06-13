@@ -85,10 +85,10 @@ if DJANGO_ENV == 'production':
     DEBUG = False
     ALLOWED_HOSTS = ['gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
 elif DJANGO_ENV == 'test':
-    DEBUG = True
+    DEBUG = False
     ALLOWED_HOSTS = ['gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io']
 else:
-    DEBUG = True
+    DEBUG = False
     ALLOWED_HOSTS = [
                     'localhost',
                     'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',

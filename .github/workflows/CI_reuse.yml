@@ -24,6 +24,8 @@ jobs:
   build-and-push-to-github:
     name: 🏗️ Build and push to GitHub Container Registry 🏗️
     runs-on: ubuntu-latest
+    env:
+      BUILD_DATE: ${{ github.run_started_at }}
     permissions:
         contents: read
         packages: write
