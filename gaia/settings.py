@@ -41,22 +41,6 @@ with open(SECRETS_FILE) as f:
 
 SECRET_KEY = secrets['DJANGO_KEY']
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
-                 'test-gaia.fisheries.noaa.gov',
-                 '52.170.141.35',
-                 '127.0.0.1',
-                 'localhost',
-                 'gaia.fisheries.noaa.gov',
-                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
-                 'gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io',
-                 'gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
-
-
-# Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.contenttypes',
@@ -94,6 +78,22 @@ MIDDLEWARE = [
     #'cordsheaders.middleware.CorsMiddleware',
     #'django.middleware.common.CommonMiddleware',
 ]
+
+ENVIRONMENT = os.getenv('django_env', 'development')  # default fallback
+
+if ENVIRONMENT == 'production':
+    DEBUG = False
+    ALLOWED_HOSTS = ['gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
+elif ENVIRONMENT == 'test':
+    DEBUG = True
+    ALLOWED_HOSTS = ['gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io']
+else:
+    DEBUG = True
+    ALLOWED_HOSTS = [
+                    'localhost',
+                    'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                    '127.0.0.1',
+                    ]
 
 if not DEBUG:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')  # Add WhiteNoise middleware only when not in debug mode
