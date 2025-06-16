@@ -83,6 +83,8 @@ DEBUG = False
 ALLOWED_HOSTS = [
                 'localhost',
                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                'gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                'gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io',
                 'dev-gaia.fisheries.noaa.gov',
                 'test-gaia.fisheries.noaa.gov',
                 '52.170.141.35',
