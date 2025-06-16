@@ -4,8 +4,5 @@ import os
 register = template.Library()
 
 @register.simple_tag
-def DJANGO_ENV():
-    """
-    Returns the current Django environment, e.g., 'development', 'production', etc.
-    """
-    return os.environ.get('djangoenv', 'Unknown')
+def django_env():
+    return os.environ.get('DJANGO_ENV', 'Unknown')
