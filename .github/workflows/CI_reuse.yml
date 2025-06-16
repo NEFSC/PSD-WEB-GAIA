@@ -99,6 +99,7 @@ jobs:
             --resource-group gaia-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}:${{ needs.build-and-push-to-github.outputs.BUILD_ID }} \
             --set-env-vars BUILD_DATE="${{ needs.build-and-push-to-github.outputs.BUILD_DATE }}" \
+            --set-env-vars DJANGO_ENV=${{ env.DJANGO_ENV }}
             --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV
