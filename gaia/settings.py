@@ -41,22 +41,6 @@ with open(SECRETS_FILE) as f:
 
 SECRET_KEY = secrets['DJANGO_KEY']
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ['dev-gaia.fisheries.noaa.gov',
-                 'test-gaia.fisheries.noaa.gov',
-                 '52.170.141.35',
-                 '127.0.0.1',
-                 'localhost',
-                 'gaia.fisheries.noaa.gov',
-                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
-                 'gaia-test.happypond-d5fa406e.eastus.azurecontainerapps.io',
-                 'gaia-prod.happypond-d5fa406e.eastus.azurecontainerapps.io']
-
-
-# Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.contenttypes',
@@ -95,6 +79,18 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
+DEBUG = False
+ALLOWED_HOSTS = [
+                'localhost',
+                'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
+                'dev-gaia.fisheries.noaa.gov',
+                'test-gaia.fisheries.noaa.gov',
+                '52.170.141.35',
+                '127.0.0.1',
+                'localhost',
+                'gaia.fisheries.noaa.gov'
+                    ]
+
 if not DEBUG:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')  # Add WhiteNoise middleware only when not in debug mode
 
@@ -112,6 +108,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'gaia.context_processors.environment',
             ],
         },
     },

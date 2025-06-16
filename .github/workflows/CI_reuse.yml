@@ -7,10 +7,14 @@ on:
       appname:
         required: true
         type: string
+      djangoenv:
+        required: true
+        type: string
 
 env:
   APPNAME: ${{ inputs.appname }}  # this should be all lower case
   REGISTRY: ghcr.io
+  DJANGO_ENV: ${{ inputs.djangoenv }}
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -28,6 +32,7 @@ jobs:
     outputs:
       LOWER_NAME: ${{ steps.prep.outputs.LOWER_NAME }}
       BUILD_ID: ${{ steps.prep.outputs.BUILD_ID }}
+      BUILD_DATE: ${{ steps.date.outputs.date }}
 
     steps:
     - name: Generate build ID
@@ -45,10 +50,11 @@ jobs:
         echo "LOWER_NAME=${reponame}"
         echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}" >> $GITHUB_OUTPUT
         echo "GIT_BRANCH=${GITHUB_HEAD_REF:-${branch}}"
-
+    - name: Set build date
+      id: date
+      run: echo "date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
     - name: Checkout repository
       uses: actions/checkout@v4
-
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -76,7 +82,7 @@ jobs:
     outputs:
       LOWER_NAME: ${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}
       BUILD_ID: ${{ needs.build-and-push-to-github.outputs.BUILD_ID }}
-
+      BUILD_DATE: ${{ needs.build-and-push-to-github.outputs.BUILD_DATE }}
     steps:
     - name: Azure login
       uses: azure/login@v2
@@ -92,6 +98,7 @@ jobs:
             --name ${{ env.APPNAME }} \
             --resource-group gaia-application-resource-group \
             --image ${{ env.REGISTRY }}/${{ needs.build-and-push-to-github.outputs.LOWER_NAME }}:${{ needs.build-and-push-to-github.outputs.BUILD_ID }} \
+            --set-env-vars BUILD_DATE="${{ needs.build-and-push-to-github.outputs.BUILD_DATE }}", DJANGO_ENV=${{ env.DJANGO_ENV }} \
             --query 'properties.latestRevisionName')
           echo "Latest revision: $LATEST_REVISION"
           echo "REVISION=$LATEST_REVISION" >> $GITHUB_ENV

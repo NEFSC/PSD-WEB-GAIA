@@ -27,6 +27,9 @@
 # Use an official miniconda image as a parent image
 FROM continuumio/miniconda3:latest
 
+ARG BUILD_DATE
+LABEL org.opencontainers.image.created=$BUILD_DATE
+
 # env variables
 ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
 
