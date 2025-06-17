@@ -4,6 +4,7 @@ import django
 from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect
+from animal.models import Project
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gaia.settings')
 os.environ["CPL_DEBUG"] = "ON" # Should enable GDAL debuggin
@@ -27,3 +28,7 @@ def login_view(request):
 
 def landing_page(request):
     return render(request, 'landing_page.html')
+
+def project_page(request):
+    projects = Project.objects.all()
+    return render(request, 'project_page.html', {'projects': projects})
