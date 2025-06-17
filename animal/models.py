@@ -37,6 +37,15 @@ class Classification(models.Model):
     def __str__(self):
         return self.label
     
+class Project(models.Model):
+    id = models.AutoField(primary_key=True)
+    label = models.CharField(max_length=25)
+    value = models.CharField(max_length=25)
+    description = models.CharField(max_length=250, null=True, blank=True)
+
+    def __str__(self):
+        return self.label
+    
 # Needs to be revisited with cleaned data from Lauren
 class Tasking(models.Model):
     MONO_STERO_CHOICES = [
@@ -339,11 +348,13 @@ class PointsOfInterest(gis_models.Model):
     final_classification = models.ForeignKey(Classification, on_delete=models.CASCADE, null=True, blank=True)
     final_review_date = models.DateField(null=True, blank=True)
 
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
+
     # Mandatory
     point = gis_models.GeometryField(null=True, blank=True)
     
     def __str__(self):
-        return self
+        return str(self.id)
     
 class Annotations(models.Model):
     id = models.AutoField(primary_key = True)
