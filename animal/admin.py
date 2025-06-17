@@ -5,7 +5,8 @@ Note: AreaOfInterest admin configuration is currently commented out.  It needs a
 """
 
 from django.contrib import admin
-from .models import AreaOfInterest, Target, Classification, Confidence
+from django.contrib.gis.admin import GISModelAdmin
+from .models import AreaOfInterest, Target, Classification, Confidence, Project, PointsOfInterest
 
 # @admin.register(AreaOfInterest)
 # class AreaOfInterestAdmin(admin.ModelAdmin):
@@ -28,3 +29,13 @@ class ConfidenceAdmin(admin.ModelAdmin):
     list_display = ('value',)
     search_fields = ['value', 'label']
     list_filter = ['value', 'label']
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('value',)
+    search_fields = ['value', 'label']
+    list_filter = ['value', 'label']
+
+@admin.register(PointsOfInterest)
+class PointsOfInterestAdmin(GISModelAdmin):
+    list_display = ('id', 'vendor_id')
