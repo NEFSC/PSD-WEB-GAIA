@@ -6,9 +6,9 @@ from django.db import migrations, models
 def create_first_project(apps, schema_editor):
     Project = apps.get_model('animal', 'Project')
     Project.objects.create(
-        label='Project Name',
-        value='projectname',
-        description='This is a description of the project.'
+        label='North Atlantic Right Whales in Cape Cod Bay 2020-2024',
+        value='narw_capecod_2020_2024',
+        description='This project compares very high-resolution satellite imagery and aerial survey data for detecting North Atlantic right whales (Eubalaena glacialis) in Cape Cod Bay between 2020 and 2024.'
     )
 
 def set_existing_poi_project(apps, schema_editor):
