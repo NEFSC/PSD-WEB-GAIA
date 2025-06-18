@@ -20,8 +20,9 @@ ENV BUILD_DATE=${BUILD_DATE}
 # Define build arguments with default values (overriden in .env file)
 ARG UID=1000
 ARG GID=1000
-ARG USER=mengland
-ARG GROUP=mengland
+ARG USER=username
+ARG GROUP=username
+RUN echo "USER: ${USER}, UID: ${UID}, GROUP: ${GROUP}, GID: ${GID}"
 
 # env variables
 ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
@@ -59,7 +60,8 @@ RUN mkdir -p /etc/sqlite && \
 # Set application directory
 WORKDIR /app
 
-RUN mkdir -p logs
+# No need, this will be overridden by the compose volume (mapped to local directory) - make sure the directory exists there
+#RUN mkdir -p logs
 
 # Change ownership to the non-root user
 RUN chown -R ${GROUP}:${USER} /etc/sqlite
