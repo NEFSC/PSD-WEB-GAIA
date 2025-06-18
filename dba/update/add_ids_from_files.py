@@ -36,7 +36,6 @@ from animal.models import PointsOfInterest as POI
 # ----------------------------
 data_dir = "../../../gis/data/"
 sub_dir = "imagery/azure/original/"
-geojson_dir = "geojson"
 
 # ----------------------------
 # Locally defined functions
