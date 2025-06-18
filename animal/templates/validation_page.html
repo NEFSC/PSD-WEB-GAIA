@@ -44,9 +44,9 @@
                         <tr>
                             <td><a href="{% url 'annotation_page' %}?id={{ poi.id }}">{{ poi.id }}</a></td>
                             {% for review in poi.three_reviews %}
-                                <td>{{ review.classification }}</td>
+                                <td>{{ review.target }}</td>
                             {% endfor %}
-                            <td>{{ poi.final_classification }}</td>
+                            <td>{{ poi.final_species }}</td>
                             <td>{{ poi.final_review_date }}</td>
                         </tr>
                     {% endfor %}
