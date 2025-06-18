@@ -22,7 +22,7 @@ ARG UID=1000
 ARG GID=1000
 ARG USER=username
 ARG GROUP=username
-RUN echo "USER: ${USER}, UID: ${UID}, GROUP: ${GROUP}, GID: ${GID}"
+# Debugging information removed to avoid creating an unnecessary image layer
 
 # env variables
 ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
