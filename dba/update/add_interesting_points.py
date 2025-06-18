@@ -54,24 +54,22 @@ def import_poi(geojson_path):
     
     vid = '_'.join(geojson_path.split('/')[-1:][0].split('.')[0].split('_')[:-2])
     cog_root = '_'.join(geojson_path.split('/')[-1:][0].split('.')[0].split('_')[:-1])
-    print(f"Adding points for {vendor_id}")
+    print(f"Adding points for {vid}")
 
     epsg_code = geojson_path.split('/')[-1:][0].split('.')[0].split('_')[-2].split('mr')[-1]
     gdf = gpd.read_file(geojson_path)
 
     for index, row in gdf.iterrows():
         poi, created = POI.objects.update_or_create(
-            sample_idx = row['id'],
-            vendor_id = vid,
             defaults={
                 'area': row['area'],
                 'deviation': row['deviation'],
                 'epsg_code': epsg_code,
                 'point': row['geometry'].wkt
-            }
+            },
+            sample_idx = row['id'],
+            vendor_id = vid,
         )
-
-    print('Data imported successfully!')
 
 # ----------------------------
 # Identify all GeoJSONs
@@ -79,7 +77,7 @@ def import_poi(geojson_path):
 interesting_points_dir = os.path.abspath(interesting_points_dir)
 geojsons = glob(interesting_points_dir + '/**/*.geojson', recursive=True)
 geojsons = [geojson.replace('\\', '/') for geojson in geojsons]
-print(f"Found {len(geojsons)} GeoJSON files to load into the database!")
+print(f"\nFound {len(geojsons)} GeoJSON files to load into the database!\n")
 print(geojsons[0])
 
 # ----------------------------
