@@ -4,13 +4,14 @@
 #
 # Written by John Wall (john.wall@noaa.gov)
 #
-# N.B.: Orignially written as a Jupyter Notebook, limited validation has been done.
-#
 # ------------------------------------------------------------------------------
 
+# ----------------------------
 # Import some libraries, configure Django
+# ----------------------------
 import os
 import django
+import asyncio
 import pandas as pd
 from glob import glob
 from time import time
@@ -29,22 +30,14 @@ from django.contrib.gis.geos import GEOSGeometry
 from animal.models import ExtractTransformLoad as ETL
 from animal.models import PointsOfInterest as POI
 
+# ----------------------------
 # User defined variables
-interesting_points_dir = '../../data/geojson/interesting_points_5-2-2025'
+# ----------------------------
+interesting_points_dir = '../../gis/data/geojson/interesting_points_5-2-2025'
 
-poi_columns = ['id', 'vendor_id', 'sample_idx', 'area', 'deviation', 'epsg_code', 'cog_url']
-
-# Identify all GeoJSONs
-geojsons = glob(interesting_points_dir + '/**/*.geojson', recursive=True)
-geojsons = [geojson.replace('\\', '/') for geojson in geojsons]
-geojsons[0]
-
-# Review Interesting Points GeoJSON
-gdf = gpd.read_file(geojsons[0])
-print(f"The shape of your Geodataframe is: {gdf.shape}\n")
-gdf.head()
-
-# Add Interesting Points to SpatiaLite Database
+# ----------------------------
+# Locally defined functions
+# ----------------------------
 def import_poi(geojson_path):
     """ Synchronous Import Points of Interest function.
 
@@ -60,80 +53,91 @@ def import_poi(geojson_path):
     cid = geojson_path.split('/')[-2]
     
     vid = '_'.join(geojson_path.split('/')[-1:][0].split('.')[0].split('_')[:-2])
-    cog_root = '_'.join(geojsons[0].split('/')[-1:][0].split('.')[0].split('_')[:-1])
-    cog_url = f"https://gaianoaastorage.blob.core.windows.net/data/cogs/{cog_root}_cog.tif"
-    print(f"Adding points for {vid}")
-    # obj = ETL.objects.get(vendor_id=vid)
+    cog_root = '_'.join(geojson_path.split('/')[-1:][0].split('.')[0].split('_')[:-1])
+    print(f"Adding points for {vendor_id}")
 
     epsg_code = geojson_path.split('/')[-1:][0].split('.')[0].split('_')[-2].split('mr')[-1]
     gdf = gpd.read_file(geojson_path)
 
     for index, row in gdf.iterrows():
-        # print(f"Processing row: {row['id']}")
         poi, created = POI.objects.update_or_create(
             sample_idx = row['id'],
+            vendor_id = vid,
             defaults={
-                # 'catalog_id': obj.id,
-                # 'vendor_id': obj.vendor_id,
-                'vendor_id': vid,
-                # 'entity_id': obj.entity_id,
                 'area': row['area'],
                 'deviation': row['deviation'],
                 'epsg_code': epsg_code,
-                'cog_url': cog_url,
                 'point': row['geometry'].wkt
             }
         )
-        # print(f"\t{'Created' if created else 'Updated'} POI with id: {poi.sample_idx}\n")
 
-    # print('Data imported successfully!')
+    print('Data imported successfully!')
 
-start = time()
+# ----------------------------
+# Identify all GeoJSONs
+# ----------------------------
+interesting_points_dir = os.path.abspath(interesting_points_dir)
+geojsons = glob(interesting_points_dir + '/**/*.geojson', recursive=True)
+geojsons = [geojson.replace('\\', '/') for geojson in geojsons]
+print(f"Found {len(geojsons)} GeoJSON files to load into the database!")
+print(geojsons[0])
 
+# ----------------------------
+# Load points
+# ----------------------------
 async def import_poi_async(file_path):
     await sync_to_async(import_poi, thread_sensitive=True)(file_path)
 
-import asyncio
+start = time()
 
-if asyncio.get_event_loop().is_running():
-    for geojson in geojsons[0:5]:
+async def run_all():
+    for geojson in geojsons:
         await import_poi_async(geojson)
-else:
-    asyncio.run(import_poi_async(geojson))
 
-end = round(time() - start, 2)
-print("It took {} seconds to load {} GeoJSONs".format(end, len(geojsons))) 
+asyncio.run(run_all())
 
-# Confirm that the points were added
-objs = await sync_to_async(list)(POI.objects.all())
-print(f"Number of POI records in database: {len(objs)}\n")
+end = time()
+print(f"\n Loaded {len(geojsons)} GeoJSONs in {round(end - start, 2)} seconds.")
 
-vid = '_'.join(geojsons[0].split('/')[-1:][0].split('.')[0].split('_')[:-2])
+# ----------------------------
+# Confirm points were loaded
+# ----------------------------
+poi_columns = ['id', 'vendor_id', 'sample_idx', 'area', 'deviation', 'epsg_code']
+
+sample_vid = '_'.join(geojsons[0].split('/')[-1].split('.')[0].split('_')[:-2])
+objs = list(POI.objects.filter(vendor_id=sample_vid))
+print(f"Found {len(objs)} POI records for vendor_id: {sample_vid}")
 
 geoms = []
 attributes = []
 for obj in objs:
-    if obj.vendor_id == vid:
-        attr_dict = {col: getattr(obj, col) for col in poi_columns}
-        attributes.append(attr_dict)
-    
-        geoms.append(GEOSGeometry(obj.point))
+    attr_dict = {col: getattr(obj, col) for col in poi_columns}
+    attributes.append(attr_dict)
+    geoms.append(GEOSGeometry(obj.point))
 
-gdf = gpd.GeoDataFrame(attributes, geometry = [loads(g.wkt) for g in geoms])
-gdf.head()
+gdf = gpd.GeoDataFrame(attributes, geometry=[loads(g.wkt) for g in geoms])
+print(gdf.head())
+print(gdf.shape)
 
-# Identify unique Vendor IDs
-objs = await sync_to_async(list)(POI.objects.all())
-print(f"Number of POI records in database: {len(objs)}\n")
+# ----------------------------
+# Confirm unique Vendor IDs
+# ----------------------------
+vendor_ids = []
+for geojson in geojsons:
+    vendor_id = '_'.join(geojson.split('/')[-1].split('.')[0].split('_')[:-2])
+    vendor_ids.append(vendor_id)
 
-vendor_ids = list(set([obj.vendor_id for obj in objs]))
-print(f"Your unique vendor ids are: {vendor_ids}")
+print(f"Unique vendor_ids: {len(set(vendor_ids))}")
+print(sorted(set(vendor_ids)))
 
-vendor_ids_list = [obj.vendor_id for obj in objs]
-vendor_dict = {}
-for vendor_id in vendor_ids:
-    vendor_dict.update({
-        vendor_id: vendor_ids_list.count(vendor_id)
-    })
+# ----------------------------
+# Provide some addtional details about points in the database
+# ----------------------------
+objs = list(POI.objects.all())
 
-pd.DataFrame.from_dict(vendor_dict, orient='index', columns=['poi'])
+vendor_ids = [obj.vendor_id for obj in objs]
+
+vendor_counts = pd.Series(vendor_ids).value_counts().reset_index()
+vendor_counts.columns = ['vendor_id', 'point_count']
+
+print(vendor_counts)
