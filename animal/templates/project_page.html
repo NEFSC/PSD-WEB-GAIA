@@ -10,7 +10,7 @@
                         <a href="{% url 'annotation_page' %}?project={{ project.id }}"
                            class="text-no-underline text-ink">
                             <div class="usa-card__header">
-                                <h4 class="usa-card__heading">{{ project.label }}</h4>
+                                <h4 class="usa-card__heading" style="word-break: break-word;">{{ project.label }}</h4>
                             </div>
                             <div class="usa-card__body">
                                 <p>{{ project.description }}</p>
