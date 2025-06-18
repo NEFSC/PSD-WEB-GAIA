@@ -20,8 +20,9 @@ ENV BUILD_DATE=${BUILD_DATE}
 # Define build arguments with default values (overriden in .env file)
 ARG UID=1000
 ARG GID=1000
-ARG USER=mengland
-ARG GROUP=mengland
+ARG USER=username
+ARG GROUP=username
+# Debugging information removed to avoid creating an unnecessary image layer
 
 # env variables
 ENV SPATIALITE_LIBRARY_PATH=mod_spatialite.so
@@ -59,10 +60,11 @@ RUN mkdir -p /etc/sqlite && \
 # Set application directory
 WORKDIR /app
 
-RUN mkdir -p logs
+# No need, this will be overridden by the compose volume (mapped to local directory) - make sure the directory exists there
+#RUN mkdir -p logs
 
 # Change ownership to the non-root user
-RUN chown -R ${GROUP}:${USER} /etc/sqlite
+RUN chown -R ${USER}:${GROUP} /etc/sqlite
 
 # Install whitenoise to serve static files with gunicorn (not for production)
 RUN conda install -c conda-forge whitenoise
