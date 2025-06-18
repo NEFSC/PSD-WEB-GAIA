@@ -21,3 +21,4 @@ gaia/secrets.json
 .vscode/settings.json
 staticfiles/*
 animal/management/commands/__pycache__/*
+external/
