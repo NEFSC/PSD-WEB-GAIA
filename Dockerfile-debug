@@ -64,7 +64,7 @@ WORKDIR /app
 #RUN mkdir -p logs
 
 # Change ownership to the non-root user
-RUN chown -R ${GROUP}:${USER} /etc/sqlite
+RUN chown -R ${USER}:${GROUP} /etc/sqlite
 
 # Install whitenoise to serve static files with gunicorn (not for production)
 RUN conda install -c conda-forge whitenoise
