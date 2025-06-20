@@ -43,11 +43,11 @@
                     {% for poi in page_obj %}
                         <tr>
                             <td><a href="{% url 'annotation_page' %}?id={{ poi.id }}">{{ poi.id }}</a></td>
-                            {% for review in poi.three_reviews %}
-                                <td>{{ review.classification }}</td>
-                            {% endfor %}
-                            <td>{{ poi.final_classification }}</td>
-                            <td>{{ poi.final_review_date }}</td>
+                            <td>{% if poi.three_reviews.0 %}{% if poi.three_reviews.0.target %}{{ poi.three_reviews.0.target }}{% else %}{{ poi.three_reviews.0.classification }}{% endif %}{% if poi.three_reviews.0.confidence %}: {{ poi.three_reviews.0.confidence }}{% endif %}{% endif %}</td>
+                            <td>{% if poi.three_reviews.1 %}{% if poi.three_reviews.1.target %}{{ poi.three_reviews.1.target }}{% else %}{{ poi.three_reviews.1.classification }}{% endif %}{% if poi.three_reviews.1.confidence %}: {{ poi.three_reviews.1.confidence }}{% endif %}{% endif %}</td>
+                            <td>{% if poi.three_reviews.2 %}{% if poi.three_reviews.2.target %}{{ poi.three_reviews.2.target }}{% else %}{{ poi.three_reviews.2.classification }}{% endif %}{% if poi.three_reviews.2.confidence %}: {{ poi.three_reviews.2.confidence }}{% endif %}{% endif %}</td>
+                            <td>{% if poi.final_classification %}{{ poi.final_classification }}{% endif %}{% if poi.final_species %}: {{ poi.final_species }}{% endif %}</td>
+                            <td>{% if poi.final_review_date %}{{ poi.final_review_date }}{% endif %}</td>
                         </tr>
                     {% endfor %}
                 </tbody>

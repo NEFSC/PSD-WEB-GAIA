@@ -148,18 +148,16 @@
               <div class="grid-col-row padding-1">
                 {{ form.classification }}
               </div>
-              {% if not user_is_superuser or annotations|length <= 2 %}
-                <div id="species-div" class="grid-col padding-1">
-                  <label class="usa-label" for="">Species <span class="text-red">*</span></label>
-                  <hr class="usa-hr" />
-                  {{ form.target }}
-                </div>
-                <div id="confidence-div" class="grid-col padding-1">
-                  <label class="usa-label" for="">Confidence <span class="text-red">*</span></label>
-                  <hr class="usa-hr" />
-                  {{ form.confidence }}
-                </div>
-              {% endif %}
+              <div id="species-div" class="grid-col padding-1" style="display:none;">
+                <label class="usa-label" for="">Species <span class="text-red">*</span></label>
+                <hr class="usa-hr" />
+                {{ form.target }}
+              </div>
+              <div id="confidence-div" class="grid-col padding-1" style="display:none;">
+                <label class="usa-label" for="">Confidence <span class="text-red">*</span></label>
+                <hr class="usa-hr" />
+                {{ form.confidence }}
+              </div>
             </div>
             
                 <input type="hidden" name="poi" value="{{ poi.id }}">
