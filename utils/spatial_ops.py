@@ -39,7 +39,7 @@ def create_hexagon(cx, cy, r):
     return gpd.GeoSeries([gpd.points_from_xy(*zip(*points)).unary_union.convex_hull])[0]
 
 
-def create_fishnet(cogs: list, cell_width: float = 400, cell_height: float = 600,
+def create_fishnet(cogs: list, cell_width: float = 600, cell_height: float = 400,
     buffer_overlap: float = 0, shape: str = "rectangle"
     ):
     """ 
@@ -52,6 +52,7 @@ def create_fishnet(cogs: list, cell_width: float = 400, cell_height: float = 600
     fishnet_gdfs = []
     for cog in cogs:
         tmp_shp = os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fp.shp'))
+        print(f"\nCreating imagery footprint: {tmp_shp}\n")
         subprocess.run(['gdal_footprint',
                         '-srcnodata', '0',
                         cog,
@@ -59,12 +60,14 @@ def create_fishnet(cogs: list, cell_width: float = 400, cell_height: float = 600
         
         gdf = gpd.read_file(tmp_shp)
         crs = gdf.crs
+        print(f"\nYour footprint is in {crs} CRS\n")
 
         if not is_projected_in_meters(CRS.from_user_input(crs)):
             raise ValueError("CRS units are not in meters." +
                              "Fishnet creation assumes meter-based projection.")
         
-        bbox = gdf.geometry.bounds  # (minx, miny, maxx, maxy)
+        bbox = box(*gdf.geometry[0].bounds)
+        print(bbox)
 
         if buffer_overlap > 0:
             bbox = bbox.buffer(buffer_overlap)
@@ -77,7 +80,7 @@ def create_fishnet(cogs: list, cell_width: float = 400, cell_height: float = 600
                 y = ymin
                 while y < ymax:
                     cell = box(x, y, x + cell_width, y + cell_height)
-                    if cell.intersects(bbox):
+                    if cell.intersects(gdf.geometry[0]):
                         grid.append(cell)
                     y += cell_height
                 x += cell_width
@@ -93,7 +96,7 @@ def create_fishnet(cogs: list, cell_width: float = 400, cell_height: float = 600
                     cx = x
                     cy = y
                     hexagon = create_hexagon(cx, cy, cell_width / 2)
-                    if hexagon.intersects(bbox):
+                    if hexagon.intersects(gdf.geometry[0]):
                         grid.append(hexagon)
                     y += dy
                 x += dx
@@ -104,6 +107,7 @@ def create_fishnet(cogs: list, cell_width: float = 400, cell_height: float = 600
         fishnet_gdfs.append(fishnet_gdf)
 
     pdf = pd.concat(fishnet_gdfs, ignore_index=True)
-    gdf = gpd.GeoDataFrame(pdf, geometry='geometry', crs="EPSG:4326")
+    gdf = gpd.GeoDataFrame(pdf, geometry='geometry', crs=crs)
+    gdf.to_file(os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.shp')))
 
     return gdf
