@@ -376,3 +376,13 @@ class Annotations(models.Model):
                 raise ValidationError({'Target': 'This field cannot be null when classification is Animal.'})
             if not self.confidence:
                 raise ValidationError({'Confidence': 'This field cannot be null when classification is Animal.'})
+            
+class Fishnet(gis_models.Model):
+    id = gis_models.AutoField(primary_key = True)
+    vendor_id = gis_models.CharField(max_length = 39, null=True, blank=True)
+
+    # Mandatory
+    cell = gis_models.GeometryField(null=True, blank=True)
+    
+    def __str__(self):
+        return str(self.id)
