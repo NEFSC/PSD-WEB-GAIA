@@ -231,7 +231,11 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
             attrs = {}
         attrs['id'] = attrs.get('id', f'id_{name}')
         radios = []
-        for val, label in self.choices:
+        
+        # Sort choices alphabetically by label
+        sorted_choices = sorted(self.choices, key=lambda x: x[1])
+        
+        for val, label in sorted_choices:
             if val in [None, '']:
                 continue
             input_attrs = {
