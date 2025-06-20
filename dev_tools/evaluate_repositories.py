@@ -16,7 +16,7 @@ import geopandas as gpd
 import folium
 
 import sys; sys.path.append("../../")
-from dba import utilities
+from utils import utilities
 
 # User defined variables
 db = "../../db.sqlite3"
