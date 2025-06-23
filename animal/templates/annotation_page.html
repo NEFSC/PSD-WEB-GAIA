@@ -380,9 +380,76 @@
         document.querySelector('input[name="pointer"]').addEventListener('change', (event) => {
           vectorLayer.setVisible(event.target.checked);
         });
-	  	}
-      </script>
-    
+      // Add context menu for coordinate copying
+      const contextMenuContainer = document.createElement('div');
+      contextMenuContainer.className = 'ol-contextmenu';
+      contextMenuContainer.style.cssText = 'position: absolute; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; z-index: 1000;';
+      document.body.appendChild(contextMenuContainer);
+
+      let clickedCoordinate = null;
+
+      // Function to show context menu with coordinate copying option
+      function showContextMenu(coordinate, pixel) {
+        clickedCoordinate = coordinate;
+        const lonLat = ol.proj.toLonLat(coordinate);
+        
+        const formattedLon = lonLat[0].toFixed(6);
+        const formattedLat = lonLat[1].toFixed(6);
+        
+        contextMenuContainer.innerHTML = `
+          <div style="cursor: pointer; padding: 8px;" id="copy-coordinates">
+            Copy coordinates: ${formattedLon}, ${formattedLat}
+          </div>
+        `;
+        
+        contextMenuContainer.style.left = `${pixel[0]}px`;
+        contextMenuContainer.style.top = `${pixel[1]}px`;
+        contextMenuContainer.style.display = 'block';
+        
+        document.getElementById('copy-coordinates').addEventListener('click', function() {
+          const coordText = `${formattedLon},${formattedLat}`;
+          navigator.clipboard.writeText(coordText)
+            .then(() => {
+              const successMsg = document.createElement('div');
+              successMsg.textContent = 'Coordinates copied!';
+              successMsg.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 10px; border-radius: 4px; z-index: 2000;';
+              document.body.appendChild(successMsg);
+              
+              setTimeout(() => {
+                document.body.removeChild(successMsg);
+              }, 2000);
+              
+              contextMenuContainer.style.display = 'none';
+            })
+            .catch(err => {
+              console.error('Failed to copy coordinates: ', err);
+            });
+        });
+      }
+
+      // Add right-click event handler to the map
+      gdalMap.getViewport().addEventListener('contextmenu', function (evt) {
+        evt.preventDefault();
+        
+        const pixel = [evt.clientX, evt.clientY];
+        const coordinate = gdalMap.getCoordinateFromPixel(pixel);
+        
+        showContextMenu(coordinate, pixel);
+      });
+
+      // Hide context menu when clicking elsewhere
+      document.addEventListener('click', function(evt) {
+        if (evt.target.closest('.ol-contextmenu') === null) {
+          contextMenuContainer.style.display = 'none';
+        }
+      });
+
+      // Hide context menu when dragging the map
+      gdalMap.on('pointerdrag', function() {
+        contextMenuContainer.style.display = 'none';
+      });
+    }
+    </script>
   </div>
 </section>
 </body>
