@@ -87,7 +87,7 @@ INTERNAL_IPS = ['127.0.0.1']
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
 }
-
+RESULTS_CACHE_SIZE = 1000
 ALLOWED_HOSTS = [
                 'localhost',
                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
