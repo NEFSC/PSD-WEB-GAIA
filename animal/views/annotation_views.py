@@ -39,9 +39,9 @@ def annotation_page(request):
 
     def get_next_poi(user, project):
         if project:
-            unreviewed_pois = PointsOfInterest.objects.filter(project_id=project)
+            unreviewed_pois = PointsOfInterest.objects.filter(project_id=project).only('id')
         else:
-            unreviewed_pois = PointsOfInterest.objects.all()
+            unreviewed_pois = PointsOfInterest.objects.all().only('id')
             
         # Filter POIs to only include those with less than 3 annotations
         # and exclude those already annotated by current user
