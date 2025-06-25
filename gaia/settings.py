@@ -81,7 +81,11 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
-DEBUG = True
+DEBUG = False
+# INTERNAL_IPS = ['127.0.0.1']
+# DEBUG_TOOLBAR_CONFIG = {
+#     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+# }
 ALLOWED_HOSTS = [
                 'localhost',
                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
@@ -95,10 +99,6 @@ ALLOWED_HOSTS = [
                 'gaia.fisheries.noaa.gov'
                     ]
 
-INTERNAL_IPS = ['127.0.0.1']
-DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
-}
 
 if not DEBUG:
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')  # Add WhiteNoise middleware only when not in debug mode
