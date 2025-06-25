@@ -257,16 +257,14 @@ def validation(request):
     show_final_reviews = request.GET.get('showfinals', 'false')
     page_number = request.GET.get('page')
 
-    POIs = PointsOfInterest.objects.annotate(
-        num_reviews=Count('annotations', filter=Q(annotations__classification=14))
-    ).filter(num_reviews__gte=1).only(
-        'id'
-    )
+    POIs = PointsOfInterest.objects.filter(
+        annotations__classification=14
+    ).distinct().only('id')
 
     if show_final_reviews == 'false':
-        POIs = POIs.filter(final_classification_id__isnull=True).only('id')
+        POIs = POIs.filter(final_classification_id__isnull=True)
 
-    three_reviews = Annotations.objects.all().order_by('id')[:3]
+    three_reviews = Annotations.objects.filter(poi__in=POIs).select_related('classification', 'target', 'confidence')
 
     POIs = POIs.prefetch_related(
         Prefetch('annotations', queryset=three_reviews, to_attr='three_reviews')
