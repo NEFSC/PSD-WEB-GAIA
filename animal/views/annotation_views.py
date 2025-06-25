@@ -18,6 +18,7 @@ def annotation_page(request):
     # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
     longitude, latitude = -70.183762, 42.049081
     id = request.GET.get('id')
+    project = request.GET.get('project')
     user = request.user
     annotation = None
     annotations = None
@@ -36,21 +37,29 @@ def annotation_page(request):
         cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  # Cache COG existence for 5 minutes
         return blob_name 
 
-    def get_next_poi(user):
+    def get_next_poi(user, project):
+        if project:
+            unreviewed_pois = PointsOfInterest.objects.filter(project_id=project)
+        else:
+            unreviewed_pois = PointsOfInterest.objects.all()
+            
         # Filter POIs to only include those with less than 3 annotations
         # and exclude those already annotated by current user
-        next_poi = PointsOfInterest.objects.exclude(
+        next_poi = unreviewed_pois.exclude(
             annotations__user_id=user.id
         ).annotate(
             annotation_count=Count('annotations')
         ).filter(
             annotation_count__lt=3,
-        ).first()
-        return next_poi
+        )
+
+        return next_poi.first()
 
     if id is None:
-        poi = get_next_poi(user)
-        if poi:
+        poi = get_next_poi(user, project)
+        if poi and project:
+            return redirect(f'{request.path}?id={poi.id}&project={project}')
+        elif poi:
             return redirect(f'{request.path}?id={poi.id}')
 
     elif id:
@@ -84,8 +93,10 @@ def annotation_page(request):
                 annotation = form.save(commit=False)
                 annotation.full_clean()
                 annotation.save()
-            poi = get_next_poi(user)
-            if poi:
+            poi = get_next_poi(user, project)
+            if poi and project:
+                return redirect(f'{request.path}?id={poi.id}&project={project}')
+            elif poi:
                 return redirect(f'{request.path}?id={poi.id}')
 
     # Since the points were generated from projected imagery, we need to transform them to
@@ -99,7 +110,7 @@ def annotation_page(request):
         print(f"easting: {easting}, northing: {northing}")
         longitude, latitude = transformer.transform(easting, northing)
 
-    cogurl = cog_exists(poi.vendor_id)
+    cogurl = cog_exists(poi.vendor_id) if poi else None
     return render(request, 'annotation_page.html', {
         'poi': poi,
         'annotation': annotation,
@@ -232,14 +243,10 @@ def check_cog_existence(vendor_id, directory=None):
         
         blobs = container_client.list_blobs(name_starts_with=prefix)
         blob_names = [blob.name for blob in blobs]
-        blob_name = [blob_name for blob_name in blob_names if vendor_id in blob_name][0]
-        return blob_name
-        # for blob in blobs:
-        #     if vendor_id in blob.name:
-        #         print(f"Your validated blob name is: {blob.name}")
-        #         return blob.name
-    
-        # return False, None
+        matching_blobs = [blob_name for blob_name in blob_names if vendor_id in blob_name]
+        if matching_blobs:
+            return matching_blobs[0]
+        return None
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -252,7 +259,7 @@ def validation(request):
 
     POIs = PointsOfInterest.objects.annotate(
         num_reviews=Count('annotations', filter=Q(annotations__classification=14))
-    ).filter(num_reviews__gte=2)
+    ).filter(num_reviews__gte=1)
 
     if show_final_reviews == 'false':
         POIs = POIs.filter(final_classification_id__isnull=True)

@@ -31,6 +31,7 @@ urlpatterns = [
     path('tasking/', login_required(views.tasking_page), name='tasking_page'),
     path('collection/', login_required(views.collection_page), name='collection_page'),
     path('processing/', login_required(views.processing_page), name='processing_page'),
+    path('project/', login_required(views.project_page), name='project_page'),
     path('annotation/', login_required(views.annotation_page), name='annotation_page'),
     path('annotation/<int:item_id>', login_required(views.annotation_page), name='annotation_page'),
     path('annotation/cogs/<str:vendor_id>/', views.cog_view, name='cog_view'),
