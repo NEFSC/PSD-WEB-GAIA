@@ -81,11 +81,13 @@ MIDDLEWARE = [
     #'django.middleware.common.CommonMiddleware',
 ]
 
-DEBUG = False
-# INTERNAL_IPS = ['127.0.0.1']
-# DEBUG_TOOLBAR_CONFIG = {
-#     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
-# }
+# to turn on debug toolbar, set DEBUG = TRUE and uncommon INTERNAL_IPS and DEBUG_TOOLBAR_CONFIG
+DEBUG = True
+INTERNAL_IPS = ['127.0.0.1']
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+}
+
 ALLOWED_HOSTS = [
                 'localhost',
                 'gaia.happypond-d5fa406e.eastus.azurecontainerapps.io',
