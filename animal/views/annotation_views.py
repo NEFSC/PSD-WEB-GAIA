@@ -259,10 +259,12 @@ def validation(request):
 
     POIs = PointsOfInterest.objects.annotate(
         num_reviews=Count('annotations', filter=Q(annotations__classification=14))
-    ).filter(num_reviews__gte=1)
+    ).filter(num_reviews__gte=1).only(
+        'id'
+    )
 
     if show_final_reviews == 'false':
-        POIs = POIs.filter(final_classification_id__isnull=True)
+        POIs = POIs.filter(final_classification_id__isnull=True).only('id')
 
     three_reviews = Annotations.objects.all().order_by('id')[:3]
 
