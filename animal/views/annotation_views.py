@@ -38,22 +38,20 @@ def annotation_page(request):
         return blob_name 
 
     def get_next_poi(user, project):
+        # Start with a base query, filtered by project if needed
         if project:
-            unreviewed_pois = PointsOfInterest.objects.filter(project_id=project)
+            query = PointsOfInterest.objects.filter(project_id=project)
         else:
-            unreviewed_pois = PointsOfInterest.objects.all()
-            
-        # Filter POIs to only include those with less than 3 annotations
-        # and exclude those already annotated by current user
-        next_poi = unreviewed_pois.exclude(
+            query = PointsOfInterest.objects.all()
+        
+        # Apply all filters in a single chained query for better performance
+        return query.exclude(
             annotations__user_id=user.id
         ).annotate(
             annotation_count=Count('annotations')
         ).filter(
-            annotation_count__lt=3,
-        )
-
-        return next_poi.first()
+            annotation_count__lt=3
+        ).order_by('id').first()
 
     if id is None:
         poi = get_next_poi(user, project)
@@ -257,14 +255,14 @@ def validation(request):
     show_final_reviews = request.GET.get('showfinals', 'false')
     page_number = request.GET.get('page')
 
-    POIs = PointsOfInterest.objects.annotate(
-        num_reviews=Count('annotations', filter=Q(annotations__classification=14))
-    ).filter(num_reviews__gte=1)
+    POIs = PointsOfInterest.objects.filter(
+        annotations__classification=14
+    ).distinct().only('id')
 
     if show_final_reviews == 'false':
         POIs = POIs.filter(final_classification_id__isnull=True)
 
-    three_reviews = Annotations.objects.all().order_by('id')[:3]
+    three_reviews = Annotations.objects.filter(poi__in=POIs).select_related('classification', 'target', 'confidence')
 
     POIs = POIs.prefetch_related(
         Prefetch('annotations', queryset=three_reviews, to_attr='three_reviews')

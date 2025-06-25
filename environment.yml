@@ -66,6 +66,7 @@ dependencies:
   - django
   - django-picklefield
   - django-q2
+  - django-debug-toolbar
   - entrypoints
   - exceptiongroup
   - executing
