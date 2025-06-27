@@ -38,19 +38,26 @@ def annotation_page(request):
         return blob_name 
 
     def get_next_poi(user, project):
-        # Start with a base query, filtered by project if needed
+        # Get IDs of POIs the user has already annotated
+        annotated_poi_ids = set(Annotations.objects.filter(
+            user_id=user.id
+        ).values_list('poi_id', flat=True))
+        
+        # Get IDs of POIs with 3+ annotations
+        full_poi_ids = set(Annotations.objects.values('poi_id')
+            .annotate(count=Count('poi_id'))
+            .filter(count__gte=3)
+            .values_list('poi_id', flat=True))
+        
+        # Base query filtered by project if needed
         if project:
             query = PointsOfInterest.objects.filter(project_id=project)
         else:
             query = PointsOfInterest.objects.all()
         
-        # Apply all filters in a single chained query for better performance
+        # Apply exclusions and get first available POI
         return query.exclude(
-            annotations__user_id=user.id
-        ).annotate(
-            annotation_count=Count('annotations')
-        ).filter(
-            annotation_count__lt=3
+            id__in=annotated_poi_ids | full_poi_ids
         ).order_by('id').first()
 
     if id is None:
