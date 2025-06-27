@@ -82,11 +82,11 @@ MIDDLEWARE = [
 ]
 
 # to turn on debug toolbar, set DEBUG = TRUE and uncommon INTERNAL_IPS and DEBUG_TOOLBAR_CONFIG
-DEBUG = True
-INTERNAL_IPS = ['127.0.0.1']
-DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
-}
+DEBUG = False
+# INTERNAL_IPS = ['127.0.0.1']
+# DEBUG_TOOLBAR_CONFIG = {
+#     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+# }
 RESULTS_CACHE_SIZE = 1000
 ALLOWED_HOSTS = [
                 'localhost',
