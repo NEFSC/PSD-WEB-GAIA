@@ -10,7 +10,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.db.models import Q, Count, Prefetch
 
-from ..models import PointsOfInterest, Annotations
+from ..models import PointsOfInterest, Annotations, Fishnet
 from ..forms import AnnotationForm
 from django.core.paginator import Paginator
 import logging
@@ -217,14 +217,10 @@ def generate_sas_token(blob_name):
 
 def check_cog_existence(vendor_id, directory='None'):
     """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
-    
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
-
     vendor_id = vendor_id.replace('P1BS', 'S1BS')
-
-    
 
     try:
         credential = AzureNamedKeyCredential(account_name, account_key)
@@ -233,9 +229,7 @@ def check_cog_existence(vendor_id, directory='None'):
             account_url = f"https://{account_name}.blob.core.windows.net/",
             credential=credential
         )
-    
         container_client = blob_service_client.get_container_client(container_name)
-    
         prefix = directory if directory else ""
         
         blobs = container_client.list_blobs(name_starts_with=prefix)
@@ -272,3 +266,42 @@ def validation(request, project_id):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'validation_page.html', {'page_obj': page_obj, 'sort_order': sort_order})
+
+def screen_page(request, project_id, id):
+    # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
+    longitude, latitude = -70.183762, 42.049081
+    vendor_id = "21MAR21152115-S1BS-507583593010_01_P003"
+
+    def cog_exists(vendor_id):
+        cached_result = cache.get(f'cog_existence_{vendor_id}')
+        if cached_result is not None:
+            return cached_result
+
+        blob_name = check_cog_existence(vendor_id, directory='cogs/')
+        cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  
+        return blob_name 
+
+    if id is None:
+        return redirect(f'/project/{project_id}/screen/1')
+
+    elif id:
+        poi = PointsOfInterest.objects.get(id=id)
+        vendor_id = poi.vendor_id
+
+    if poi and poi.point and poi.epsg_code:
+        print(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
+        source_crs = CRS(f"EPSG:{poi.epsg_code}")
+        target_crs = CRS("EPSG:4326")
+        transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
+        easting, northing = poi.point.coords
+        print(f"easting: {easting}, northing: {northing}")
+        longitude, latitude = transformer.transform(easting, northing)
+
+    cogurl = cog_exists(poi.vendor_id) if poi else None
+    return render(request, 'screen_page.html', {
+        'poi': poi,
+        'vendor_id': vendor_id,
+        'longitude': longitude,
+        'latitude': latitude,
+        'cogurl': cogurl
+    })

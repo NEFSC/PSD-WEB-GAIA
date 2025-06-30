@@ -1,0 +1,299 @@
+{% load static %} {% include 'sections/header.html' %}
+<style>
+  #gdal-map {
+    height: 50vh;
+    width: 100%;
+    position: relative;
+  }
+  #layer-switcher {
+    position: absolute;
+    bottom: 4rem;
+    right: 1rem;
+    width: 8rem;
+    background: white;
+    padding: 10px;
+    border-radius: 5px; /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow for better visibility */
+    z-index: 1000;
+  }
+   .ol-viewport .ol-overlaycontainer-stopevent .ol-zoom {
+      top: .5em;
+      right: .5em;
+      left: auto;  /* Override default left positioning */
+    }
+</style>
+<section class="usa-section padding-top-0 padding-bottom-0">
+  <div class="grid-row">
+    <div class="grid-col-3"></div>
+    <div class="grid-col-3">
+      <h1>Screen</h1>
+    </div>
+  </div>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  {% if error_message %}
+    <div class="usa-alert usa-alert--error">
+      <div class="usa-alert__body">
+        <h3 class="usa-alert__heading">Error</h3>
+        <p class="usa-alert__text">An error has occurred:</p>
+      {{ error_message }}
+      </div>
+    </div>
+  {% endif %}
+  <div class="grid-row flex-justify">
+      <div class="grid-container" style="width: 85%;max-width: 100%;height:70vh;">
+        <div id="osm-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 85%; height: 70vh; z-index: 1;"></div>
+        <div id="gdal-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 85%; height: 70vh; z-index: 2;">
+          <div id="layer-switcher">
+            <label>
+              <input type="radio" name="layer" value="street" />
+              Street Map
+            </label>
+            <br />
+            <label>
+              <input type="radio" name="layer" value="satellite" checked />
+              Satellite
+            </label><br>
+            <label>
+              <input type="checkbox" name="pointer" value="checked" checked />
+              Search Area
+            </label>
+          </div>
+          <div id="pointer-switcher">
+          </div>
+        </div>
+        <div class="grid-row controls flex-row" style="position:relative; top:69vh; z-index: 3;">
+          <div class="grid-col">
+            <label for="exposure">Brightness: </label>
+            <input
+              type="range"
+              id="exposure"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              value="0"
+            />
+          </div>
+          <div class="grid-col">
+            <label for="contrast">Contrast: </label>
+            <input
+              type="range"
+              id="contrast"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              value="0"
+            />
+          </div>
+          <div class="grid-col">
+            <label for="saturation">Saturation: </label>
+            <input
+              type="range"
+              id="saturation"
+              min="-0.5"
+              max="0.5"
+              step="0.1"
+              value="0"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+      <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ol@10.1.0/ol.css"
+      />
+      <script src="https://cdn.jsdelivr.net/npm/ol@v10.1.0/dist/ol.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.0/proj4.js"></script>
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+      />
+
+      <script>
+		// Ensure variables are passed correctly
+		const latitude = {{ latitude }}; //42.049081 //;
+		const longitude = {{ longitude }};  //-70.183762 //;
+    const cogUrl = "{{ cogurl }}";
+
+		// Map Initialization
+		window.onload = function() {
+			// Initialize maps, points, and other layers here
+			initializeMaps();
+		};
+
+		function initializeMaps() {
+			// Re-initialize the maps based on the provided latitude, longitude, and COG URL
+			const point = new ol.Feature({
+				geometry: new ol.geom.Point(ol.proj.fromLonLat([longitude, latitude])),
+				name: 'Point of Interest',
+			});
+
+      const cogSource = new ol.source.GeoTIFF({
+        sources: [{
+          url: new URL(cogUrl, window.location.origin).toString()
+        }]
+      });
+			const baseLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
+			const vectorSource = new ol.source.Vector({ features: [point] });
+      const vectorLayer = new ol.layer.Vector({
+        source: vectorSource,
+        style: new ol.style.Style({
+          image: new ol.style.Circle({
+            fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
+            stroke: new ol.style.Stroke({ 
+              color: 'rgba(128, 128, 128, 0.5)',
+              width: 2,
+              lineDash: [3, 3] // Creates a dotted line pattern
+            }),
+            radius: 64
+          })
+        }),
+        
+				});
+
+
+			const variables = {
+				exposure: 0,
+				contrast: 0,
+				saturation: 0,
+			};
+
+        // Initialize the COG image layer
+        const cogLayer = new ol.layer.WebGLTile({
+			style: {
+				exposure: ['var', 'exposure'],
+				contrast: ['var', 'contrast'],
+				saturation: ['var', 'saturation'],
+				variables: variables,
+			},
+			source: cogSource,
+			attributions: 'GAIA',
+		});
+
+		//Variable handling
+		let variable;
+		for (variable in variables) {
+			const name = variable;
+			const element = document.getElementById(name);
+			const value = variables[name];
+			element.value = value.toString();
+			document.getElementById(name).innerText = value.toFixed(2);
+			element.addEventListener('input', function (event) {
+				const value = parseFloat(event.target.value);
+				document.getElementById(name).innerText = value.toFixed(2);
+				const updates = {};
+				updates[name] = value;
+				cogLayer.updateStyleVariables(updates);
+			});
+		}
+
+		const osmMap = new ol.Map({
+			target: 'osm-map',
+			layers: [baseLayer, vectorLayer],
+			view: new ol.View({
+				center: ol.proj.fromLonLat([longitude, latitude]),
+				zoom: 18,
+			}),
+		});
+
+		const gdalMap = new ol.Map({
+			target: 'gdal-map',
+			layers: [baseLayer, cogLayer, vectorLayer],
+			view: osmMap.getView(),
+		});
+
+		const scaleLineControl = new ol.control.ScaleLine();
+		gdalMap.addControl(scaleLineControl)
+
+        document.querySelectorAll('input[name="layer"]').forEach((input) => {
+        	input.addEventListener('change', (event) => {
+        		const value = event.target.value;
+        		baseLayer.setVisible(value === 'street');
+        		cogLayer.setVisible(value === 'satellite');
+        	});
+        });
+        document.querySelector('input[name="pointer"]').addEventListener('change', (event) => {
+          vectorLayer.setVisible(event.target.checked);
+        });
+      // Add context menu for coordinate copying
+      const contextMenuContainer = document.createElement('div');
+      contextMenuContainer.className = 'ol-contextmenu';
+      contextMenuContainer.style.cssText = 'position: absolute; background: white; border: 1px solid #ccc; padding: 5px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: none; z-index: 1000;';
+      document.body.appendChild(contextMenuContainer);
+
+      let clickedCoordinate = null;
+
+      // Function to show context menu with coordinate copying option
+      function showContextMenu(coordinate, pixel) {
+        clickedCoordinate = coordinate;
+        const lonLat = ol.proj.toLonLat(coordinate);
+        
+        const formattedLon = lonLat[0].toFixed(6);
+        const formattedLat = lonLat[1].toFixed(6);
+        
+        contextMenuContainer.innerHTML = `
+          <div style="cursor: pointer; padding: 8px;" id="copy-coordinates">
+            Copy coordinates: ${formattedLon}, ${formattedLat}
+          </div>
+        `;
+        
+        contextMenuContainer.style.left = `${pixel[0]}px`;
+        contextMenuContainer.style.top = `${pixel[1]}px`;
+        contextMenuContainer.style.display = 'block';
+        
+        document.getElementById('copy-coordinates').addEventListener('click', function() {
+          const coordText = `${formattedLon},${formattedLat}`;
+          navigator.clipboard.writeText(coordText)
+            .then(() => {
+              const successMsg = document.createElement('div');
+              successMsg.textContent = 'Coordinates copied!';
+              successMsg.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 10px; border-radius: 4px; z-index: 2000;';
+              document.body.appendChild(successMsg);
+              
+              setTimeout(() => {
+                document.body.removeChild(successMsg);
+              }, 2000);
+              
+              contextMenuContainer.style.display = 'none';
+            })
+            .catch(err => {
+              console.error('Failed to copy coordinates: ', err);
+            });
+        });
+      }
+
+      // Add right-click event handler to the map
+      gdalMap.getViewport().addEventListener('contextmenu', function (evt) {
+        evt.preventDefault();
+        
+        const pixel = [evt.clientX, evt.clientY];
+        const coordinate = gdalMap.getCoordinateFromPixel(pixel);
+        
+        showContextMenu(coordinate, pixel);
+      });
+
+      // Hide context menu when clicking elsewhere
+      document.addEventListener('click', function(evt) {
+        if (evt.target.closest('.ol-contextmenu') === null) {
+          contextMenuContainer.style.display = 'none';
+        }
+      });
+
+      // Hide context menu when dragging the map
+      gdalMap.on('pointerdrag', function() {
+        contextMenuContainer.style.display = 'none';
+      });
+    }
+    </script>
+  </div>
+</section>
+</body>
+{% include 'sections/footer.html' %}
+</html>
