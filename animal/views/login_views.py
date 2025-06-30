@@ -11,10 +11,6 @@ os.environ["CPL_DEBUG"] = "ON" # Should enable GDAL debuggin
 django.setup()
 
 def login_view(request):
-    """ A simple log-in page meeting NOAA OCIO's security requirement for
-            a username and password protecting restricted access
-            satellite imagery.
-    """
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -27,8 +23,9 @@ def login_view(request):
     return render(request, 'login.html', {'form': form})
 
 def landing_page(request):
-    return render(request, 'landing_page.html')
-
-def project_page(request):
     projects = Project.objects.all()
-    return render(request, 'project_page.html', {'projects': projects})
+    return render(request, 'landing_page.html', {'projects': projects})
+
+def project_page(request, project_id = id):
+    project = Project.objects.filter(id=project_id)
+    return render(request, 'project_page.html', {'project': project})

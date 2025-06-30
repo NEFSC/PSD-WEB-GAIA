@@ -153,7 +153,7 @@ LOGGING = {
             'formatter': 'verbose',
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs/main.log'),
             'formatter': 'verbose',
@@ -169,6 +169,11 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+         'animal': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
 
     },

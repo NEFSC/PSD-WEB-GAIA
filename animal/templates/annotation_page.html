@@ -282,7 +282,7 @@
 		// Ensure variables are passed correctly
 		const latitude = {{ latitude }}; //42.049081 //;
 		const longitude = {{ longitude }};  //-70.183762 //;
-		const cogUrl = "{{ cogurl }}";
+    const cogUrl = "{{ cogurl }}";
 
 		// Map Initialization
 		window.onload = function() {
@@ -297,7 +297,11 @@
 				name: 'Point of Interest',
 			});
 
-			const cogSource = new ol.source.GeoTIFF({ sources: [{ url: cogUrl }] });
+      const cogSource = new ol.source.GeoTIFF({
+        sources: [{
+          url: new URL(cogUrl, window.location.origin).toString()
+        }]
+      });
 			const baseLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
 			const vectorSource = new ol.source.Vector({ features: [point] });
       const vectorLayer = new ol.layer.Vector({
