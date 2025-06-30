@@ -26,6 +26,8 @@ def landing_page(request):
     projects = Project.objects.all()
     return render(request, 'landing_page.html', {'projects': projects})
 
-def project_page(request, project_id = id):
+def project_page(request, project_id=None):
+    if project_id is None:
+        return redirect('landing_page')  # Redirect to landing page if no project_id is provided
     project = Project.objects.filter(id=project_id)
     return render(request, 'project_page.html', {'project': project})
