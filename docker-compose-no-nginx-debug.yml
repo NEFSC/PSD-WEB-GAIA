@@ -18,3 +18,8 @@ services:
       - "80:8000"
       # pydebug listen port
       - "5678:5678"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G

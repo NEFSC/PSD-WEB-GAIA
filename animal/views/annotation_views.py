@@ -13,12 +13,15 @@ from django.db.models import Q, Count, Prefetch
 from ..models import PointsOfInterest, Annotations
 from ..forms import AnnotationForm
 from django.core.paginator import Paginator
+import logging
 
-def annotation_page(request):
+logger = logging.getLogger('animal')  # use your app name here
+
+def annotation_page(request, project_id, item_id=None):
     # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
     longitude, latitude = -70.183762, 42.049081
-    id = request.GET.get('id')
-    project = request.GET.get('project')
+    id = item_id
+    project = project_id
     user = request.user
     annotation = None
     annotations = None
@@ -26,15 +29,12 @@ def annotation_page(request):
     vendor_id = None
 
     def cog_exists(vendor_id):
-        """ Checks if a COG exists in Azure when provided with a Vendor ID.
-                Really a wrapper function that includes a check cache function.
-        """
         cached_result = cache.get(f'cog_existence_{vendor_id}')
         if cached_result is not None:
             return cached_result
 
         blob_name = check_cog_existence(vendor_id, directory='cogs/')
-        cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  # Cache COG existence for 5 minutes
+        cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  
         return blob_name 
 
     def get_next_poi(user, project):
@@ -50,10 +50,7 @@ def annotation_page(request):
             .values_list('poi_id', flat=True))
         
         # Base query filtered by project if needed
-        if project:
-            query = PointsOfInterest.objects.filter(project_id=project)
-        else:
-            query = PointsOfInterest.objects.all()
+        query = PointsOfInterest.objects.filter(project_id=project)
         
         # Apply exclusions and get first available POI
         return query.exclude(
@@ -62,10 +59,7 @@ def annotation_page(request):
 
     if id is None:
         poi = get_next_poi(user, project)
-        if poi and project:
-            return redirect(f'{request.path}?id={poi.id}&project={project}')
-        elif poi:
-            return redirect(f'{request.path}?id={poi.id}')
+        return redirect(f'/project/{project_id}/annotation/{poi.id}')
 
     elif id:
         try:
@@ -99,10 +93,7 @@ def annotation_page(request):
                 annotation.full_clean()
                 annotation.save()
             poi = get_next_poi(user, project)
-            if poi and project:
-                return redirect(f'{request.path}?id={poi.id}&project={project}')
-            elif poi:
-                return redirect(f'{request.path}?id={poi.id}')
+            return redirect(f'/project/{project_id}/annotation/{poi.id}')
 
     # Since the points were generated from projected imagery, we need to transform them to
     #      geographic coordinates (i.e., EPSG:4326) to show them.
@@ -130,7 +121,6 @@ def annotation_page(request):
     })
 
 def cog_view(request, vendor_id=None):
-    # Supporting view for the exploitation page which serves out the COGs. 
     try:
         blob_url = generate_sas_token(vendor_id)
         print(f"Constructed Blob URL with SAS Token: {blob_url}")
@@ -226,14 +216,16 @@ def generate_sas_token(blob_name):
         return None
 
 def check_cog_existence(vendor_id, directory=None):
-    """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
+    """ Checks if a Cloud Optimized GeoTIFF exists in Azure. """
     
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
 
     vendor_id = vendor_id.replace('P1BS', 'S1BS')
+
     
+
     try:
         credential = AzureNamedKeyCredential(account_name, account_key)
     
@@ -257,13 +249,14 @@ def check_cog_existence(vendor_id, directory=None):
         print(f"An error occurred: {e}")
         return False, None
 
-def validation(request):
+def validation(request, project_id):
     sort_order = request.GET.get('sort', 'asc')
     show_final_reviews = request.GET.get('showfinals', 'false')
     page_number = request.GET.get('page')
 
     POIs = PointsOfInterest.objects.filter(
-        annotations__classification=14
+        annotations__classification=14,
+        project_id=project_id
     ).distinct().only('id')
 
     if show_final_reviews == 'false':
