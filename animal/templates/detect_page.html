@@ -142,21 +142,49 @@
       });
 			const baseLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
 			const vectorSource = new ol.source.Vector({ features: [point] });
+      // Create a bounding box around the point (approx 300 meters)
+      // Calculate box dimensions for 600m width and 400m height
+      const latOffset = 150 / 111320; // 400 meters in decimal degrees
+      // Longitude degrees per meter varies with latitude
+      const metersPerLonDegree = 111320 * Math.cos(latitude * Math.PI / 180);
+      const lonOffset = 250 / metersPerLonDegree; // 600 meters in decimal degrees
+
+      const minLon = longitude - lonOffset;
+      const maxLon = longitude + lonOffset;
+      const minLat = latitude - latOffset;
+      const maxLat = latitude + latOffset;
+
+      // Convert bbox corners to projected coordinates
+      const bbox = [
+        ol.proj.fromLonLat([minLon, minLat]),
+        ol.proj.fromLonLat([maxLon, minLat]),
+        ol.proj.fromLonLat([maxLon, maxLat]),
+        ol.proj.fromLonLat([minLon, maxLat]),
+        ol.proj.fromLonLat([minLon, minLat]) // Close the polygon
+      ];
+
+      // Create a polygon feature for the bounding box
+      const boxFeature = new ol.Feature({
+        geometry: new ol.geom.Polygon([bbox]),
+        name: 'Search Area'
+      });
+
+      // Add feature to the vector source
+      vectorSource.addFeature(boxFeature);
+
+      // Create vector layer with styling
       const vectorLayer = new ol.layer.Vector({
         source: vectorSource,
         style: new ol.style.Style({
-          image: new ol.style.Circle({
-            fill: new ol.style.Fill({ color: 'rgba(0,0,0,0)' }),
-            stroke: new ol.style.Stroke({ 
-              color: 'rgba(128, 128, 128, 0.5)',
-              width: 2,
-              lineDash: [3, 3] // Creates a dotted line pattern
-            }),
-            radius: 64
-          })
-        }),
-        
-				});
+          stroke: new ol.style.Stroke({
+            color: 'rgba(255, 255, 255, 0.5)',
+            width: 2
+          }),
+          fill: new ol.style.Fill({
+            color: 'rgba(0, 255, 0, 0.1)'
+          }),
+        })
+      });
 
 
 			const variables = {
