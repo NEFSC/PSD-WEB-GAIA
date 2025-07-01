@@ -10,7 +10,7 @@ import django
 from django.contrib import messages
 from django.contrib.gis.geos import GEOSGeometry
 from django.shortcuts import render
-from django_q.tasks import async_task
+# from django_q.tasks import async_task
 from ..security import ee_login
 from ..models import ExtractTransformLoad
 from ..forms import ProcessingForm
@@ -476,12 +476,12 @@ def processing_page(request):
                 
                 return render(request, 'processing_page.html', {'form': form, 'filtered_data': geojson_data})
                 
-        elif 'process' in request.POST:
-            selected_ids = request.POST.getlist('select_images')
-            if selected_ids:
-                user_email = request.user.email
-                task_id = async_task('animal.tasks.process_etl_data', filtered_data)
-                return render(request, 'processing_page.html', {'task_id': task_id})
+        # elif 'process' in request.POST:
+        #     selected_ids = request.POST.getlist('select_images')
+        #     if selected_ids:
+        #         user_email = request.user.email
+        #         task_id = async_task('animal.tasks.process_etl_data', filtered_data)
+        #         return render(request, 'processing_page.html', {'task_id': task_id})
   
     return render(request, 'processing_page.html', {'form': form})
 

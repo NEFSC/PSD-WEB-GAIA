@@ -57,16 +57,16 @@ INSTALLED_APPS = [
 
 # Django Q Cluster
 
-Q_CLUSTER = {
-    'name': 'DjangoORM',
-    'workers': 1,
-    'orm': 'default',
-    'retry': 3600,
-    'timeout': 900,
-    'catch_up': True,
-    'sync': False,
-    'max_attempts': 3,
-}
+# Q_CLUSTER = {
+#     'name': 'DjangoORM',
+#     'workers': 1,
+#     'orm': 'default',
+#     'retry': 3600,
+#     'timeout': 900,
+#     'catch_up': True,
+#     'sync': False,
+#     'max_attempts': 3,
+# }
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

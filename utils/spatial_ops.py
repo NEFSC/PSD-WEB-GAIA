@@ -15,8 +15,10 @@
 # ------------------------------------------------------------------------------
 import os
 import math
+import shutil
 import tempfile
 import subprocess
+from time import time
 from pyproj import CRS
 from osgeo import gdal
 from shapely.geometry import box
@@ -28,6 +30,34 @@ import geopandas as gpd
 # ------------------------------------------------------------------------------
 # Spatial methods
 # ------------------------------------------------------------------------------
+def pansharpen_imagery(pan_image, msi_image):
+    """Short term pansharpened method for testing, usuable only on Maxar WV"""
+    start = time()
+    shrp_image = pan_image.split('/')[-1].replace('P1BS', 'S1BS')
+    print(f"YOUR SHARP IMAGE IS: {shrp_image}")
+    gdal_pansharpen(['' ,
+                     '-b', '5',
+                     '-b', '3',
+                     '-b', '2',
+                     '-r', 'cubic',
+                     '-threads', 'ALL_CPUS',
+                     pan_image, msi_image, shrp_image])
+    print(f"\n It took: {round(time() - start,2)} seconds to create a pansharpened image \n")
+
+
+def create_cog(sharpened_imagery):
+    start = time()
+    cogtiff = sharpened_imagery.replace('.tif', '_cog.tif')
+    subprocess.run(['rio',
+                    'cogeo',
+                    'create',
+                    '--zoom-level', '20',
+                    '--overview-resampling', 'cubic',
+                    '-w',
+                    sharpened_imagery, cogtiff])
+    print(f"\n It took: {round(time() - start,2)} seconds to create your COG: {cogtiff} \n")
+
+
 def is_projected_in_meters(crs: CRS) -> bool:
     return crs.axis_info[0].unit_name.lower() in ["metre", "meter"]
 
@@ -108,6 +138,9 @@ def create_fishnet(cogs: list, cell_width: float = 600, cell_height: float = 400
 
     pdf = pd.concat(fishnet_gdfs, ignore_index=True)
     gdf = gpd.GeoDataFrame(pdf, geometry='geometry', crs=crs)
-    gdf.to_file(os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.shp')))
+    # gdf.to_file(os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.shp')))
+    # gdf.to_csv(os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.csv')))
+
+    shutil.rmtree(tmp_dir)
 
     return gdf

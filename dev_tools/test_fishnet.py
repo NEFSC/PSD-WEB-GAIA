@@ -54,18 +54,11 @@ fishnet_gdf = utils.spatial_ops.create_fishnet(test_cog)
 # Import fishnet into the SpatiaLite database
 # ------------------------------------------------------------------------------
 def import_fishnet(gdf):
-    """ Synchronous Import fishnet cells function.
-
-        When provided with a GeoDataFrame of cells representing a fishnet, load
-            them into the SpatiaLite database.
-
-        GDF - A GeoDataFrame of fishnet cells with vendor id and geometry
-            attributes.
-    """
+    """Synchronous import fishnet cells."""
     for index, row in gdf.iterrows():
-        fn, created = FN.objects.create(
-            'vendor_id': row['vendor_id'],
-            'cell': row['geometry'].wkt
+        FN.objects.create_or_update(
+            vendor_id=row['vendor_id'],
+            cell=row['geometry'].wkt
         )
 
 async def import_fishnet_async(gdf):
@@ -80,3 +73,4 @@ asyncio.run(run_all())
 
 end = time()
 print(f"\n Loaded in {round(end - start, 2)} seconds.")
+

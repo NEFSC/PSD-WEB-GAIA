@@ -17,6 +17,8 @@
 # Import libraries, find third-party exript
 # ----------------------------
 import sys
+import subprocess
+from glob import glob
 from pathlib import Path
 
 try:
@@ -31,7 +33,7 @@ sys.path.append(str(external_dir))
 
 
 # ----------------------------
-# Functions to be pulled from utils.py
+# Example function
 # ----------------------------
 def run_orthorectification(input_dem: str, output_dir: str, other_args: list = None):
     """
@@ -50,3 +52,35 @@ def run_orthorectification(input_dem: str, output_dir: str, other_args: list = N
 
     print(f"Running pgc_ortho with: {' '.join(args)}")
     pgc_ortho.main(args)  # Use pgc_ortho's main function directly if callable
+
+
+# ----------------------------
+# Real functions
+# ----------------------------
+def calibrate_image(tiff):
+    """ Calibrates a given Maxar 1B image using the Polar Geospatial Center (PGC) method
+             (see references). Georeferences the images to the nearest UTM zone, applies
+             no stretch to the image, outputs to GeoTIFF format, the image will be
+             16-bit Unsigned Integer, and resampled using cubic convolution.
+    
+        Ref: https://www.pgc.umn.edu/guides/pgc-coding-and-utilities/using-pgc-github-orthorectification/
+        Ref: https://github.com/PolarGeospatialCenter/imagery_utils/blob/main/doc/pgc_ortho.txt
+    """
+    dir_path = os.path.dirname(os.path.realpath(tiff))
+    print(f"Your dir_path is: {dir_path}")
+    dir_path_new = os.path.join(dir_path, 'calibrated/') # Make LInux style
+    print(f"Your new dir_oath is: {dir_path_new}")
+    if not os.path.exists(dir_path_new):
+        os.makedirs(dir_path_new)
+
+    # Check -c ns versus mr. Lauren might be processing only three bands.
+    subprocess.run([sys.executable, 'imagery_utils/pgc_ortho.py', '-p', 'utm',
+                    '-c', 'mr', '-f', 'GTiff', '-t', 'Byte', '--resample=cubic',
+                    dir_path, dir_path_new])
+    try:
+        img_out = glob(dir_path_new + "/*.tif")[0]
+        print(f"Your image is: {img_out}")
+        return img_out
+    except:
+        print("Failed on: {}".format(tiff))
+        pass

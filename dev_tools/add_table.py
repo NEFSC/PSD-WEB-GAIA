@@ -42,7 +42,7 @@ def create_poitnsofinterest(db):
         c.execute('''
             CREATE TABLE IF NOT EXISTS animal_fishnet(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                vendor_id VARCHAR(39),
+                vendor_id VARCHAR(39)
             )
         ''')
         

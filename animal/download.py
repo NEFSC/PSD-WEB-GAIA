@@ -23,7 +23,7 @@ def unzip_download(zippedfile):
     os.remove(zippedfile)
     return os.path.abspath(outdir)
 
-def download_zip(session, url):
+def download_zip(session, url, out_dir):
     """ Downloads zipped data from EarthExplorer when provided with
             the URL returning the output name.
 
@@ -33,11 +33,10 @@ def download_zip(session, url):
     headers = response.headers['content-disposition']
     filename = re.findall("filename=(.+)", headers)[0].replace('"','')
     print("Your files are: {}".format(filename))
-    outdir = "../data/"
-    print("Your data are being saved to: {}".format(os.path.abspath(outdir)))
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-    outname = outdir + filename
+    print("Your data are being saved to: {}".format(os.path.abspath(out_dir)))
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    outname = out_dir + filename
     print("Downloading: {}".format(filename))
     with open(outname, "wb") as dst:
         dst.write(response.content)
@@ -123,7 +122,7 @@ def get_product_id(session, dataset_name, entity_id):
     print("Your data are {} bytes in size!".format(rd['filesize']))
     return rd['id']
 
-def download_imagery(session, datasetName, entity_id, max_retries=5):
+def download_imagery(session, datasetName, entity_id, out_dir, max_retries=5):
     """ Wrapper function which generates an EarthExplorer product ID,
             requests the download, retrieves the download URL, downloads
             the zip file locally, and then unzips it locally.
@@ -142,7 +141,7 @@ def download_imagery(session, datasetName, entity_id, max_retries=5):
             label, download_id = request_download(session, entity_id, dataset_id)
             if download_id != 999999999:
                 ready_download_ids = retrieve_download(session, label)
-                zippedfile = download_zip(session, download_id)
+                zippedfile = download_zip(session, download_id, out_dir)
                 return unzip_download(zippedfile)
         except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
