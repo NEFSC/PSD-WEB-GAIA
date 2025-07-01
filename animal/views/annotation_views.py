@@ -267,7 +267,7 @@ def validation(request, project_id):
 
     return render(request, 'validation_page.html', {'page_obj': page_obj, 'sort_order': sort_order})
 
-def screen_page(request, project_id, id):
+def detect_page(request, project_id, id):
     # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
     longitude, latitude = -70.183762, 42.049081
     vendor_id = "21MAR21152115-S1BS-507583593010_01_P003"
@@ -282,7 +282,7 @@ def screen_page(request, project_id, id):
         return blob_name 
 
     if id is None:
-        return redirect(f'/project/{project_id}/screen/1')
+        return redirect(f'/project/{project_id}/detect/1')
 
     elif id:
         poi = PointsOfInterest.objects.get(id=id)
@@ -298,7 +298,7 @@ def screen_page(request, project_id, id):
         longitude, latitude = transformer.transform(easting, northing)
 
     cogurl = cog_exists(poi.vendor_id) if poi else None
-    return render(request, 'screen_page.html', {
+    return render(request, 'detect_page.html', {
         'poi': poi,
         'vendor_id': vendor_id,
         'longitude': longitude,
