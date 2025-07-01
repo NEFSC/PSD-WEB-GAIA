@@ -185,7 +185,104 @@
           }),
         })
       });
+      // Create a draw control button
+      const drawPointBtn = document.createElement('button');
+      drawPointBtn.innerHTML = 'Add Point';
+      drawPointBtn.className = 'usa-button';
+      drawPointBtn.style.cssText = 'position: absolute; top: 10px; left: 10px; z-index: 1000; background-color: #4CAF50; color: white;';
 
+      // Add button to the map container
+      document.getElementById('gdal-map').appendChild(drawPointBtn);
+
+      // Variable to track if draw mode is active
+      let drawModeActive = false;
+      let draw;
+
+      // Create draw interaction for points
+      function createDrawInteraction() {
+        draw = new ol.interaction.Draw({
+          source: vectorSource,
+          type: 'Point'
+        });
+        
+        // When a point is drawn, add it to the vector source
+        draw.on('drawend', function(evt) {
+          const feature = evt.feature;
+          feature.set('name', 'New Point');
+          
+          // Style the new point
+          feature.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+              radius: 7,
+              fill: new ol.style.Fill({color: 'red'}),
+              stroke: new ol.style.Stroke({color: 'white', width: 2})
+            })
+          }));
+          
+          // Disable drawing mode after adding a point
+          toggleDrawMode();
+        });
+        
+        return draw;
+      }
+      // Create submit button to print points
+      const submitPointsBtn = document.createElement('button');
+      submitPointsBtn.innerHTML = 'Submit Points';
+      submitPointsBtn.className = 'usa-button';
+      submitPointsBtn.style.cssText = 'position: absolute; top: 10px; left: 120px; z-index: 1000; background-color: #0071bc; color: white;';
+
+      // Add button to the map container
+      document.getElementById('gdal-map').appendChild(submitPointsBtn);
+
+      // Add click event listener to the submit button
+      submitPointsBtn.addEventListener('click', function() {
+        // Get all features from the vector source
+        const features = vectorSource.getFeatures();
+        
+        // Filter to only point features (excluding the search area box)
+        const pointFeatures = features.filter(feature => 
+          feature.getGeometry().getType() === 'Point'
+        );
+        
+        console.log('Total points:', pointFeatures.length);
+        
+        // Log each point's coordinates
+        pointFeatures.forEach((feature, index) => {
+          const geometry = feature.getGeometry();
+          const coordinates = geometry.getCoordinates();
+          const lonLat = ol.proj.toLonLat(coordinates);
+          console.log(`Point ${index + 1}:`, {
+            longitude: lonLat[0].toFixed(6),
+            latitude: lonLat[1].toFixed(6)
+          });
+        });
+        
+        // Visual feedback that submission occurred
+        if (pointFeatures.length > 0) {
+          alert(`Submitted ${pointFeatures.length} points. Check the console for details.`);
+        } else {
+          alert('No points to submit. Add points first using the "Add Point" button.');
+        }
+      });
+      // Toggle drawing mode
+      function toggleDrawMode() {
+        drawModeActive = !drawModeActive;
+        
+        if (drawModeActive) {
+          draw = createDrawInteraction();
+          gdalMap.addInteraction(draw);
+          drawPointBtn.style.backgroundColor = '#D83933'; // Red when active
+          drawPointBtn.innerHTML = 'Cancel';
+        } else {
+          gdalMap.removeInteraction(draw);
+          draw = null;
+          drawPointBtn.style.backgroundColor = '#4CAF50'; // Green when inactive
+          drawPointBtn.innerHTML = 'Add Point';
+        }
+      }
+
+      // Add click event to the button
+      drawPointBtn.addEventListener('click', toggleDrawMode);
 
 			const variables = {
 				exposure: 0,
