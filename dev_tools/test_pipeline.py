@@ -52,17 +52,17 @@ importlib.reload(utils.spatial_ops)
 username = "johnwallx"
 token_file = "../../../gis/security/token.txt"
 data_dir = "../../../gis/data/"
-# aoi_shp = "shapefiles/UCIPlus.shp"
-dem_file = "rasters/dem.tif"
-# img_dir = "imagery/belugas/"
-aoi_shp = "shapefiles/CCB_Polygon.shp"
-img_dir = "imagery/narw/"
+aoi_shp = "shapefiles/UCIPlus.shp"
+dem_file = "rasters/output_hh.tif"
+img_dir = "imagery/belugas/"
+# aoi_shp = "shapefiles/CCB_Polygon.shp"
+# img_dir = "imagery/narw/"
 
 imagery_dataset = 'crssp_orderable_w3'
-# start_date = '2021-06-01'
-# end_date = '2021-06-30'
-start_date = '2021-03-01'
-end_date = '2021-05-30'
+start_date = '2021-06-01'
+end_date = '2021-06-30'
+# start_date = '2021-03-01'
+# end_date = '2021-05-30'
 
 token_file = os.path.abspath(token_file)
 data_dir = os.path.abspath(data_dir)
@@ -87,7 +87,7 @@ secure_session = utils.api_utils.ee_login(session, username, token)
 gdf = gpd.read_file(aoi_shp)
 if gdf.crs != "EPSG:4326":
     gdf = gdf.to_crs("EPSG:4326")
-aoi_geometry = gdf['geometry'][0]
+aoi_geometry = gdf['geometry'][0].buffer(0.1)
 
 
 # ------------------------------------------------------------------------------
@@ -190,7 +190,9 @@ cat_id_dirs = [d for d in os.listdir(img_dir) if os.path.isdir(os.path.join(img_
 print(cat_id_dirs)
 
 # ------------------------------------------------------------------------------
-# Unzip imagery, organize imagery into USGS loading values
+# Unzip imagery, organize imagery into arbitarary USGS loading values or events.
+#   Should be modified to find which directory has the most files and delete all
+#   others.
 # ------------------------------------------------------------------------------
 for cat_id_dir in cat_id_dirs:
     # Unzip directories
@@ -235,32 +237,20 @@ for cat_id_dir in cat_id_dirs:
                     shutil.move(source_path, destination_path)
 
 # ------------------------------------------------------------------------------
-# Tidy up the files, ensure there are panchromatic, multispectral pairs
+# Ensure there are panchromatic, multispectral pairs
 # ------------------------------------------------------------------------------
+geotiffs = glob(img_dir + '/**/*.tif', recursive=True) # Should support NTF too
+
+# This function needs to be rewritten for this current code base
+# standard_name_geotiff = [utils.api_utils.standardize_names(geotiff) for geotiff in geotiffs]
+
 panchromatic_image_list = []
 multispectral_image_list = []
-for unzipped_dir in unzipped_dirs:
-    print(f"Your unzipped dir looks like: {unzipped_dir}")
-    
-    start = time()
-    # Only use this to get the dir name again
-    unzipped_files = glob(unzipped_dir + '/**/*.*', recursive=True)
-    print(f"\nSuccessfully executed glob: {unzipped_files}")
-    filtered_files = [file for file in unzipped_files if 'license' not in file]
-    print("Successfully removed license related files")
-    dir_name = filtered_files[0].replace('\\', '/').split('/')[-2].split('.')[0]
-    print(f"Successfully found dir name: {dir_name}\n")
-
-    try:
-        standard_name_geotiff = utils.api_utils.standardize_names(unzipped_dir)
-    except Exception as e:
-        standard_name_geotiff = unzipped_dir
-        print(f"\n\nFailed standardizing names with Exception: {e}.\n\tTrying to move along...\n\n")
-
-    if 'P1BS' in standard_name_geotiff:
-        panchromatic_image_list.append(standard_name_geotiff)
-    elif 'M1BS' in standard_name_geotiff:
-        multispectral_image_list.append(standard_name_geotiff)
+for geotiff in geotiffs:
+    if 'P1BS' in geotiff:
+        panchromatic_image_list.append(geotiff)
+    elif 'M1BS' in geotiff:
+        multispectral_image_list.append(geotiff)
     else:
         print("\n\nYOUR IMAGE DOES NOT FOLLOW THE STANDARD NAMING CONVENTION FOR MAXAR\n\n")
 
@@ -298,14 +288,26 @@ for img in no_pan_match:
 #   Optimized GeoTIFF (web optimized), and upload it to Azure.
 #
 # TODO: Needs to be able to handle different types of imagery (e.g. GeoEye)
+# TODO: Function in parallel
+# TODO: Better file organization and management
+#           - Calibrated super directory
+#           - Garbage collection after making Pan and COG
 #
 # ------------------------------------------------------------------------------
+first_two = dict(list(imagery_pairs.items())[:1])
+
 calibrated_imagery_pairs = {}
-for pan, msi in imagery_pairs.items():
+for pan, msi in first_two.items():
     calibrated_pan = utils.pgc_wrapper.calibrate_image(pan, dem_file)
     calibrated_msi = utils.pgc_wrapper.calibrate_image(msi, dem_file)
+
+    print(f"Your PAN is: {calibrated_pan}\n\t Your MSI is: {calibrated_msi}")
 
     pansharpened_image = utils.spatial_ops.pansharpen_imagery(calibrated_pan,
                                                               calibrated_msi)
     
+    print(f"Your pansharpened image is {pansharpened_image}")
+    
     web_optimized_cog = utils.spatial_ops.create_cog(pansharpened_image)
+
+    print(f"Your COG is: {web_optimized_cog}")

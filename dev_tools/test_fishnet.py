@@ -56,7 +56,7 @@ fishnet_gdf = utils.spatial_ops.create_fishnet(test_cog)
 def import_fishnet(gdf):
     """Synchronous import fishnet cells."""
     for index, row in gdf.iterrows():
-        FN.objects.create_or_update(
+        FN.objects.update_or_create(
             vendor_id=row['vendor_id'],
             cell=row['geometry'].wkt
         )
@@ -73,4 +73,3 @@ asyncio.run(run_all())
 
 end = time()
 print(f"\n Loaded in {round(end - start, 2)} seconds.")
-

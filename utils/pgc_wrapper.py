@@ -16,6 +16,7 @@
 # ----------------------------
 # Import libraries, find third-party exript
 # ----------------------------
+import os
 import sys
 import subprocess
 from glob import glob
@@ -28,7 +29,7 @@ except NameError:
     base_dir = Path(os.getenv("PROJECT_ROOT", Path.cwd()))
 
 external_dir = base_dir / "external" / "imagery_utils"
-print(external_dir)
+print(f"The imagery utilities directory is: {external_dir}")
 sys.path.append(str(external_dir))
 
 
@@ -57,7 +58,7 @@ def run_orthorectification(input_dem: str, output_dir: str, other_args: list = N
 # ----------------------------
 # Real functions
 # ----------------------------
-def calibrate_image(tiff):
+def calibrate_image(tiff, dem):
     """ Calibrates a given Maxar 1B image using the Polar Geospatial Center (PGC) method
              (see references). Georeferences the images to the nearest UTM zone, applies
              no stretch to the image, outputs to GeoTIFF format, the image will be
@@ -68,15 +69,22 @@ def calibrate_image(tiff):
     """
     dir_path = os.path.dirname(os.path.realpath(tiff))
     print(f"Your dir_path is: {dir_path}")
-    dir_path_new = os.path.join(dir_path, 'calibrated/') # Make LInux style
-    print(f"Your new dir_oath is: {dir_path_new}")
+    dir_path_new = "\\".join(os.path.dirname(tiff).split('\\')[:-1] + ["calibrated"]) 
+    # dir_path_new = os.path.join(dir_path, 'calibrated/') # Make LInux style
+    print(f"Your new dir_ath is: {dir_path_new}")
     if not os.path.exists(dir_path_new):
         os.makedirs(dir_path_new)
 
-    # Check -c ns versus mr. Lauren might be processing only three bands.
-    subprocess.run([sys.executable, 'imagery_utils/pgc_ortho.py', '-p', 'utm',
-                    '-c', 'mr', '-f', 'GTiff', '-t', 'Byte', '--resample=cubic',
-                    dir_path, dir_path_new])
+    subprocess.run([sys.executable,
+                    f'{external_dir}/pgc_ortho.py',
+                    '-p', 'utm',
+                    '-c', 'mr',
+                    '-f', 'GTiff',
+                    '-t', 'Byte',
+                    '-d', dem,
+                    '--resample=cubic',
+                    dir_path,
+                    dir_path_new])
     try:
         img_out = glob(dir_path_new + "/*.tif")[0]
         print(f"Your image is: {img_out}")

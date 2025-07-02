@@ -25,6 +25,7 @@ from shapely.geometry import box
 from shapely.ops import unary_union
 import pandas as pd
 import geopandas as gpd
+from osgeo_utils.gdal_pansharpen import gdal_pansharpen
 
 
 # ------------------------------------------------------------------------------
@@ -33,7 +34,10 @@ import geopandas as gpd
 def pansharpen_imagery(pan_image, msi_image):
     """Short term pansharpened method for testing, usuable only on Maxar WV"""
     start = time()
-    shrp_image = pan_image.split('/')[-1].replace('P1BS', 'S1BS')
+    shrp_dir = "\\".join(os.path.dirname(pan_image).split('\\')[-1:] + ["pansharpened"])
+    if not os.path.exists(shrp_dir):
+        os.makedirs(shrp_dir)
+    shrp_image = shrp_dir + '\\' + os.path.basename(pan_image).replace('P1BS', 'S1BS')
     print(f"YOUR SHARP IMAGE IS: {shrp_image}")
     gdal_pansharpen(['' ,
                      '-b', '5',
@@ -43,11 +47,16 @@ def pansharpen_imagery(pan_image, msi_image):
                      '-threads', 'ALL_CPUS',
                      pan_image, msi_image, shrp_image])
     print(f"\n It took: {round(time() - start,2)} seconds to create a pansharpened image \n")
+    return shrp_image
 
 
 def create_cog(sharpened_imagery):
     start = time()
-    cogtiff = sharpened_imagery.replace('.tif', '_cog.tif')
+    cog_dir = "\\".join(os.path.dirname(sharpened_imagery).split('\\')[-1:] + ["cogs"])
+    if not os.path.exists(cog_dir):
+        os.makedirs(cog_dir)
+    cogtiff = cog_dir + '\\' + os.path.basename(sharpened_imagery)
+    # cogtiff = sharpened_imagery.replace('.tif', '_cog.tif')
     subprocess.run(['rio',
                     'cogeo',
                     'create',
@@ -56,6 +65,7 @@ def create_cog(sharpened_imagery):
                     '-w',
                     sharpened_imagery, cogtiff])
     print(f"\n It took: {round(time() - start,2)} seconds to create your COG: {cogtiff} \n")
+    return cogtiff
 
 
 def is_projected_in_meters(crs: CRS) -> bool:
@@ -90,14 +100,18 @@ def create_fishnet(cogs: list, cell_width: float = 600, cell_height: float = 400
         
         gdf = gpd.read_file(tmp_shp)
         crs = gdf.crs
-        print(f"\nYour footprint is in {crs} CRS\n")
+        print(f"\nYour footprint is in {crs} CRS. This is likely going to be 3857 since" +
+              " the COG should be web-enabled as part of the preprocessing pipeline!\n")
+
+        utm_proj = cog.split('_')[-1].split('.')[0].split('mr')[-1] 
+        print(f"Reprojecting to {utm_proj} on-the-fly from the COG file name!\n")
+        gdf = gdf.to_crs(f"EPSG:{utm_proj}")
 
         if not is_projected_in_meters(CRS.from_user_input(crs)):
             raise ValueError("CRS units are not in meters." +
                              "Fishnet creation assumes meter-based projection.")
         
         bbox = box(*gdf.geometry[0].bounds)
-        print(bbox)
 
         if buffer_overlap > 0:
             bbox = bbox.buffer(buffer_overlap)
@@ -137,10 +151,13 @@ def create_fishnet(cogs: list, cell_width: float = 600, cell_height: float = 400
         fishnet_gdfs.append(fishnet_gdf)
 
     pdf = pd.concat(fishnet_gdfs, ignore_index=True)
-    gdf = gpd.GeoDataFrame(pdf, geometry='geometry', crs=crs)
-    # gdf.to_file(os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.shp')))
+    gdf = gpd.GeoDataFrame(pdf, geometry='geometry', crs=utm_proj)
+    gdf = gdf.to_crs(crs)
+    outfile = os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.shp'))
+    gdf.to_file(outfile)
+    print(f"Your outfile is: {outfile} which is in {crs}")
     # gdf.to_csv(os.path.join(tmp_dir, os.path.basename(cog).replace('.tif', '_fishnet.csv')))
 
-    shutil.rmtree(tmp_dir)
+    # shutil.rmtree(tmp_dir)
 
     return gdf
