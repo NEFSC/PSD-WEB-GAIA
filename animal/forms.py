@@ -35,7 +35,7 @@ Note:
 
 from datetime import datetime
 from django import forms
-from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Target
+from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Target, FishnetReviews
 from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
 
@@ -255,39 +255,9 @@ class USWDSRadioButtonGroupWidget(forms.Widget):
         return mark_safe('<fieldset class="usa-fieldset">' + ''.join(radios) + '</fieldset>')
 
 class PointsOfInterestForm(forms.ModelForm):
-    """
-    PointsOfInterestForm is a Django ModelForm for managing animal observation data from three users.
-
-    This form allows multiple users to input their observations about potential animal sightings,
-    with fields for classification, species identification, confidence levels and comments.
-    It also includes final review fields for consensus determination.
-
-    Fields for each user (user1, user2, user3):
-    - user{n}_id: Unique identifier for the user
-    - user{n}_comments: Free-text observations (max 500 chars)
-    - user{n}_classification: Type of observation (uses USWDS button group)  
-    - user{n}_species: Identified animal species (uses USWDS radio buttons)
-    - user{n}_confidence: Confidence in identification (uses USWDS radio buttons)
-
-    Final review fields:
-    - final_review: Consensus classification
-    - final_species: Consensus species identification  
-    - final_confidence: Consensus confidence level
-
-    All fields use USWDS (U.S. Web Design System) widgets for consistent styling:
-    - Text areas with 500 char limit and 'usa-textarea' class
-    - Button groups for classifications
-    - Radio button groups for species and confidence selections
-
-    Inherits from:
-        forms.ModelForm
-
-    Related Model:
-        PointsOfInterest
-    """
     class Meta:
         model = PointsOfInterest
-        fields = ['id', 'final_review_date', 'final_species', 'final_classification']
+        fields = ['id', 'vendor_id', 'point', 'final_review_date', 'final_species', 'final_classification']
         widgets = {
 
         }
@@ -311,3 +281,8 @@ class AnnotationForm(forms.ModelForm):
 
         if (str(classification).lower() == "animal") and (not target or not confidence):
             raise forms.ValidationError("Target and Confidence are required when Classification is Animal.")
+        
+class FishnetForm(forms.ModelForm):
+    class Meta:
+        model = FishnetReviews
+        fields = ['fishnet', 'user', 'id', 'date']

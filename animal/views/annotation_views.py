@@ -10,10 +10,11 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.db.models import Q, Count, Prefetch
 
-from ..models import PointsOfInterest, Annotations, Fishnet
-from ..forms import AnnotationForm
+from ..models import PointsOfInterest, Annotations, Fishnet, FishnetReviews
+from ..forms import AnnotationForm, FishnetForm, PointsOfInterestForm
 from django.core.paginator import Paginator
 import logging
+from django.contrib.gis.geos import Polygon
 
 logger = logging.getLogger('animal')  # use your app name here
 
@@ -267,10 +268,40 @@ def validation(request, project_id):
 
     return render(request, 'validation_page.html', {'page_obj': page_obj, 'sort_order': sort_order})
 
-def detect_page(request, project_id, id):
+def detect_page(request, project_id, id=None):
     # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
     longitude, latitude = -70.183762, 42.049081
-    vendor_id = "21MAR21152115-S1BS-507583593010_01_P003"
+    # vendor_id = "21APR09152109-S1BS-509404630080_01_P001_u08mr32619"
+    user = request.user
+
+    def get_next_cell(user, project_id):
+        # Get IDs of Fishnets the user has already annotated
+        reviewed_fishnet_ids = set(FishnetReviews.objects.filter(
+            user_id=user.id
+        ).values_list('fishnet_id', flat=True))
+        
+        # Get IDs of Fishnets with 2+ annotations
+        full_fishnet_ids = set(FishnetReviews.objects.values('fishnet_id')
+            .annotate(count=Count('fishnet_id'))
+            .filter(count__gte=2)
+            .values_list('fishnet_id', flat=True))
+        
+        # Base query filtered by project if needed
+        query = Fishnet.objects.filter(project_id=project_id)
+        
+        # Apply exclusions and get first available fishnet cell
+        return query.exclude(
+            id__in=list(reviewed_fishnet_ids | full_fishnet_ids)
+        ).order_by('id').first()
+
+    if id is None:
+        fishnet = get_next_cell(user, project_id)
+        if fishnet is None:
+            return render(request, 'detect_page.html', {
+            'info_message': 'No points cells left to review.',
+        })
+        else:
+            return redirect(f'/project/{project_id}/detect/{fishnet.id}')
 
     def cog_exists(vendor_id):
         cached_result = cache.get(f'cog_existence_{vendor_id}')
@@ -281,27 +312,95 @@ def detect_page(request, project_id, id):
         cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  
         return blob_name 
 
-    if id is None:
-        return redirect(f'/project/{project_id}/detect/1')
+    fishnet = Fishnet.objects.get(id=id)
+    vendor_id = fishnet.vendor_id
 
-    elif id:
-        poi = PointsOfInterest.objects.get(id=id)
-        vendor_id = poi.vendor_id
+    if request.method == "POST":
+        form = FishnetForm(request.POST, instance=fishnet)
+        if form.is_valid():
+            FishnetReviews.objects.create(
+                fishnet=fishnet,
+                user=user,
+                date=datetime.now()
+            )
+            fishnet = get_next_cell(user, project_id)
+            return redirect(f'/project/{project_id}/detect/{fishnet.id}')
 
-    if poi and poi.point and poi.epsg_code:
-        print(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
-        source_crs = CRS(f"EPSG:{poi.epsg_code}")
-        target_crs = CRS("EPSG:4326")
-        transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
-        easting, northing = poi.point.coords
-        print(f"easting: {easting}, northing: {northing}")
-        longitude, latitude = transformer.transform(easting, northing)
+    source_crs = CRS(f"EPSG:3857")
+    target_crs = CRS("EPSG:4326")
+    transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
+    centroid = fishnet.cell.centroid
+    easting = centroid.x
+    northing = centroid.y
+    print(f"easting: {easting}, northing: {northing}")
+    longitude, latitude = transformer.transform(easting, northing)
 
-    cogurl = cog_exists(poi.vendor_id) if poi else None
+    # Transform the fishnet cell polygon
+    # Get the exterior ring of the polygon
+    exterior_ring = fishnet.cell.exterior_ring
+    transformed_coords = []
+    # Transform each point in the polygon
+    for point in exterior_ring:
+        lon, lat = transformer.transform(point[0], point[1])
+        transformed_coords.append((lon, lat))
+    # Create a new polygon with transformed coordinates
+    transformed_polygon = Polygon(transformed_coords)
+    # Store the transformed polygon for rendering
+    fishnet.transformed_cell = transformed_polygon
+
+    cogurl = cog_exists(vendor_id) if fishnet else None
     return render(request, 'detect_page.html', {
-        'poi': poi,
+        'id': fishnet.id,
+        'cell': fishnet.transformed_cell,
         'vendor_id': vendor_id,
         'longitude': longitude,
         'latitude': latitude,
-        'cogurl': cogurl
+        'cogurl': cogurl,
+        'project_id': project_id
     })
+
+def create_point(request, project_id):
+    user = request.user
+    def get_next_cell(user, project_id):
+        # Get IDs of Fishnets the user has already annotated
+        reviewed_fishnet_ids = set(FishnetReviews.objects.filter(
+            user_id=user.id
+        ).values_list('fishnet_id', flat=True))
+        
+        # Get IDs of Fishnets with 2+ annotations
+        full_fishnet_ids = set(FishnetReviews.objects.values('fishnet_id')
+            .annotate(count=Count('fishnet_id'))
+            .filter(count__gte=2)
+            .values_list('fishnet_id', flat=True))
+        
+        # Base query filtered by project if needed
+        query = Fishnet.objects.filter(project_id=project_id)
+        
+        # Apply exclusions and get first available fishnet cell
+        return query.exclude(
+            id__in=list(reviewed_fishnet_ids | full_fishnet_ids)
+        ).order_by('id').first()
+
+    if request.method == "POST":
+        form = PointsOfInterestForm(request.POST)
+        logger.info(f"Form data: {form.data}")
+        
+        if form.is_valid():
+            logger.info(f"Form is valid")
+            PointsOfInterest.objects.create(
+                point=form.cleaned_data['point'],
+                vendor_id=form.cleaned_data['vendor_id'],
+                project_id=project_id
+            )
+        else:
+            logger.error(f"Form validation errors: {form.errors}")
+            fishnet = get_next_cell(user, project_id)
+            return redirect(f'/project/{project_id}/detect/{fishnet.id}')
+    
+    fishnet = get_next_cell(user, project_id)
+    if fishnet is None:
+        return render(request, 'detect_page.html', {
+        'info_message': 'No points cells left to review.',
+    })
+    else:
+        return redirect(f'/project/{project_id}/detect/{fishnet.id}')

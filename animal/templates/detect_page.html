@@ -43,10 +43,19 @@
       </div>
     </div>
   {% endif %}
+  {% if info_message %}
+    <div class="usa-alert usa-alert--info" role="alert">
+      <div class="usa-alert__body">
+        <p class="usa-alert__text">
+            {{ info_message }}
+        </p>
+      </div>
+    </div>
+    {% else %}
   <div class="grid-row flex-justify">
-      <div class="grid-container" style="width: 85%;max-width: 100%;height:70vh;">
-        <div id="osm-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 85%; height: 70vh; z-index: 1;"></div>
-        <div id="gdal-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 85%; height: 70vh; z-index: 2;">
+      <div class="grid-container" style="width: 60%;max-width: 100%;height:70vh;">
+        <div id="osm-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 60%; height: 70vh; z-index: 1;"></div>
+        <div id="gdal-map" class="map padding-bottom-5" style="position: absolute; top: inherit; left: inherit; width: 60%; height: 70vh; z-index: 2;">
           <div id="layer-switcher">
             <label>
               <input type="radio" name="layer" value="street" />
@@ -99,9 +108,19 @@
               value="0"
             />
           </div>
+          <div class="grid-col text-right">
+            <form id="fishnet_form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="fishnet" value="{{ id }}">
+            <input type="hidden" name="user" value="{{ user.id }}">
+            <input type="hidden" name="form_type" value="form">
+          <button class="usa-button" type="submit" id="next-button">Next</button>
+          </form>
+        </div>
         </div>
       </div>
     </div>
+    {% endif %}
       <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/geotiff"></script>
       <link
@@ -144,24 +163,33 @@
 			const vectorSource = new ol.source.Vector({ features: [point] });
       // Create a bounding box around the point (approx 300 meters)
       // Calculate box dimensions for 600m width and 400m height
-      const latOffset = 150 / 111320; // 400 meters in decimal degrees
-      // Longitude degrees per meter varies with latitude
-      const metersPerLonDegree = 111320 * Math.cos(latitude * Math.PI / 180);
-      const lonOffset = 250 / metersPerLonDegree; // 600 meters in decimal degrees
-
-      const minLon = longitude - lonOffset;
-      const maxLon = longitude + lonOffset;
-      const minLat = latitude - latOffset;
-      const maxLat = latitude + latOffset;
-
-      // Convert bbox corners to projected coordinates
-      const bbox = [
-        ol.proj.fromLonLat([minLon, minLat]),
-        ol.proj.fromLonLat([maxLon, minLat]),
-        ol.proj.fromLonLat([maxLon, maxLat]),
-        ol.proj.fromLonLat([minLon, maxLat]),
-        ol.proj.fromLonLat([minLon, minLat]) // Close the polygon
-      ];
+      // Use polygon shape from fishnet.cell to define the search area boundaries
+      const fishnetCellWkt = '{{ cell|escapejs }}';  // Get the raw WKT string
+          
+      // Convert the fishnet cell coordinates to OpenLayers format
+      const bbox = [];
+          
+      // Process the WKT polygon coordinates
+      if (fishnetCellWkt) {
+        // Remove any SRID prefix
+        const wktWithoutSrid = fishnetCellWkt.replace(/SRID=\d+;/i, '');
+        
+        // Check if it's a POLYGON WKT
+        const match = wktWithoutSrid.match(/POLYGON\s*\(\((.*?)\)\)/i);
+        
+        if (match && match[1]) {
+          // Extract coordinates from the matched pattern
+          const coordPairs = match[1].split(',');
+          
+          // Process each coordinate pair
+          coordPairs.forEach(pair => {
+            const [lon, lat] = pair.trim().split(' ').map(parseFloat);
+            if (!isNaN(lon) && !isNaN(lat)) {
+              bbox.push(ol.proj.fromLonLat([lon, lat]));
+            }
+          });
+        }
+      } 
 
       // Create a polygon feature for the bounding box
       const boxFeature = new ol.Feature({
@@ -176,12 +204,13 @@
       const vectorLayer = new ol.layer.Vector({
         source: vectorSource,
         style: new ol.style.Style({
-          stroke: new ol.style.Stroke({
+            stroke: new ol.style.Stroke({
             color: 'rgba(255, 255, 255, 0.5)',
-            width: 2
-          }),
+            width: 2,
+            lineDash: [6, 3]  // Creates dashed line pattern
+            }),
           fill: new ol.style.Fill({
-            color: 'rgba(0, 255, 0, 0.1)'
+            color: 'rgba(0, 255, 0, 0.01)'
           }),
         })
       });
@@ -256,14 +285,124 @@
             latitude: lonLat[1].toFixed(6)
           });
         });
+        // Send points to the server for annotation
+        const pointData = pointFeatures.map((feature) => {
+          const geometry = feature.getGeometry();
+          const coordinates = geometry.getCoordinates();
+          const lonLat = ol.proj.toLonLat(coordinates);
+          
+          return {
+            longitude: lonLat[0],
+            latitude: lonLat[1],
+            geometry: {
+              type: "Point",
+              coordinates: [lonLat[0], lonLat[1]]
+            }
+          };
+        });
+
+        // Get the CSRF token
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
+        // Check if points exist before submission
+        if (pointData.length === 0) {
+          alert('No points to submit. Add points first using the "Add Point" button.');
+          return;
+        }
+        
+        // Prepare form data for submission
+        const formData = new FormData();
+        formData.append('point', JSON.stringify(pointData[0].geometry));
+        formData.append('vendor_id', "{{vendor_id}}");
+        formData.append('project_id', "{{project_id}}");
+        
+        console.log("Form data being sent:", Object.fromEntries(formData));
+        
+        // Send POST request
+        fetch(`/project/{{project_id}}/poi/create`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          body: formData
+        })
+        .then(response => {
+          // Get the content type header
+          const contentType = response.headers.get('content-type');
+          
+          if (!response.ok) {
+            return response.text().then(text => {
+              console.error('Server error response:', text.substring(0, 500));
+              throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            });
+          }
+          
+          // Handle JSON responses
+          if (contentType && contentType.includes('application/json')) {
+            return response.json();
+          } 
+          // Handle HTML or other response types
+          else {
+            console.warn('Server returned non-JSON response:', contentType);
+            return { success: true, message: 'Point submitted, but server returned non-JSON response' };
+          }
+        })
+        .then(data => {
+          console.log('Point of interest created successfully:', data);
+        })
+        .catch(error => {
+          console.error('Error submitting point of interest:', error);
+          showNotification('Failed to submit points: ' + error.message, 'error');
+        });
         
         // Visual feedback that submission occurred
         if (pointFeatures.length > 0) {
-          alert(`Submitted ${pointFeatures.length} points. Check the console for details.`);
+          showNotification(`Successfully submitted ${pointFeatures.length} points.`, 'success');
         } else {
-          alert('No points to submit. Add points first using the "Add Point" button.');
+          showNotification('No points to submit. Add points first using the "Add Point" button.', 'warning');
         }
-      });
+        
+        // Function to show on-page notifications
+        function showNotification(message, type = 'info') {
+          // Create notification element
+          const notification = document.createElement('div');
+          notification.className = `map-notification ${type}`;
+          notification.textContent = message;
+          
+          // Style the notification based on type
+          const colors = {
+            'success': '#4CAF50',
+            'error': '#D83933',
+            'warning': '#FFC107',
+            'info': '#0071bc'
+          };
+          
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${colors[type]};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+            z-index: 2000;
+            max-width: 80%;
+            text-align: center;
+          `;
+          
+          // Add to document
+          document.body.appendChild(notification);
+          
+          // Remove after 10 seconds
+          setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.5s ease-out';
+            setTimeout(() => document.body.removeChild(notification), 500);
+          }, 10000);
+        }
+            });
       // Toggle drawing mode
       function toggleDrawMode() {
         drawModeActive = !drawModeActive;

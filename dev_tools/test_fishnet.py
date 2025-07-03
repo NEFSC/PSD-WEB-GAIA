@@ -59,9 +59,10 @@ fishnet_gdf = utils.spatial_ops.create_fishnet(test_cog)
 def import_fishnet(gdf):
     """Synchronous import fishnet cells."""
     for index, row in gdf.iterrows():
-        FN.objects.update_or_create(
+        print(f"\nindex: {index}, row: {row}")
+        FN.objects.create(
             vendor_id=row['vendor_id'],
-            defaults={'cell': row['geometry'].wkt}
+            cell=row['geometry'].wkt
         )
 
 async def import_fishnet_async(gdf):
