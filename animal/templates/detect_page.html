@@ -114,7 +114,7 @@
             <input type="hidden" name="fishnet" value="{{ id }}">
             <input type="hidden" name="user" value="{{ user.id }}">
             <input type="hidden" name="form_type" value="form">
-          <button class="usa-button" type="submit" id="next-button">Next</button>
+          <button class="usa-button usa-button--big" type="submit" id="next-button">Next</button>
           </form>
         </div>
         </div>
@@ -312,9 +312,13 @@
         
         // Prepare form data for submission
         const formData = new FormData();
-        formData.append('point', JSON.stringify(pointData[0].geometry));
-        formData.append('vendor_id', "{{vendor_id}}");
-        formData.append('project_id', "{{project_id}}");
+        // Add each point as a separate form field for PointsOfInterest objects
+        formData.append('points', JSON.stringify(pointData.slice(1).map(point => ({
+        geometry: point.geometry,
+        vendor_id: "{{vendor_id}}",
+        project_id: "{{project_id}}"
+        }))));
+          
         
         console.log("Form data being sent:", Object.fromEntries(formData));
         
@@ -349,18 +353,31 @@
         })
         .then(data => {
           console.log('Point of interest created successfully:', data);
+          // Visual feedback that submission occurred
+          if (pointFeatures.length > 0) {
+            let pointIds = '';
+            
+            if (Array.isArray(data.points)) {
+              // If data.points is an array, collect all IDs
+              pointIds = data.points.map(point => point.id).join(', ');
+            } else if (data.points && data.points.id) {
+              // If data.points is a single object
+              pointIds = data.points.id;
+            } else {
+              // Fallback if structure is different
+              pointIds = 'submitted successfully';
+            }
+            
+            showNotification(`Successfully submitted points. ID's: ${pointIds}`, 'success');
+          } else {
+            showNotification('No points to submit. Add points first using the "Add Point" button.', 'warning');
+          }
         })
         .catch(error => {
           console.error('Error submitting point of interest:', error);
           showNotification('Failed to submit points: ' + error.message, 'error');
         });
         
-        // Visual feedback that submission occurred
-        if (pointFeatures.length > 0) {
-          showNotification(`Successfully submitted ${pointFeatures.length} points.`, 'success');
-        } else {
-          showNotification('No points to submit. Add points first using the "Add Point" button.', 'warning');
-        }
         
         // Function to show on-page notifications
         function showNotification(message, type = 'info') {
