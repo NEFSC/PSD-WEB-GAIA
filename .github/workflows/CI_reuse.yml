@@ -39,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Optional: restrict linters to Python only
-          ENABLE_LINTERS: PYTHON
+          #ENABLE_LINTERS: PYTHON
           # Optional: don't fail the workflow if lint errors are found
           DISABLE_ERRORS: true
           VALIDATE_ALL_CODEBASE: true
