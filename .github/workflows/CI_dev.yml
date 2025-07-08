@@ -3,7 +3,7 @@ name: CI Dev
 on:
   push:
     branches:
-      - dev
+      - GAIFAGP-314-validate-all-files
   workflow_dispatch:
 
 jobs:
