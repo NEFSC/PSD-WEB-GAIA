@@ -101,7 +101,7 @@ def annotation_page(request, project_id, item_id=None):
     # Since the points were generated from projected imagery, we need to transform them to
     #      geographic coordinates (i.e., EPSG:4326) to show them.
     if poi and poi.point and poi.epsg_code:
-        print(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
+        logger.info(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
         source_crs = CRS(f"EPSG:{poi.epsg_code}")
         target_crs = CRS("EPSG:4326")
         transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
@@ -399,7 +399,8 @@ def create_point(request, project_id):
                 poi = PointsOfInterest.objects.create(
                     point=point_geom,
                     vendor_id=vendor_id,
-                    project_id=project_id
+                    project_id=project_id,
+                    epsg_code=4326
                 )
                 created_points.append({'id': poi.id})
                 logger.info(f"Point {poi.id} created")
