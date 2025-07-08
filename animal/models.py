@@ -380,9 +380,17 @@ class Annotations(models.Model):
 class Fishnet(gis_models.Model):
     id = gis_models.AutoField(primary_key = True)
     vendor_id = gis_models.CharField(max_length = 39, null=True, blank=True)
-
-    # Mandatory
     cell = gis_models.GeometryField(null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.id)
+
+class FishnetReviews(models.Model):
+    id = models.AutoField(primary_key = True)
+    fishnet = models.ForeignKey(Fishnet, related_name='fishnetreviews', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField(null=True, blank=True)
     
     def __str__(self):
         return str(self.id)
