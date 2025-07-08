@@ -218,8 +218,9 @@ def generate_sas_token(blob_name):
         print(f"Error generating SAS token for blob '{blob_name}': {e}")
         return None
 
-def check_cog_existence(vendor_id, directory='None'):
-    """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
+def check_cog_existence(vendor_id, directory=None):
+    """ Checks if a Cloud Optimized GeoTIFF exists in Azure. """
+
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
