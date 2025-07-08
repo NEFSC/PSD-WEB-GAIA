@@ -6,14 +6,17 @@ from azure.core.credentials import AzureNamedKeyCredential
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions, BlobServiceClient
 from django.core.cache import cache
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, redirect
 from django.db.models import Q, Count, Prefetch
+import json
+from django.contrib.gis.geos import Point
 
-from ..models import PointsOfInterest, Annotations
-from ..forms import AnnotationForm
+from ..models import PointsOfInterest, Annotations, Fishnet, FishnetReviews
+from ..forms import AnnotationForm, FishnetForm, PointsOfInterestForm
 from django.core.paginator import Paginator
 import logging
+from django.contrib.gis.geos import Polygon
 
 logger = logging.getLogger('animal')  # use your app name here
 
@@ -98,7 +101,7 @@ def annotation_page(request, project_id, item_id=None):
     # Since the points were generated from projected imagery, we need to transform them to
     #      geographic coordinates (i.e., EPSG:4326) to show them.
     if poi and poi.point and poi.epsg_code:
-        print(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
+        logger.info(f"Your geometry is: {poi.point} and your EPSG code is: {poi.epsg_code}")
         source_crs = CRS(f"EPSG:{poi.epsg_code}")
         target_crs = CRS("EPSG:4326")
         transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
@@ -217,14 +220,10 @@ def generate_sas_token(blob_name):
 
 def check_cog_existence(vendor_id, directory='None'):
     """ Checks if a Cloud Optimized GeoTIFF eixsts in Azure. """
-    
     account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
     account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
     container_name = settings.AZURE_CONTAINER_NAME
-
     vendor_id = vendor_id.replace('P1BS', 'S1BS')
-
-    
 
     try:
         credential = AzureNamedKeyCredential(account_name, account_key)
@@ -233,9 +232,7 @@ def check_cog_existence(vendor_id, directory='None'):
             account_url = f"https://{account_name}.blob.core.windows.net/",
             credential=credential
         )
-    
         container_client = blob_service_client.get_container_client(container_name)
-    
         prefix = directory if directory else ""
         
         blobs = container_client.list_blobs(name_starts_with=prefix)
@@ -272,3 +269,145 @@ def validation(request, project_id):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'validation_page.html', {'page_obj': page_obj, 'sort_order': sort_order})
+
+def detect_page(request, project_id, id=None):
+    # Initialize default coordinates (Fisherman's Wharf, Provincetown, MA)
+    longitude, latitude = -70.183762, 42.049081
+    user = request.user
+
+    def get_next_cell(user, project_id):
+        # Get IDs of Fishnets the user has already annotated
+        reviewed_fishnet_ids = set(FishnetReviews.objects.filter(
+            user_id=user.id
+        ).values_list('fishnet_id', flat=True))
+        
+        # Get IDs of Fishnets with 2+ annotations
+        full_fishnet_ids = set(FishnetReviews.objects.values('fishnet_id')
+            .annotate(count=Count('fishnet_id'))
+            .filter(count__gte=2)
+            .values_list('fishnet_id', flat=True))
+        
+        # Base query filtered by project if needed
+        query = Fishnet.objects.filter(project_id=project_id)
+        
+        # Apply exclusions and get first available fishnet cell
+        return query.exclude(
+            id__in=list(reviewed_fishnet_ids | full_fishnet_ids)
+        ).order_by('id').first()
+
+    if id is None:
+        fishnet = get_next_cell(user, project_id)
+        if fishnet is None:
+            return render(request, 'detect_page.html', {
+            'info_message': 'No points cells left to review.',
+        })
+        else:
+            return redirect(f'/project/{project_id}/detect/{fishnet.id}')
+
+    def cog_exists(vendor_id):
+        cached_result = cache.get(f'cog_existence_{vendor_id}')
+        if cached_result is not None:
+            return cached_result
+
+        blob_name = check_cog_existence(vendor_id, directory='cogs/')
+        cache.set(f'cog_existence_{vendor_id}', (blob_name), timeout=300)  
+        return blob_name 
+
+    fishnet = Fishnet.objects.get(id=id)
+    vendor_id = fishnet.vendor_id
+
+    if request.method == "POST":
+        form = FishnetForm(request.POST, instance=fishnet)
+        if form.is_valid():
+            FishnetReviews.objects.create(
+                fishnet=fishnet,
+                user=user,
+                date=datetime.now()
+            )
+            fishnet = get_next_cell(user, project_id)
+            return redirect(f'/project/{project_id}/detect/{fishnet.id}')
+
+    source_crs = CRS(f"EPSG:3857")
+    target_crs = CRS("EPSG:4326")
+    transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
+    centroid = fishnet.cell.centroid
+    easting = centroid.x
+    northing = centroid.y
+    print(f"easting: {easting}, northing: {northing}")
+    longitude, latitude = transformer.transform(easting, northing)
+
+    # Transform the fishnet cell polygon
+    # Get the exterior ring of the polygon
+    exterior_ring = fishnet.cell.exterior_ring
+    transformed_coords = []
+    # Transform each point in the polygon
+    for point in exterior_ring:
+        lon, lat = transformer.transform(point[0], point[1])
+        transformed_coords.append((lon, lat))
+    # Create a new polygon with transformed coordinates
+    transformed_polygon = Polygon(transformed_coords)
+    # Store the transformed polygon for rendering
+    fishnet.transformed_cell = transformed_polygon
+
+    cogurl = cog_exists(vendor_id) if fishnet else None
+    return render(request, 'detect_page.html', {
+        'id': fishnet.id,
+        'cell': fishnet.transformed_cell,
+        'vendor_id': vendor_id,
+        'longitude': longitude,
+        'latitude': latitude,
+        'cogurl': cogurl,
+        'project_id': project_id
+    })
+
+def create_point(request, project_id):
+    if request.method == "POST":
+        # Accept both JSON and form-data
+        points_data = None
+
+        # Try to get points from form-data (as in your JS)
+        if 'points' in request.POST:
+            # The frontend sends a single stringified JSON array under 'points'
+            try:
+                points_data = json.loads(request.POST['points'])
+            except Exception as e:
+                return JsonResponse({'error': f'Invalid points data: {e}'}, status=400)
+        else:
+            # Try to parse JSON body (for application/json requests)
+            try:
+                body = request.body.decode('utf-8')
+                data = json.loads(body)
+                points_data = data.get('points')
+            except Exception:
+                pass
+
+        if not points_data or not isinstance(points_data, list):
+            return JsonResponse({'error': 'No valid points provided.'}, status=400)
+
+        created_points = []
+        for point_data in points_data:
+            try:
+                geom = point_data.get('geometry')
+                vendor_id = point_data.get('vendor_id')
+                # Accept geometry as GeoJSON
+                if geom and geom.get('type') == 'Point':
+                    coords = geom.get('coordinates')
+                    point_geom = Point(coords[0], coords[1])
+                else:
+                    return JsonResponse({'error': 'Invalid geometry.'}, status=400)
+
+                poi = PointsOfInterest.objects.create(
+                    point=point_geom,
+                    vendor_id=vendor_id,
+                    project_id=project_id,
+                    epsg_code=4326
+                )
+                created_points.append({'id': poi.id})
+                logger.info(f"Point {poi.id} created")
+            except Exception as e:
+                logger.error(f"Error creating point: {e}")
+                return JsonResponse({'error': str(e)}, status=400)
+
+        return JsonResponse({'points': created_points})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

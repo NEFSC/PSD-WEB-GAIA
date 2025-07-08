@@ -23,7 +23,10 @@ from glob import glob
 from pathlib import Path
 from asgiref.sync import sync_to_async
 
-project_dir = "../../../gis/PSD-WEB-GAIA"
+# Set PROJ_LIB environment variable to fix projection issues
+os.environ['PROJ_LIB'] = '/opt/conda/envs/gaia/share/proj'
+
+project_dir = "../"
 project_dir = os.path.abspath(project_dir)
 sys.path.append(str(project_dir))
 
@@ -39,8 +42,8 @@ from animal.models import Fishnet as FN
 # ------------------------------------------------------------------------------
 # Basic test for fishnet method
 # ------------------------------------------------------------------------------
-data_dir = "../../../gis/data/"
-sub_dir = "cogs/"
+data_dir = ""
+sub_dir = ""
 
 data_dir = os.path.abspath(data_dir)
 cogs = glob(os.path.join(data_dir, sub_dir, '**', "*.tif"), recursive=True)
@@ -54,18 +57,12 @@ fishnet_gdf = utils.spatial_ops.create_fishnet(test_cog)
 # Import fishnet into the SpatiaLite database
 # ------------------------------------------------------------------------------
 def import_fishnet(gdf):
-    """ Synchronous Import fishnet cells function.
-
-        When provided with a GeoDataFrame of cells representing a fishnet, load
-            them into the SpatiaLite database.
-
-        GDF - A GeoDataFrame of fishnet cells with vendor id and geometry
-            attributes.
-    """
+    """Synchronous import fishnet cells."""
     for index, row in gdf.iterrows():
-        fn, created = FN.objects.create(
-            'vendor_id': row['vendor_id'],
-            'cell': row['geometry'].wkt
+        print(f"\nindex: {index}, row: {row}")
+        FN.objects.create(
+            vendor_id=row['vendor_id'],
+            cell=row['geometry'].wkt
         )
 
 async def import_fishnet_async(gdf):
