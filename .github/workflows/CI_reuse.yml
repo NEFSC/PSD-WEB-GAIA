@@ -15,6 +15,7 @@ env:
   APPNAME: ${{ inputs.appname }}  # this should be all lower case
   REGISTRY: ghcr.io
   DJANGO_ENV: ${{ inputs.djangoenv }}
+  TEMPLATE_BRANCH: main  # Branch of the nefsc-pipeline-template repository to use for MegaLinter configuration
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -29,10 +30,18 @@ jobs:
       pull-requests: read
 
     steps:
-      - name: Checkout code
+      - name: Checkout main code
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout NEFSC-Pipeline-Template repository for MegaLinter configuration
+        uses: actions/checkout@v4
+        with:
+          repository: nefsc/nefsc-pipeline-template
+          token: ${{ secrets.CICDTOKEN }} # `CICDTOKEN` is a secret that contains your PAT
+          path: nefsc-config
+          ref: ${{ env.TEMPLATE_BRANCH }}
 
       - name: MegaLinter run
         uses: oxsecurity/megalinter@v8
@@ -43,6 +52,8 @@ jobs:
           # Optional: don't fail the workflow if lint errors are found
           DISABLE_ERRORS: true
           VALIDATE_ALL_CODEBASE: true
+          # Uses .mega-linter.yml config file found in root if not changed here
+          MEGALINTER_CONFIG: nefsc-config/linters/.mega-linter.yml
 
       # Upload MegaLinter artifacts
       - name: Archive MegaLinter production artifacts
