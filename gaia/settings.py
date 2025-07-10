@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'debug_toolbar',
     'animal',
+    'adminsortable2',
     #'django_q',
     #'corsheaders',
 ]

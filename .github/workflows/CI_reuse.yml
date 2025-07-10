@@ -21,6 +21,38 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
+  megalinter:
+    name: 🐂 MegaLinter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: MegaLinter run
+        uses: oxsecurity/megalinter@v8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional: restrict linters to Python only
+          ENABLE_LINTERS: PYTHON
+          # Optional: don't fail the workflow if lint errors are found
+          DISABLE_ERRORS: true
+
+      # Upload MegaLinter artifacts
+      - name: Archive MegaLinter production artifacts
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: MegaLinter reports
+          path: |
+            megalinter-reports
+            mega-linter.log
+
   build-and-push-to-github:
     name: 🏗️ Build and push to GitHub Container Registry 🏗️
     runs-on: ubuntu-latest
