@@ -189,25 +189,65 @@
         </div>
       <script>
         document.addEventListener("DOMContentLoaded", () => {
-          document
-            .querySelectorAll("#classification-buttongroup button")
-            .forEach((button) => {
-              button.addEventListener("click", function () {
-                const group = this.closest("#classification-buttongroup");
-                const hiddenInput = group.nextElementSibling;
-
-                // Remove active class from all buttons
-                group.querySelectorAll("button").forEach((btn) => {
-                  btn.classList.remove("usa-button--active");
-                });
-
-                // Add active class to the clicked button
-                this.classList.add("usa-button--active");
-
-                // Update the hidden input value
-                hiddenInput.value = this.getAttribute("data-value");
+          const group = document.querySelector("#classification-buttongroup");
+          const allButtons = group.querySelectorAll("button");
+          
+          // Function to handle button visibility based on Animal selection
+          function handleAnimalButtonVisibility() {
+            const animalButton = group.querySelector("button[data-value='14']");
+            const submitButton = document.querySelector("button[type='submit']");
+            
+            if (animalButton && animalButton.classList.contains("usa-button--active")) {
+              // Hide all buttons including the Animal button when Animal is selected
+              allButtons.forEach((btn) => {
+                btn.style.display = "none";
               });
+              // Hide category labels too
+              group.querySelectorAll(".usa-button-group__label").forEach((label) => {
+                label.style.display = "none";
+              });
+              // Show submit button when Animal is selected
+              if (submitButton) {
+                submitButton.style.display = "";
+              }
+            } else {
+              // Show all buttons and labels when any other button is selected
+              allButtons.forEach((btn) => {
+                btn.style.display = "";
+              });
+              group.querySelectorAll(".usa-button-group__label").forEach((label) => {
+                label.style.display = "";
+              });
+              // Hide submit button when Animal is not selected
+              if (submitButton) {
+                submitButton.style.display = "none";
+              }
+            }
+          }
+
+          // Initial check on page load
+          handleAnimalButtonVisibility();
+
+          // Add click event listeners to all buttons
+          allButtons.forEach((button) => {
+            button.addEventListener("click", function () {
+              const hiddenInput = group.nextElementSibling;
+
+              // Remove active class from all buttons
+              allButtons.forEach((btn) => {
+                btn.classList.remove("usa-button--active");
+              });
+
+              // Add active class to the clicked button
+              this.classList.add("usa-button--active");
+
+              // Update the hidden input value
+              hiddenInput.value = this.getAttribute("data-value");
+
+              // Handle visibility based on Animal button selection
+              handleAnimalButtonVisibility();
             });
+          });
         });
       </script>
       <script>

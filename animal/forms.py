@@ -35,9 +35,11 @@ Note:
 
 from datetime import datetime
 from django import forms
-from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Target, FishnetReviews
+from .models import AreaOfInterest, ExtractTransformLoad, PointsOfInterest, Annotations, Classification, Confidence, Target, FishnetReviews, Category
 from django.utils.safestring import mark_safe
 from django.forms.utils import flatatt
+import logging
+logger = logging.getLogger('animal')
 
 class APIQueryForm(forms.Form):
     """A Django Form for querying various satellite imagery APIs.
@@ -140,29 +142,6 @@ class ProcessingForm(forms.Form):
                   'date_min', 'date_max', 'publish_date_min', 'publish_date_max', 'aoi']
 
 class USWDSButtonGroupWidget(forms.Widget):
-    """A custom widget class implementing a USWDS (U.S. Web Design System) styled button group.
-
-    This widget creates a group of buttons following USWDS styling guidelines, with special
-    handling for "Unsure" and "Animal" options. It includes a hidden input to store the
-    selected value.
-
-    Args:
-        choices (iterable): An iterable of tuples containing (value, label) pairs for
-            each button in the group.
-        attrs (dict, optional): HTML attributes to be added to the hidden input element.
-            Defaults to None.
-
-    Attributes:
-        choices (iterable): Stored choices for button creation.
-
-    Methods:
-        render(name, value, attrs=None, renderer=None): Renders the button group HTML.
-            Special styling is applied to "Unsure" and "Animal" buttons using USWDS classes.
-            Selected buttons receive an 'usa-button--active' class.
-
-    Returns:
-        SafeString: HTML markup for the button group including a hidden input for form submission.
-    """
     def __init__(self, choices, attrs=None):
         super().__init__(attrs)
         self.choices = choices
@@ -172,30 +151,85 @@ class USWDSButtonGroupWidget(forms.Widget):
             attrs = {}
         attrs['id'] = attrs.get('id', f'id_{name}')
 
-        # Reorder choices to prioritize "Unsure" and "Animal"
-        def prioritize_choice(choice):
-            return (choice[1] not in {"Unsure", "Animal"}, choice[1])
-
-        reordered_choices = sorted(self.choices, key=prioritize_choice)
-
+        # Get all classifications with their categories
+        from .models import Classification, Category
+        classifications = Classification.objects.select_related('category').all()
+        
+        # Group classifications by category
+        categories_dict = {}
+        uncategorized = []
+        
+        for classification in classifications:
+            if classification.category:
+                category_id = classification.category.id
+                if category_id not in categories_dict:
+                    categories_dict[category_id] = {
+                        'category': classification.category,
+                        'classifications': []
+                    }
+                categories_dict[category_id]['classifications'].append(classification)
+            else:
+                uncategorized.append(classification)
+        
+        # Sort categories by their order field
+        sorted_categories = sorted(categories_dict.values(), key=lambda x: x['category'].order)
+        
         buttons = []
-        for val, label in reordered_choices:
-            if val in [None, '']:
-                continue
-            button_attrs = {
-                'type': 'button',
-                'class': 'usa-button margin-1',
-                'data-value': val,
-            }
-            if label in {"Unsure", "Animal"}:
-                button_attrs['class'] += ' usa-button--outline'
-            if str(value) == str(val):
-                button_attrs['class'] += ' usa-button--active'
-            submit_script = "" if label == "Animal" else "this.form.submit();"
-            button_html = f'''<button {flatatt(button_attrs)} onclick="
-                this.parentElement.nextElementSibling.value = this.dataset.value;
-                {submit_script}">{label}</button>'''
-            buttons.append(button_html)
+        
+        # Render buttons grouped by category
+        for category_group in sorted_categories:
+            category = category_group['category']
+            category_classifications = category_group['classifications']
+            
+            # Sort classifications within category by their order field
+            sorted_classifications = sorted(category_classifications, key=lambda x: x.order)
+            
+            # Add category header
+            if category.name:
+                buttons.append(f'<div class="usa-button-group__label margin-top-2 margin-bottom-1"><strong>{category.name}</strong></div>')
+            
+            # Add buttons for this category
+            for classification in sorted_classifications:
+                if classification.id in [None, '']:
+                    continue
+                button_attrs = {
+                    'type': 'button',
+                    'class': 'usa-button margin-1',
+                    'data-value': classification.id,
+                }
+                if classification.label in {"Unsure", "Animal"}:
+                    button_attrs['class'] += ' usa-button--outline'
+                if str(value) == str(classification.id):
+                    button_attrs['class'] += ' usa-button--active'
+                submit_script = "" if classification.label == "Animal" else "this.form.submit();"
+                button_html = f'''<button {flatatt(button_attrs)} onclick="
+                    this.parentElement.nextElementSibling.value = this.dataset.value;
+                    {submit_script}">{classification.label}</button>'''
+                buttons.append(button_html)
+        
+        # Add uncategorized classifications at the end
+        if uncategorized:
+            # Sort uncategorized by their order field
+            sorted_uncategorized = sorted(uncategorized, key=lambda x: x.order)
+            
+            buttons.append(f'<div class="usa-button-group__label margin-top-2 margin-bottom-1"><strong>Other</strong></div>')
+            for classification in sorted_uncategorized:
+                if classification.id in [None, '']:
+                    continue
+                button_attrs = {
+                    'type': 'button',
+                    'class': 'usa-button margin-1',
+                    'data-value': classification.id,
+                }
+                if classification.label in {"Unsure", "Animal"}:
+                    button_attrs['class'] += ' usa-button--outline'
+                if str(value) == str(classification.id):
+                    button_attrs['class'] += ' usa-button--active'
+                submit_script = "" if classification.label == "Animal" else "this.form.submit();"
+                button_html = f'''<button {flatatt(button_attrs)} onclick="
+                    this.parentElement.nextElementSibling.value = this.dataset.value;
+                    {submit_script}">{classification.label}</button>'''
+                buttons.append(button_html)
 
         hidden_input = f'<input type="hidden" name="{name}" value="{value or ""}" {flatatt(attrs)}>'
         return mark_safe('<div id="classification-buttongroup" class="">' + ''.join(buttons) + '</div>' + hidden_input)
@@ -263,12 +297,17 @@ class PointsOfInterestForm(forms.ModelForm):
         }
 
 class AnnotationForm(forms.ModelForm):
+    classification = forms.ModelChoiceField(
+        queryset=Classification.objects.select_related('category').all(),
+        widget=USWDSButtonGroupWidget(
+            choices=[]  # Choices will be handled dynamically in the widget
+        )
+    )
     class Meta:
         model = Annotations
         fields = ['poi', 'user', 'classification', 'comments', 'confidence', 'target']
         widgets = {
             'comments': forms.Textarea(attrs={'maxlength': 500, 'class': 'usa-textarea', 'id':'comments-textarea'}),
-            'classification': USWDSButtonGroupWidget(choices=Classification),
             'target': USWDSRadioButtonGroupWidget(choices=Target),
             'confidence': USWDSRadioButtonGroupWidget(choices=Confidence),
         }
