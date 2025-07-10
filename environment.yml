@@ -68,6 +68,8 @@ dependencies:
   - django-q2
   - django-debug-toolbar
   - entrypoints
+  - pip:
+    - django-admin-sortable2
   - exceptiongroup
   - executing
   - expat
