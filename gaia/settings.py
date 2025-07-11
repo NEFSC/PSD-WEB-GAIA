@@ -276,8 +276,11 @@ EMAIL_HOST_PASSWORD = secrets.get('EMAIL_PASSWORD', '')
 DEFAULT_FROM_EMAIL = 'no-reply@noaa.gov'
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+# Use Azure Redis if available, otherwise fall back to local Redis
+# For Azure Container Apps, Redis will be accessible at redis-cache-dev|test|prod:6379
+REDIS_URL = secrets.get('REDIS_URL', 'redis://redis:6379/0')
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

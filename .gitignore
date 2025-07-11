@@ -36,6 +36,9 @@ celerybeat.pid
 mgp_token.json
 *.token
 
+# Windows Zone.Identifier files
+*:Zone.Identifier
+
 # Azure deployment files (if they contain sensitive info)
 # azure/containerapp-prod.yaml
 # azure/containerapp.yaml

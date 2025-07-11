@@ -63,3 +63,16 @@ az containerapp update -n gaia-test -g $RESOURCE_GROUP --yaml azure/containerapp
 Check it
 ```bash
 az containerapp exec --name gaia-test --resource-group $RESOURCE_GROUP --command "/bin/bash"
+
+Create redis container (dev example)
+```bash
+az containerapp create \
+    --name redis-cache-dev \
+    --resource-group $RESOURCE_GROUP \
+    --environment $MANAGED_ENVIRONMENT \
+    --image redis:8-alpine \
+    --ingress internal \
+    --transport tcp \
+    --target-port 6379 \
+    --cpu 0.5 \
+    --memory 1Gi
