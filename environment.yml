@@ -258,6 +258,7 @@ dependencies:
   - pyzmq
   - qhull
   - rasterio
+  - redis-py
   - re2
   - referencing
   - requests

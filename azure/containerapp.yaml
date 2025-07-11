@@ -26,11 +26,11 @@ properties:
     maxInactiveRevisions: 100
     registries:
     - identity: ''
-      passwordSecretRef: reg-pswd-8adc1063-bda4
+      passwordSecretRef: <registry-password-secret>
       server: ghcr.io
       username: <user>
     secrets:
-    - name: reg-pswd-8adc1063-bda4
+    - name: <registry-password-secret>
     - name: secrets-json
     service: null
   delegatedIdentities: []

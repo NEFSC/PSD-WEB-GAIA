@@ -23,3 +23,54 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile-debug
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        USER: ${USER}
+        GROUP: ${GROUP}
+    env_file:
+      - .env
+    command: /bin/bash -c "source activate gaia && celery -A gaia worker -l info"
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=gaia.settings
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile-debug
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        USER: ${USER}
+        GROUP: ${GROUP}
+    env_file:
+      - .env
+    command: /bin/bash -c "source activate gaia && celery -A gaia beat -l info"
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=gaia.settings
+
+volumes:
+  redis_data:
