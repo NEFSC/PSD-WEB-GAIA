@@ -274,3 +274,27 @@ EMAIL_HOST_PASSWORD = secrets.get('EMAIL_PASSWORD', '')
 # print("EMAIL_HOST_USER:", EMAIL_HOST_USER)
 
 DEFAULT_FROM_EMAIL = 'no-reply@noaa.gov'
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Optional: Configure Celery to use UTC
+CELERY_ENABLE_UTC = True
+
+# Optional: Configure task routing
+CELERY_TASK_ROUTES = {
+    # Route specific tasks to specific queues if needed
+    # 'myapp.tasks.my_task': {'queue': 'queue_name'},
+}
+
+# Optional: Configure task result expiration
+CELERY_RESULT_EXPIRES = 3600  # 1 hour
+
+# Optional: Configure worker settings
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_ACKS_LATE = True
